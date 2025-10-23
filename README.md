@@ -357,9 +357,34 @@ For comprehensive testing, use the MCP evaluation harness or connect to Claude D
 - [Model Context Protocol Specification](https://modelcontextprotocol.io)
 - [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
-## 📄 License
+## 📜 License
 
-This MCP server implementation is provided as-is for integration with GitHub's public API, subject to GitHub's API Terms of Service.
+This project is available under a **dual licensing model**:
+
+### 🆓 Open Source License (AGPL v3)
+Free for open source projects, personal use, and educational purposes.  
+**Requirement:** You must share your source code.
+
+### 💼 Commercial License
+For commercial/proprietary use without sharing source code.  
+**Pricing:** Starting at £399/year
+
+📄 **[View Full Licensing Details](LICENSING.md)**
+
+**Need a commercial license?** [Contact us](mailto:licensing@mcplabs.co.uk) or [open an issue](https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry)
+
+---
+
+## 🤔 Which License Do I Need?
+
+| Your Use Case | License Needed |
+|---------------|----------------|
+| Open source project | AGPL v3 (Free) ✅ |
+| Personal/hobby project | AGPL v3 (Free) ✅ |
+| Education/research | AGPL v3 (Free) ✅ |
+| Commercial SaaS product | Commercial 💼 |
+| Internal business tool (proprietary) | Commercial 💼 |
+| Closed-source software | Commercial 💼 |
 
 ## 🤝 Contributing
 
