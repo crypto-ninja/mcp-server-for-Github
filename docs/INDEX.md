@@ -1,324 +1,210 @@
-# 📚 GitHub MCP Server - Documentation Index
+# 📚 Documentation Index
 
-Welcome to the GitHub MCP Server! This index will help you navigate all the documentation and resources.
+Complete guide to GitHub MCP Server documentation.
 
-## 🚀 Getting Started (Start Here!)
+---
 
-### [QUICKSTART.md](QUICKSTART.md) - 5-Minute Setup Guide
-**Start here if you want to get up and running immediately.**
-- Step-by-step installation
-- Configuration for Claude Desktop
-- Quick test examples
-- Troubleshooting guide
+## 🚀 Getting Started
 
-**Time to complete:** 5 minutes
+**New to the project? Start here:**
+
+1. **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
+2. **[Configuration Guide](CONFIGURATION.md)** - Set up authentication and options
+3. **[Feature Showcase](FEATURES.md)** - See what you can build
 
 ---
 
 ## 📖 Core Documentation
 
-### [README.md](README.md) - Complete Reference Manual
-**Your comprehensive guide to the GitHub MCP Server.**
+### Essential Reading
 
-**Contents:**
-- Feature overview
-- Installation instructions
-- Tool reference (all 8 tools)
-- Rate limits and best practices
-- Security guidelines
-- Use cases
-
-**Read this for:** Detailed information about every tool and capability
-
----
-
-### [CONFIGURATION.md](CONFIGURATION.md) - Setup & Configuration
-**Everything about configuring the server.**
-
-**Contents:**
-- Claude Desktop configuration
-- Environment variables
-- Authentication setup
-- GitHub Enterprise support
-- Security best practices
-- Troubleshooting
-
-**Read this for:** Advanced configuration options
+| Document | Description | Location |
+|----------|-------------|----------|
+| **README** | Main documentation and API reference | [../README.md](../README.md) |
+| **START_HERE** | Welcome guide and navigation | [../START_HERE.md](../START_HERE.md) |
+| **Quick Start** | 5-minute setup guide | [QUICKSTART.md](QUICKSTART.md) |
+| **Configuration** | Advanced setup and options | [CONFIGURATION.md](CONFIGURATION.md) |
+| **Features** | Tool showcase with examples | [FEATURES.md](FEATURES.md) |
+| **Architecture** | System design and implementation | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| **Project Summary** | Overview and statistics | [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) |
 
 ---
 
-### [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Project Overview
-**High-level overview of what makes this server special.**
+## 🏢 Business & Legal
 
-**Contents:**
-- Why this server is amazing
-- Key features and benefits
-- Code statistics
-- Quality metrics
-- Design philosophy
-
-**Read this for:** Understanding the project's value and architecture decisions
+| Document | Description | Location |
+|----------|-------------|----------|
+| **Licensing** | Dual licensing explained | [../LICENSING.md](../LICENSING.md) |
+| **Commercial License** | Terms and pricing | [../LICENSE-COMMERCIAL](../LICENSE-COMMERCIAL) |
+| **Open Source License** | AGPL v3 terms | [../LICENSE](../LICENSE) |
+| **Contributing** | How to contribute | [../CONTRIBUTING.md](../CONTRIBUTING.md) |
+| **Changelog** | Version history | [../CHANGELOG.md](../CHANGELOG.md) |
 
 ---
 
-## 🏗️ Technical Documentation
+## 🔧 Technical Resources
 
-### [ARCHITECTURE.md](ARCHITECTURE.md) - System Architecture
-**Deep dive into how the server works.**
+### Code Files
 
-**Contents:**
-- System architecture diagrams
-- Data flow explanations
-- Component details
-- Error handling flow
-- Performance characteristics
-- Extension points
+| File | Description | Location |
+|------|-------------|----------|
+| **github_mcp.py** | Main server implementation | [../github_mcp.py](../github_mcp.py) |
+| **requirements.txt** | Python dependencies | [../requirements.txt](../requirements.txt) |
+| **setup.py** | Package setup | [../setup.py](../setup.py) |
 
-**Read this for:** Understanding the internal workings and design patterns
+### Examples
 
----
-
-### [FEATURES.md](FEATURES.md) - Feature Showcase
-**Visual tour of all capabilities with examples.**
-
-**Contents:**
-- Tool-by-tool showcase
-- Input/output examples
-- Advanced usage scenarios
-- Response format comparisons
-- Power user tips
-- Integration examples
-
-**Read this for:** Learning how to use each tool effectively
+| File | Description | Location |
+|------|-------------|----------|
+| **Claude Desktop Config** | Example configuration | [../examples/claude_desktop_config.json](../examples/claude_desktop_config.json) |
+| **Evaluation Tests** | Test scenarios | [../examples/github_mcp_evaluation.xml](../examples/github_mcp_evaluation.xml) |
 
 ---
 
-## 💻 Code Files
+## 📚 Documentation by Topic
 
-### [github_mcp.py](github_mcp.py) - Main Server Implementation
-**The actual MCP server code (1,200+ lines).**
+### For Users
 
-**Structure:**
-- FastMCP server initialization
-- 8 tool implementations
-- Pydantic input models
-- Shared utilities
-- Error handling
-- Response formatting
+**Getting Started:**
+1. [Quick Start Guide](QUICKSTART.md) - Installation and basic setup
+2. [Configuration Guide](CONFIGURATION.md) - Authentication and advanced options
+3. [Feature Showcase](FEATURES.md) - What you can build
 
-**Read this for:** Understanding the implementation or extending functionality
-
----
-
-### [requirements.txt](requirements.txt) - Python Dependencies
-**Required packages for the server.**
-
-**Dependencies:**
-- `mcp` - MCP SDK
-- `httpx` - Async HTTP client
-- `pydantic` - Data validation
-
----
-
-### [github_mcp_evaluation.xml](github_mcp_evaluation.xml) - Test Scenarios
-**10 evaluation questions for testing the server.**
-
-**Purpose:**
-- Validate functionality
-- Test edge cases
-- Ensure quality
-- Provide examples
-
----
-
-## 📋 Quick Reference by Task
-
-### I want to...
-
-#### ...get started quickly
-→ Read [QUICKSTART.md](QUICKSTART.md)
-
-#### ...understand what the server can do
-→ Read [FEATURES.md](FEATURES.md)
-
-#### ...configure authentication
-→ Read [CONFIGURATION.md](CONFIGURATION.md) → Authentication section
-
-#### ...learn about a specific tool
-→ Read [README.md](README.md) → Tool Reference section
-
-#### ...troubleshoot an issue
-→ Read [QUICKSTART.md](QUICKSTART.md) → Troubleshooting section
-
-#### ...understand the architecture
-→ Read [ARCHITECTURE.md](ARCHITECTURE.md)
-
-#### ...see example queries
-→ Read [FEATURES.md](FEATURES.md) → Advanced Usage Scenarios
-
-#### ...extend the server
-→ Read [ARCHITECTURE.md](ARCHITECTURE.md) → Extension Points
-
-#### ...check code quality
-→ Read [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) → Quality Metrics
-
-#### ...deploy to production
-→ Read [README.md](README.md) → Security Best Practices
-
----
-
-## 🎯 Documentation by User Type
-
-### For End Users (Claude Desktop)
-1. [QUICKSTART.md](QUICKSTART.md) - Get set up
-2. [FEATURES.md](FEATURES.md) - Learn what you can do
-3. [README.md](README.md) - Reference for specific tools
+**Using the Tools:**
+- [README.md](../README.md) - Complete API reference
+- [Feature Examples](FEATURES.md) - Real-world use cases
+- [Project Summary](PROJECT_SUMMARY.md) - Capabilities overview
 
 ### For Developers
-1. [QUICKSTART.md](QUICKSTART.md) - Initial setup
-2. [ARCHITECTURE.md](ARCHITECTURE.md) - Understand design
-3. [github_mcp.py](github_mcp.py) - Study implementation
-4. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Design decisions
 
-### For System Administrators
-1. [CONFIGURATION.md](CONFIGURATION.md) - Setup options
-2. [README.md](README.md) - Security section
-3. [ARCHITECTURE.md](ARCHITECTURE.md) - Performance section
+**Understanding the Code:**
+1. [Architecture Guide](ARCHITECTURE.md) - System design
+2. [Contributing Guide](../CONTRIBUTING.md) - Development workflow
+3. [Source Code](../github_mcp.py) - Main implementation
 
-### For Researchers/Analysts
-1. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Overview
-2. [ARCHITECTURE.md](ARCHITECTURE.md) - Technical details
-3. [FEATURES.md](FEATURES.md) - Capabilities
+**Building & Testing:**
+- [Requirements](../requirements.txt) - Dependencies
+- [Setup Script](../setup.py) - Package configuration
+- [Evaluation Tests](../examples/github_mcp_evaluation.xml) - Test scenarios
 
----
+### For Business Users
 
-## 📊 File Quick Stats
+**Licensing:**
+1. [Licensing Overview](../LICENSING.md) - Dual licensing explained
+2. [Commercial License](../LICENSE-COMMERCIAL) - Terms and pricing
+3. [Open Source License](../LICENSE) - AGPL v3 terms
 
-| File | Size | Purpose | Target Audience |
-|------|------|---------|----------------|
-| QUICKSTART.md | ~6.5KB | Getting started | Everyone |
-| README.md | ~11KB | Complete reference | End users |
-| CONFIGURATION.md | ~3.7KB | Setup guide | Admins |
-| FEATURES.md | ~14KB | Feature showcase | Users/Developers |
-| ARCHITECTURE.md | ~14KB | System design | Developers |
-| PROJECT_SUMMARY.md | ~8.7KB | Project overview | Everyone |
-| github_mcp.py | ~38KB | Server code | Developers |
-| requirements.txt | ~41B | Dependencies | Developers |
-| github_mcp_evaluation.xml | ~2.2KB | Test cases | Developers/QA |
-
-**Total Documentation:** ~70KB of comprehensive guides
+**Making a Decision:**
+- Which license do I need? → [LICENSING.md](../LICENSING.md)
+- Commercial pricing → [LICENSE-COMMERCIAL](../LICENSE-COMMERCIAL)
+- Support options → [LICENSING.md](../LICENSING.md)
 
 ---
 
-## 🔍 Search Guide
+## 🗺️ Document Relationships
 
-Looking for specific information? Here's where to find it:
-
-### Authentication & Security
-- Token setup: [QUICKSTART.md](QUICKSTART.md) Step 2
-- Security practices: [README.md](README.md) Security section
-- Token configuration: [CONFIGURATION.md](CONFIGURATION.md)
-
-### Tools & Features
-- Tool list: [README.md](README.md) Tool Reference
-- Examples: [FEATURES.md](FEATURES.md)
-- Advanced usage: [FEATURES.md](FEATURES.md) Advanced Scenarios
-
-### Setup & Configuration
-- Quick setup: [QUICKSTART.md](QUICKSTART.md)
-- Advanced config: [CONFIGURATION.md](CONFIGURATION.md)
-- Troubleshooting: [QUICKSTART.md](QUICKSTART.md) Troubleshooting
-
-### Technical Details
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- Code structure: [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)
-- Implementation: [github_mcp.py](github_mcp.py)
-
-### Performance & Limits
-- Rate limits: [README.md](README.md) Rate Limits section
-- Performance: [ARCHITECTURE.md](ARCHITECTURE.md) Performance section
-- Best practices: [README.md](README.md) Performance Tips
+```
+START_HERE.md (Welcome)
+    │
+    ├─→ QUICKSTART.md (5-min setup)
+    │       │
+    │       └─→ CONFIGURATION.md (Advanced setup)
+    │
+    ├─→ FEATURES.md (What you can build)
+    │       │
+    │       └─→ README.md (Full API reference)
+    │
+    ├─→ ARCHITECTURE.md (How it works)
+    │       │
+    │       └─→ CONTRIBUTING.md (How to help)
+    │
+    └─→ LICENSING.md (Legal & business)
+            │
+            ├─→ LICENSE (AGPL v3)
+            └─→ LICENSE-COMMERCIAL (Commercial terms)
+```
 
 ---
 
-## 🎓 Recommended Reading Order
+## 📊 Documentation Stats
 
-### For First-Time Users
-1. [QUICKSTART.md](QUICKSTART.md) - Set everything up
-2. [FEATURES.md](FEATURES.md) - See what's possible
-3. [README.md](README.md) - Deep dive into tools
-
-### For Developers Building Extensions
-1. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Understand the vision
-2. [ARCHITECTURE.md](ARCHITECTURE.md) - Learn the design
-3. [github_mcp.py](github_mcp.py) - Study the code
-4. [FEATURES.md](FEATURES.md) - See usage patterns
-
-### For System Administrators
-1. [QUICKSTART.md](QUICKSTART.md) - Basic setup
-2. [CONFIGURATION.md](CONFIGURATION.md) - Advanced options
-3. [README.md](README.md) - Security & performance
+- **Total Documents**: 11 files
+- **Total Size**: 70KB+
+- **Core Guides**: 6 files
+- **Examples**: 2 files
+- **Legal**: 3 files
+- **Coverage**: Complete
 
 ---
 
-## 💡 Tips for Learning
+## 🔍 Finding What You Need
 
-1. **Start Small**: Set up the server first with [QUICKSTART.md](QUICKSTART.md)
-2. **Try Examples**: Use the examples in [FEATURES.md](FEATURES.md)
-3. **Read As Needed**: Use this index to find specific information
-4. **Experiment**: Try different queries and tools
-5. **Reference Back**: Keep [README.md](README.md) handy for tool details
+### "I want to..."
 
----
+**...get started quickly**
+→ [Quick Start Guide](QUICKSTART.md)
 
-## 🆘 Common Questions
+**...understand all the tools**
+→ [Feature Showcase](FEATURES.md) or [README](../README.md)
 
-**Q: How do I get started?**
-A: Start with [QUICKSTART.md](QUICKSTART.md) - it takes 5 minutes!
+**...configure authentication**
+→ [Configuration Guide](CONFIGURATION.md)
 
-**Q: Do I need a GitHub token?**
-A: Optional but recommended. See [QUICKSTART.md](QUICKSTART.md) Step 2.
+**...see examples**
+→ [Feature Showcase](FEATURES.md)
 
-**Q: What can this server do?**
-A: Check [FEATURES.md](FEATURES.md) for a complete showcase.
+**...understand the architecture**
+→ [Architecture Guide](ARCHITECTURE.md)
 
-**Q: How do I troubleshoot issues?**
-A: See [QUICKSTART.md](QUICKSTART.md) Troubleshooting section.
+**...contribute code**
+→ [Contributing Guide](../CONTRIBUTING.md)
 
-**Q: Can I extend this server?**
-A: Yes! See [ARCHITECTURE.md](ARCHITECTURE.md) Extension Points.
+**...use commercially**
+→ [Licensing Guide](../LICENSING.md)
 
-**Q: Is this production-ready?**
-A: Yes! See [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) for quality metrics.
-
-**Q: How do rate limits work?**
-A: See [README.md](README.md) Rate Limits section.
-
-**Q: How secure is it?**
-A: See [README.md](README.md) Security Best Practices.
+**...get support**
+→ Email licensing@mcplabs.co.uk
 
 ---
 
-## 🎉 You're All Set!
+## 📝 Documentation Standards
 
-You now have access to:
-- ✅ Complete MCP server implementation
-- ✅ Comprehensive documentation (8 files)
-- ✅ Quick start guide
-- ✅ Architecture diagrams
-- ✅ Feature showcase
-- ✅ Configuration examples
-- ✅ Test scenarios
+All documentation follows these principles:
 
-**Happy exploring! 🚀**
+✅ **Clear** - Easy to understand  
+✅ **Comprehensive** - Covers all topics  
+✅ **Current** - Kept up to date  
+✅ **Consistent** - Same style throughout  
+✅ **Examples** - Real-world usage  
+✅ **Accessible** - For all skill levels  
 
 ---
 
-## 📞 Need More Help?
+## 🆘 Need Help?
 
-- Check the troubleshooting sections in [QUICKSTART.md](QUICKSTART.md)
-- Review examples in [FEATURES.md](FEATURES.md)
-- Study the architecture in [ARCHITECTURE.md](ARCHITECTURE.md)
-- Read the complete reference in [README.md](README.md)
+**Can't find what you're looking for?**
 
-**Everything you need is right here in these documents!** 📚
+1. Check the [README](../README.md) - Most comprehensive
+2. Browse [Feature Showcase](FEATURES.md) - Lots of examples
+3. Read [Quick Start](QUICKSTART.md) - Step-by-step setup
+4. Open an [Issue](https://github.com/crypto-ninja/github-mcp-server/issues) - We'll help!
+
+**Business inquiries:**
+- Email: licensing@mcplabs.co.uk
+- See: [Licensing Guide](../LICENSING.md)
+
+---
+
+## 🔄 Documentation Updates
+
+**Last Updated**: October 2025  
+**Version**: 1.0.0  
+**Status**: Complete and current
+
+See [CHANGELOG.md](../CHANGELOG.md) for version history.
+
+---
+
+**Built with ❤️ by MCP Labs**
+
+Making AI integration seamless, one protocol at a time.
