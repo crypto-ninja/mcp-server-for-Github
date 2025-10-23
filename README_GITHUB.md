@@ -3,12 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-![GitHub stars](https://img.shields.io/github/stars/crypto-ninja/github-mcp-server)
-![GitHub issues](https://img.shields.io/github/issues/crypto-ninja/github-mcp-server)
-![GitHub last commit](https://img.shields.io/github/last-commit/crypto-ninja/github-mcp-server)
-![GitHub forks](https://img.shields.io/github/forks/crypto-ninja/github-mcp-server)
-![GitHub contributors](https://img.shields.io/github/contributors/crypto-ninja/github-mcp-server)
-![GitHub release](https://img.shields.io/github/v/release/crypto-ninja/github-mcp-server)
 
 > A comprehensive, production-ready Model Context Protocol (MCP) server that enables AI assistants to seamlessly interact with GitHub repositories, issues, pull requests, and more.
 
