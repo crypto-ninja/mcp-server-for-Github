@@ -1,0 +1,48 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2025 MCP Labs
+GitHub: https://github.com/crypto-ninja/github-mcp-server
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+ADDITIONAL TERMS:
+
+This software is available under a dual licensing model:
+
+1. AGPL v3 License (this file) - For open source projects and personal use
+2. Commercial License - For commercial/proprietary use
+
+For commercial licensing inquiries, please contact:
+Email: licensing@mcplabs.co.uk
+Website: https://mcplabs.co.uk (coming soon)
+GitHub: https://github.com/crypto-ninja/github-mcp-server/issues
+
+---
+
+The complete text of the GNU Affero General Public License v3 can be found at:
+https://www.gnu.org/licenses/agpl-3.0.html
+
+Key requirements of AGPL v3:
+- Source code must be made available to users
+- Modifications must be released under AGPL v3
+- Network use is considered distribution (must share code)
+- Commercial use is allowed IF source code is shared
+
+For proprietary/commercial use WITHOUT sharing source code,
+a commercial license is required.
+
+Contact licensing@mcplabs.co.uk for commercial licensing options.
