@@ -38,6 +38,7 @@ Features:
 - Repository management and exploration
 - Issue creation, search, and management
 - Pull request operations
+- GitHub Actions workflow monitoring
 - File content retrieval
 - User and organization information
 - Search across repositories, code, and users
@@ -81,6 +82,25 @@ class SortOrder(str, Enum):
     """Sort order for results."""
     ASC = "asc"
     DESC = "desc"
+
+class WorkflowRunStatus(str, Enum):
+    """GitHub workflow run status."""
+    QUEUED = "queued"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    WAITING = "waiting"
+    REQUESTED = "requested"
+    PENDING = "pending"
+
+class WorkflowRunConclusion(str, Enum):
+    """GitHub workflow run conclusion."""
+    SUCCESS = "success"
+    FAILURE = "failure"
+    NEUTRAL = "neutral"
+    CANCELLED = "cancelled"
+    SKIPPED = "skipped"
+    TIMED_OUT = "timed_out"
+    ACTION_REQUIRED = "action_required"
 
 # Shared Utilities
 async def _make_github_request(
@@ -308,6 +328,37 @@ class ListRepoContentsInput(BaseModel):
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     path: Optional[str] = Field(default="", description="Directory path (empty for root directory)")
     ref: Optional[str] = Field(default=None, description="Branch, tag, or commit")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListWorkflowsInput(BaseModel):
+    """Input model for listing GitHub Actions workflows."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetWorkflowRunsInput(BaseModel):
+    """Input model for getting GitHub Actions workflow runs."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    workflow_id: Optional[str] = Field(default=None, description="Workflow ID or name (optional - gets all workflows if not specified)")
+    status: Optional[WorkflowRunStatus] = Field(default=None, description="Filter by run status")
+    conclusion: Optional[WorkflowRunConclusion] = Field(default=None, description="Filter by run conclusion")
+    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    page: Optional[int] = Field(default=1, description="Page number", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
@@ -1034,6 +1085,191 @@ Use `github_get_file_content` to retrieve the file content.
                 markdown += f"- `{item['name']}` ({size_str})\n"
         
         return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_list_workflows",
+    annotations={
+        "title": "List GitHub Actions Workflows",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_workflows(params: ListWorkflowsInput) -> str:
+    """
+    List GitHub Actions workflows for a repository.
+    
+    Retrieves all workflows configured in a repository, including their status,
+    trigger events, and basic metadata. Essential for CI/CD monitoring.
+    
+    Args:
+        params (ListWorkflowsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of workflows with their configuration and status
+    
+    Examples:
+        - Use when: "Show me all GitHub Actions workflows"
+        - Use when: "What CI/CD workflows are configured?"
+        - Use when: "List the workflows in microsoft/vscode"
+    
+    Error Handling:
+        - Returns error if repository not found
+        - Handles private repository access requirements
+        - Provides clear status for each workflow
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/workflows",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        # Markdown format
+        markdown = f"# GitHub Actions Workflows for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Workflows:** {data['total_count']}\n\n"
+        
+        if not data['workflows']:
+            markdown += "No workflows found in this repository.\n"
+        else:
+            for workflow in data['workflows']:
+                markdown += f"## {workflow['name']}\n"
+                markdown += f"- **ID:** {workflow['id']}\n"
+                markdown += f"- **State:** {workflow['state']}\n"
+                markdown += f"- **Created:** {_format_timestamp(workflow['created_at'])}\n"
+                markdown += f"- **Updated:** {_format_timestamp(workflow['updated_at'])}\n"
+                markdown += f"- **Path:** `{workflow['path']}`\n"
+                markdown += f"- **URL:** {workflow['html_url']}\n\n"
+                
+                if workflow.get('badge_url'):
+                    markdown += f"- **Badge:** ![Workflow Status]({workflow['badge_url']})\n\n"
+                
+                markdown += "---\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_get_workflow_runs",
+    annotations={
+        "title": "Get GitHub Actions Workflow Runs",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
+    """
+    Get GitHub Actions workflow run history and status.
+    
+    Retrieves recent workflow runs with detailed status, conclusions, and timing.
+    Supports filtering by workflow, status, and conclusion. Critical for CI/CD monitoring.
+    
+    Args:
+        params (GetWorkflowRunsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - workflow_id (Optional[str]): Specific workflow ID or name
+            - status (Optional[WorkflowRunStatus]): Filter by run status
+            - conclusion (Optional[WorkflowRunConclusion]): Filter by conclusion
+            - limit (int): Maximum results (1-100, default 20)
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of workflow runs with status, timing, and results
+    
+    Examples:
+        - Use when: "Show me recent workflow runs"
+        - Use when: "Check if my deployment workflow passed"
+        - Use when: "Show me failed test runs from last week"
+        - Use when: "Get runs for the 'CI' workflow"
+    
+    Error Handling:
+        - Returns error if repository not accessible
+        - Handles workflow not found scenarios
+        - Provides clear status indicators for each run
+    """
+    try:
+        params_dict = {
+            "per_page": params.limit,
+            "page": params.page
+        }
+        
+        if params.status:
+            params_dict["status"] = params.status.value
+        if params.conclusion:
+            params_dict["conclusion"] = params.conclusion.value
+        
+        # Build endpoint
+        if params.workflow_id:
+            endpoint = f"repos/{params.owner}/{params.repo}/actions/workflows/{params.workflow_id}/runs"
+        else:
+            endpoint = f"repos/{params.owner}/{params.repo}/actions/runs"
+        
+        data = await _make_github_request(
+            endpoint,
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        # Markdown format
+        workflow_name = params.workflow_id or "All Workflows"
+        markdown = f"# Workflow Runs for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Workflow:** {workflow_name}\n"
+        markdown += f"**Total Runs:** {data['total_count']:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['workflow_runs'])} runs\n\n"
+        
+        if not data['workflow_runs']:
+            markdown += "No workflow runs found matching your criteria.\n"
+        else:
+            for run in data['workflow_runs']:
+                # Status emoji
+                status_emoji = "🔄" if run['status'] == "in_progress" else "✅" if run['conclusion'] == "success" else "❌" if run['conclusion'] == "failure" else "⏸️" if run['status'] == "queued" else "⚠️"
+                
+                markdown += f"## {status_emoji} Run #{run['run_number']}: {run['name']}\n"
+                markdown += f"- **Status:** {run['status']}\n"
+                markdown += f"- **Conclusion:** {run['conclusion'] or 'N/A'}\n"
+                markdown += f"- **Triggered By:** {run['triggering_actor']['login']}\n"
+                markdown += f"- **Branch:** `{run['head_branch']}`\n"
+                markdown += f"- **Commit:** {run['head_sha'][:8]}\n"
+                markdown += f"- **Created:** {_format_timestamp(run['created_at'])}\n"
+                markdown += f"- **Updated:** {_format_timestamp(run['updated_at'])}\n"
+                
+                if run.get('run_started_at'):
+                    markdown += f"- **Started:** {_format_timestamp(run['run_started_at'])}\n"
+                
+                if run.get('jobs_url'):
+                    markdown += f"- **Jobs:** {run['jobs_url']}\n"
+                
+                markdown += f"- **URL:** {run['html_url']}\n\n"
+                
+                # Show workflow info
+                if run.get('workflow_id'):
+                    markdown += f"- **Workflow ID:** {run['workflow_id']}\n"
+                
+                markdown += "---\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
         
     except Exception as e:
         return _handle_api_error(e)
