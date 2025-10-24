@@ -39,9 +39,9 @@ Features:
 - Issue creation, search, and management
 - Pull request operations (list, create, detailed view)
 - GitHub Actions workflow monitoring
+- Advanced search (code and issues across GitHub)
 - File content retrieval
 - User and organization information
-- Search across repositories, code, and users
 """
 
 from typing import Optional, List, Dict, Any
@@ -408,6 +408,38 @@ class GetPullRequestDetailsInput(BaseModel):
     include_reviews: Optional[bool] = Field(default=True, description="Include review information")
     include_commits: Optional[bool] = Field(default=True, description="Include commit information")
     include_files: Optional[bool] = Field(default=False, description="Include changed files (can be large)")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class SearchCodeInput(BaseModel):
+    """Input model for searching code across GitHub."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    query: str = Field(..., description="Code search query (e.g., 'TODO language:python', 'function authenticate')", min_length=1, max_length=256)
+    sort: Optional[str] = Field(default=None, description="Sort field: 'indexed' (default)")
+    order: Optional[SortOrder] = Field(default=SortOrder.DESC, description="Sort order: 'asc' or 'desc'")
+    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class SearchIssuesInput(BaseModel):
+    """Input model for searching issues across GitHub."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    query: str = Field(..., description="Issue search query (e.g., 'bug language:python', 'security in:title')", min_length=1, max_length=256)
+    sort: Optional[str] = Field(default=None, description="Sort field: 'created', 'updated', 'comments'")
+    order: Optional[SortOrder] = Field(default=SortOrder.DESC, description="Sort order: 'asc' or 'desc'")
+    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    page: Optional[int] = Field(default=1, description="Page number", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
@@ -1590,6 +1622,249 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                 markdown += "## Changed Files\n\nError fetching files.\n\n"
         
         return _truncate_response(markdown)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_search_code",
+    annotations={
+        "title": "Search Code Across GitHub",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_search_code(params: SearchCodeInput) -> str:
+    """
+    Search for code snippets across GitHub repositories.
+    
+    Powerful code search with language filtering, repository targeting, and
+    advanced qualifiers. Essential for finding patterns, TODOs, and specific functions.
+    
+    Args:
+        params (SearchCodeInput): Validated input parameters containing:
+            - query (str): Code search query with optional qualifiers
+            - sort (Optional[str]): Sort by 'indexed' (default)
+            - order (SortOrder): Sort order ('asc' or 'desc')
+            - limit (int): Maximum results (1-100, default 20)
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Code search results with file locations and context
+    
+    Examples:
+        - Use when: "Find all TODOs in Python repositories"
+          query="TODO language:python"
+        - Use when: "Search for authentication functions"
+          query="function authenticate"
+        - Use when: "Find security vulnerabilities"
+          query="password language:javascript"
+        - Use when: "Find API endpoints in specific repo"
+          query="@RequestMapping repo:spring-projects/spring-framework"
+    
+    Query Qualifiers:
+        - language:python - Code in Python
+        - repo:owner/repo - Search specific repository
+        - user:username - Search user's repositories
+        - org:organization - Search organization's repositories
+        - path:src/main - Search specific path
+        - extension:js - Files with specific extension
+        - size:>1000 - Files larger than 1000 bytes
+    
+    Error Handling:
+        - Returns error if query syntax is invalid
+        - Handles rate limiting for search API
+        - Provides clear guidance for complex queries
+    """
+    try:
+        params_dict = {
+            "q": params.query,
+            "per_page": params.limit,
+            "page": params.page,
+            "order": params.order.value
+        }
+        
+        if params.sort:
+            params_dict["sort"] = params.sort
+        
+        data = await _make_github_request(
+            "search/code",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        # Markdown format
+        markdown = f"# Code Search Results\n\n"
+        markdown += f"**Query:** `{params.query}`\n"
+        markdown += f"**Total Results:** {data['total_count']:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} files\n\n"
+        
+        if not data['items']:
+            markdown += "No code found matching your query.\n"
+        else:
+            for item in data['items']:
+                # Extract repository info
+                repo_name = item['repository']['full_name']
+                file_path = item['path']
+                file_name = file_path.split('/')[-1]
+                
+                markdown += f"## 📄 {file_name}\n"
+                markdown += f"**Repository:** [{repo_name}]({item['repository']['html_url']})\n"
+                markdown += f"**Path:** `{file_path}`\n"
+                markdown += f"**Language:** {item.get('language', 'Unknown')}\n"
+                markdown += f"**Size:** {item['size']:,} bytes\n"
+                markdown += f"**URL:** [{item['html_url']}]({item['html_url']})\n\n"
+                
+                # Show code snippets if available
+                if 'text_matches' in item and item['text_matches']:
+                    markdown += "**Code Snippets:**\n"
+                    for match in item['text_matches'][:3]:  # Limit to first 3 matches
+                        if match.get('fragment'):
+                            # Clean up the fragment
+                            fragment = match['fragment'].replace('\n', ' ').strip()
+                            if len(fragment) > 200:
+                                fragment = fragment[:200] + "..."
+                            markdown += f"```\n{fragment}\n```\n"
+                    markdown += "\n"
+                
+                markdown += "---\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_search_issues",
+    annotations={
+        "title": "Search Issues Across GitHub",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_search_issues(params: SearchIssuesInput) -> str:
+    """
+    Search for issues across GitHub repositories with advanced filtering.
+    
+    Powerful issue search with state, label, author, and repository filtering.
+    Essential for finding specific problems, feature requests, and security issues.
+    
+    Args:
+        params (SearchIssuesInput): Validated input parameters containing:
+            - query (str): Issue search query with optional qualifiers
+            - sort (Optional[str]): Sort by 'created', 'updated', 'comments'
+            - order (SortOrder): Sort order ('asc' or 'desc')
+            - limit (int): Maximum results (1-100, default 20)
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Issue search results with details and pagination info
+    
+    Examples:
+        - Use when: "Find security issues in Python projects"
+          query="security language:python"
+        - Use when: "Search for bug reports"
+          query="bug label:bug"
+        - Use when: "Find feature requests in specific repo"
+          query="feature request repo:microsoft/vscode"
+        - Use when: "Find issues by specific user"
+          query="author:torvalds"
+    
+    Query Qualifiers:
+        - state:open - Open issues only
+        - state:closed - Closed issues only
+        - label:bug - Issues with specific label
+        - author:username - Issues by specific author
+        - assignee:username - Issues assigned to user
+        - repo:owner/repo - Issues in specific repository
+        - user:username - Issues in user's repositories
+        - org:organization - Issues in organization's repositories
+        - language:python - Issues in Python repositories
+        - created:>2023-01-01 - Issues created after date
+        - updated:>2023-01-01 - Issues updated after date
+        - comments:>10 - Issues with more than 10 comments
+        - in:title - Search in issue titles only
+        - in:body - Search in issue bodies only
+    
+    Error Handling:
+        - Returns error if query syntax is invalid
+        - Handles rate limiting for search API
+        - Provides clear guidance for complex queries
+    """
+    try:
+        params_dict = {
+            "q": params.query,
+            "per_page": params.limit,
+            "page": params.page,
+            "order": params.order.value
+        }
+        
+        if params.sort:
+            params_dict["sort"] = params.sort
+        
+        data = await _make_github_request(
+            "search/issues",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        # Markdown format
+        markdown = f"# Issue Search Results\n\n"
+        markdown += f"**Query:** `{params.query}`\n"
+        markdown += f"**Total Results:** {data['total_count']:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} issues\n\n"
+        
+        if not data['items']:
+            markdown += "No issues found matching your query.\n"
+        else:
+            for issue in data['items']:
+                # Status emoji
+                status_emoji = "🟢" if issue['state'] == "open" else "🔴"
+                
+                markdown += f"## {status_emoji} #{issue['number']}: {issue['title']}\n"
+                markdown += f"**Repository:** [{issue['repository_url'].split('/')[-2]}/{issue['repository_url'].split('/')[-1]}]({issue['html_url']})\n"
+                markdown += f"**State:** {issue['state']}\n"
+                markdown += f"**Author:** @{issue['user']['login']}\n"
+                markdown += f"**Created:** {_format_timestamp(issue['created_at'])}\n"
+                markdown += f"**Updated:** {_format_timestamp(issue['updated_at'])}\n"
+                
+                if issue.get('closed_at'):
+                    markdown += f"**Closed:** {_format_timestamp(issue['closed_at'])}\n"
+                
+                if issue.get('labels'):
+                    labels = ', '.join([f"`{l['name']}`" for l in issue['labels'][:5]])
+                    markdown += f"**Labels:** {labels}\n"
+                
+                if issue.get('assignees'):
+                    assignees = ', '.join([f"@{a['login']}" for a in issue['assignees']])
+                    markdown += f"**Assignees:** {assignees}\n"
+                
+                markdown += f"**Comments:** {issue['comments']}\n"
+                markdown += f"**URL:** {issue['html_url']}\n\n"
+                
+                if issue.get('body'):
+                    body_preview = issue['body'][:300] + "..." if len(issue['body']) > 300 else issue['body']
+                    markdown += f"**Description:** {body_preview}\n\n"
+                
+                markdown += "---\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
         
     except Exception as e:
         return _handle_api_error(e)
