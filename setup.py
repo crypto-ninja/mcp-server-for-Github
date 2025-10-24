@@ -13,12 +13,12 @@ long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists
 setup(
     name="github-mcp-server",
     version="1.0.0",
-    author="GitHub MCP Server Contributors",
-    author_email="",
+    author="MCP Labs",
+    author_email="licensing@mcplabs.co.uk",
     description="A comprehensive Model Context Protocol server for GitHub integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/github-mcp-server",
+    url="https://github.com/crypto-ninja/github-mcp-server",
     py_modules=["github_mcp"],
     python_requires=">=3.10",
     install_requires=[
@@ -30,7 +30,7 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -39,9 +39,11 @@ setup(
     ],
     keywords="mcp model-context-protocol github api ai assistant claude",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/github-mcp-server/issues",
-        "Source": "https://github.com/yourusername/github-mcp-server",
-        "Documentation": "https://github.com/yourusername/github-mcp-server/blob/main/README.md",
+        "Bug Reports": "https://github.com/crypto-ninja/github-mcp-server/issues",
+        "Source": "https://github.com/crypto-ninja/github-mcp-server",
+        "Documentation": "https://github.com/crypto-ninja/github-mcp-server/blob/main/README.md",
+        "Website": "https://mcplabs.co.uk",
+        "Licensing": "https://github.com/crypto-ninja/github-mcp-server/blob/main/LICENSING.md",
     },
     entry_points={
         "console_scripts": [

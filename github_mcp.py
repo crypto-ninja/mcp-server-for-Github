@@ -2,6 +2,37 @@
 """
 GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
 
+Copyright (C) 2025 MCP Labs
+https://github.com/crypto-ninja/github-mcp-server
+
+This software is available under a dual licensing model:
+
+1. AGPL v3 License - For open source projects and personal use
+   See LICENSE file for full terms
+   https://www.gnu.org/licenses/agpl-3.0.html
+
+2. Commercial License - For commercial/proprietary use
+   See LICENSE-COMMERCIAL file for full terms
+   Contact: licensing@mcplabs.co.uk
+
+Key AGPL v3 Requirements:
+- Source code must be made available to users
+- Modifications must be released under AGPL v3
+- Network use is considered distribution
+- Commercial use allowed IF source code is shared
+
+For proprietary/commercial use WITHOUT sharing source code,
+a commercial license is required.
+
+For licensing inquiries:
+Email: licensing@mcplabs.co.uk
+Website: https://mcplabs.co.uk
+GitHub: https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry
+
+---
+
+GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
+
 This server provides tools to interact with GitHub repositories, issues, pull requests,
 and more. It enables AI assistants to seamlessly integrate with GitHub workflows.
 
@@ -622,7 +653,7 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
         markdown = f"# Repository Search Results\n\n"
         markdown += f"**Query:** {params.query}\n"
         markdown += f"**Total Results:** {data['total_count']:,}\n"
-        markdown += f"**Showing:** {len(data['items'])} repositories (Page {params.page})\n\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} repositories\n\n"
         
         if not data['items']:
             markdown += "No repositories found matching your query.\n"
@@ -630,23 +661,19 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
             for repo in data['items']:
                 markdown += f"## {repo['full_name']}\n"
                 markdown += f"{repo['description'] or 'No description'}\n\n"
-                markdown += f"- ⭐ Stars: {repo['stargazers_count']:,}\n"
-                markdown += f"- 🍴 Forks: {repo['forks_count']:,}\n"
-                markdown += f"- Language: {repo['language'] or 'Not specified'}\n"
-                markdown += f"- Updated: {_format_timestamp(repo['updated_at'])}\n"
-                markdown += f"- URL: {repo['html_url']}\n\n"
+                markdown += f"- ⭐ **Stars:** {repo['stargazers_count']:,}\n"
+                markdown += f"- 🍴 **Forks:** {repo['forks_count']:,}\n"
+                markdown += f"- **Language:** {repo['language'] or 'Not specified'}\n"
+                markdown += f"- **Updated:** {_format_timestamp(repo['updated_at'])}\n"
                 
                 if repo.get('topics'):
                     topics = ', '.join([f"`{t}`" for t in repo['topics'][:5]])
-                    markdown += f"- Topics: {topics}\n\n"
+                    markdown += f"- **Topics:** {topics}\n"
                 
+                markdown += f"- **URL:** {repo['html_url']}\n\n"
                 markdown += "---\n\n"
         
-        has_more = data['total_count'] > (params.page * params.limit)
-        if has_more:
-            markdown += f"\n*More results available. Use page={params.page + 1} to see next page.*\n"
-        
-        return _truncate_response(markdown, len(data['items']))
+        return _truncate_response(markdown, data['total_count'])
         
     except Exception as e:
         return _handle_api_error(e)
@@ -690,16 +717,22 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
         - Handles binary files appropriately
     """
     try:
-        endpoint = f"repos/{params.owner}/{params.repo}/contents/{params.path}"
         params_dict = {}
         if params.ref:
             params_dict["ref"] = params.ref
         
         data = await _make_github_request(
-            endpoint,
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
             token=params.token,
-            params=params_dict if params_dict else None
+            params=params_dict
         )
+        
+        # Handle file content
+        if data.get('encoding') == 'base64':
+            import base64
+            content = base64.b64decode(data['content']).decode('utf-8', errors='replace')
+        else:
+            content = data.get('content', '')
         
         result = f"""# File: {data['name']}
 
@@ -712,18 +745,12 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
 
 ---
 
+**Content:**
+
+```
+{content}
+```
 """
-        
-        if data['type'] == 'file' and data.get('content'):
-            import base64
-            try:
-                content = base64.b64decode(data['content']).decode('utf-8')
-                result += f"**Content:**\n\n```\n{content}\n```\n"
-            except:
-                result += "*Binary file - content cannot be displayed as text.*\n"
-                result += f"Download URL: {data['download_url']}\n"
-        else:
-            result += f"*File is a directory or content unavailable.*\n"
         
         return _truncate_response(result)
         
@@ -800,26 +827,21 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
                 markdown += f"- **Author:** @{pr['user']['login']}\n"
                 markdown += f"- **Created:** {_format_timestamp(pr['created_at'])}\n"
                 markdown += f"- **Updated:** {_format_timestamp(pr['updated_at'])}\n"
-                markdown += f"- **Branch:** {pr['head']['ref']} → {pr['base']['ref']}\n"
+                markdown += f"- **Base:** `{pr['base']['ref']}` ← **Head:** `{pr['head']['ref']}`\n"
                 
                 if pr.get('draft'):
                     markdown += f"- **Draft:** Yes\n"
                 
                 if pr.get('merged'):
-                    markdown += f"- **Merged:** {_format_timestamp(pr['merged_at'])}\n"
-                elif pr['state'] == 'closed':
-                    markdown += f"- **Closed:** {_format_timestamp(pr['closed_at'])}\n"
+                    markdown += f"- **Merged:** Yes\n"
+                    if pr.get('merged_at'):
+                        markdown += f"- **Merged At:** {_format_timestamp(pr['merged_at'])}\n"
                 
-                if pr.get('labels'):
-                    labels = ', '.join([f"`{l['name']}`" for l in pr['labels']])
-                    markdown += f"- **Labels:** {labels}\n"
-                
-                markdown += f"- **Comments:** {pr['comments']}\n"
                 markdown += f"- **URL:** {pr['html_url']}\n\n"
                 
                 if pr.get('body'):
                     body_preview = pr['body'][:200] + "..." if len(pr['body']) > 200 else pr['body']
-                    markdown += f"**Description:** {body_preview}\n\n"
+                    markdown += f"**Preview:** {body_preview}\n\n"
                 
                 markdown += "---\n\n"
         
@@ -875,35 +897,40 @@ async def github_get_user_info(params: GetUserInfoInput) -> str:
             return _truncate_response(result)
         
         # Markdown format
-        markdown = f"# {data['name'] or data['login']}\n"
-        markdown += f"**@{data['login']}** ({data['type']})\n\n"
+        markdown = f"# {data['name'] or data['login']}\n\n"
         
         if data.get('bio'):
-            markdown += f"*{data['bio']}*\n\n"
+            markdown += f"**Bio:** {data['bio']}\n\n"
         
-        markdown += "## Profile\n"
+        markdown += f"**Username:** @{data['login']}\n"
+        markdown += f"**Type:** {data['type']}\n"
+        
         if data.get('company'):
-            markdown += f"- **Company:** {data['company']}\n"
+            markdown += f"**Company:** {data['company']}\n"
+        
         if data.get('location'):
-            markdown += f"- **Location:** {data['location']}\n"
+            markdown += f"**Location:** {data['location']}\n"
+        
         if data.get('email'):
-            markdown += f"- **Email:** {data['email']}\n"
+            markdown += f"**Email:** {data['email']}\n"
+        
         if data.get('blog'):
-            markdown += f"- **Website:** {data['blog']}\n"
+            markdown += f"**Website:** {data['blog']}\n"
+        
         if data.get('twitter_username'):
-            markdown += f"- **Twitter:** @{data['twitter_username']}\n"
+            markdown += f"**Twitter:** @{data['twitter_username']}\n"
         
         markdown += f"\n## Statistics\n"
-        markdown += f"- Public Repos: {data['public_repos']}\n"
-        markdown += f"- Public Gists: {data['public_gists']}\n"
-        markdown += f"- Followers: {data['followers']:,}\n"
-        markdown += f"- Following: {data['following']:,}\n"
+        markdown += f"- 📦 **Public Repos:** {data['public_repos']:,}\n"
+        markdown += f"- 👥 **Followers:** {data['followers']:,}\n"
+        markdown += f"- 👤 **Following:** {data['following']:,}\n"
         
-        markdown += f"\n## Activity\n"
-        markdown += f"- **Account Created:** {_format_timestamp(data['created_at'])}\n"
-        markdown += f"- **Last Updated:** {_format_timestamp(data['updated_at'])}\n"
+        if data.get('public_gists') is not None:
+            markdown += f"- 📝 **Public Gists:** {data['public_gists']:,}\n"
         
-        markdown += f"\n**Profile URL:** {data['html_url']}\n"
+        markdown += f"\n**Joined:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"**Last Updated:** {_format_timestamp(data['updated_at'])}\n"
+        markdown += f"**Profile URL:** {data['html_url']}\n"
         
         return _truncate_response(markdown)
         
@@ -950,62 +977,69 @@ async def github_list_repo_contents(params: ListRepoContentsInput) -> str:
         - Indicates if path points to a file vs directory
     """
     try:
-        endpoint = f"repos/{params.owner}/{params.repo}/contents/{params.path}"
         params_dict = {}
         if params.ref:
             params_dict["ref"] = params.ref
         
+        path = params.path.strip('/') if params.path else ''
+        endpoint = f"repos/{params.owner}/{params.repo}/contents/{path}"
+        
         data = await _make_github_request(
             endpoint,
             token=params.token,
-            params=params_dict if params_dict else None
+            params=params_dict
         )
-        
-        # Handle single file response
-        if isinstance(data, dict):
-            return await github_get_file_content(GetFileContentInput(
-                owner=params.owner,
-                repo=params.repo,
-                path=params.path,
-                ref=params.ref,
-                token=params.token
-            ))
         
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            return _truncate_response(result, len(data) if isinstance(data, list) else 1)
         
         # Markdown format
-        path_display = params.path or "root"
-        markdown = f"# Contents of /{path_display}\n"
+        if isinstance(data, dict):
+            # Single file returned
+            return f"""# Single File
+
+This path points to a file, not a directory.
+
+**Name:** {data['name']}
+**Path:** {data['path']}
+**Size:** {data['size']:,} bytes
+**Type:** {data['type']}
+**URL:** {data['html_url']}
+
+Use `github_get_file_content` to retrieve the file content.
+"""
+        
+        # Directory listing
+        display_path = path or "(root)"
+        markdown = f"# Contents of /{display_path}\n\n"
         markdown += f"**Repository:** {params.owner}/{params.repo}\n"
         if params.ref:
-            markdown += f"**Ref:** {params.ref}\n"
-        markdown += f"\n**Items:** {len(data)}\n\n"
+            markdown += f"**Branch/Ref:** {params.ref}\n"
+        markdown += f"**Items:** {len(data)}\n\n"
         
-        # Group by type
-        dirs = [item for item in data if item['type'] == 'dir']
+        # Separate directories and files
+        directories = [item for item in data if item['type'] == 'dir']
         files = [item for item in data if item['type'] == 'file']
         
-        if dirs:
+        if directories:
             markdown += "## 📁 Directories\n"
-            for item in sorted(dirs, key=lambda x: x['name']):
+            for item in directories:
                 markdown += f"- `{item['name']}/`\n"
             markdown += "\n"
         
         if files:
             markdown += "## 📄 Files\n"
-            for item in sorted(files, key=lambda x: x['name']):
+            for item in files:
                 size_kb = item['size'] / 1024
                 size_str = f"{size_kb:.1f} KB" if size_kb >= 1 else f"{item['size']} bytes"
                 markdown += f"- `{item['name']}` ({size_str})\n"
-            markdown += "\n"
         
         return _truncate_response(markdown, len(data))
         
     except Exception as e:
         return _handle_api_error(e)
 
-# Server execution
+# Entry point
 if __name__ == "__main__":
     mcp.run()
