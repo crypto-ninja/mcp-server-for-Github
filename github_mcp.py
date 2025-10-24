@@ -1,34 +1,5 @@
 #!/usr/bin/env python3
 """
-
-GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
-
-Copyright (C) 2025 crypto-ninja
-https://github.com/crypto-ninja/github-mcp-server
-
-This software is available under a dual licensing model:
-
-1. AGPL v3 License - For open source projects and personal use
-   See LICENSE-AGPL file for full terms
-   https://www.gnu.org/licenses/agpl-3.0.html
-
-2. Commercial License - For commercial/proprietary use
-   See LICENSE-COMMERCIAL file for full terms
-   Contact: https://github.com/crypto-ninja/github-mcp-server/issues
-
-Key AGPL v3 Requirements:
-- Source code must be made available to users
-- Modifications must be released under AGPL v3
-- Network use is considered distribution
-- Commercial use allowed IF source code is shared
-
-For proprietary/commercial use WITHOUT sharing source code,
-a commercial license is required.
-
-For licensing inquiries:
-https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry
-"""
-
 GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
 
 Copyright (C) 2025 MCP Labs
@@ -59,8 +30,6 @@ Website: https://mcplabs.co.uk
 GitHub: https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry
 
 ---
-
-GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
 
 This server provides tools to interact with GitHub repositories, issues, pull requests,
 and more. It enables AI assistants to seamlessly integrate with GitHub workflows.
