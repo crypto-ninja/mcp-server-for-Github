@@ -1,38 +1,73 @@
 # GitHub MCP Server
 
-A comprehensive Model Context Protocol (MCP) server that enables AI assistants to seamlessly interact with GitHub repositories, issues, pull requests, and more.
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
+[![Tools](https://img.shields.io/badge/Tools-14-brightgreen.svg)](#-available-tools)
 
-## 🚀 Features
+> **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, and intelligent code search. Built for AI-powered development teams.
 
-### Repository Management
-- **Get Repository Info** - Fetch detailed metadata about any GitHub repository
-- **List Repository Contents** - Browse files and directories in a repository
-- **Get File Content** - Retrieve and display file contents from any branch or commit
+## ✨ What's New in Phase 1
 
-### Issue Management
-- **List Issues** - Browse repository issues with state filtering and pagination
-- **Create Issues** - Create new issues with labels and assignees
-- **Search Issues** - Find specific issues across repositories
+🎉 **Major Update:** We've expanded from 8 to **14 powerful tools**, adding:
 
-### Pull Requests
-- **List Pull Requests** - View open, closed, or all pull requests
-- **PR Details** - Get comprehensive information about pull request status and changes
+- **🔄 GitHub Actions Integration** - Monitor CI/CD workflows and runs
+- **🔀 Enhanced PR Management** - Create PRs with reviews and detailed analysis  
+- **🔍 Advanced Search** - Search code and issues across all of GitHub
 
-### Search & Discovery
-- **Search Repositories** - Find repositories with advanced filters (language, stars, topics)
-- **Search Code** - Locate code snippets across GitHub
-- **Search Users** - Find GitHub users and organizations
+[View Full Changelog](CHANGELOG.md)
 
-### User Information
-- **Get User Info** - Retrieve profile information for any GitHub user or organization
+---
 
-## 📋 Installation
+## 🚀 Features Overview
+
+### 📦 Repository Management (3 tools)
+Complete repository exploration and file access capabilities.
+
+- **Repository Info** - Comprehensive metadata, statistics, and configuration
+- **Browse Contents** - Navigate directory structures and file trees
+- **File Access** - Retrieve file contents from any branch or commit
+
+### 🐛 Issue Management (3 tools)
+Full issue lifecycle from creation to advanced search.
+
+- **List Issues** - Browse with state filtering and pagination
+- **Create Issues** - Open issues with labels and assignees
+- **🆕 Search Issues** - Advanced search across repositories with filters
+
+### 🔀 Pull Request Operations (3 tools)
+Complete PR workflow from creation to detailed analysis.
+
+- **List PRs** - View all pull requests with state filtering
+- **🆕 Create PRs** - Open pull requests with draft support
+- **🆕 PR Details** - Comprehensive analysis with reviews, commits, and files
+
+### ⚡ GitHub Actions (2 tools)
+Monitor and manage your CI/CD pipelines.
+
+- **🆕 List Workflows** - View all GitHub Actions workflows
+- **🆕 Workflow Runs** - Track execution status and results
+
+### 🔍 Search & Discovery (2 tools)
+Powerful search across GitHub's entire ecosystem.
+
+- **Search Repositories** - Find repos with advanced filters
+- **🆕 Search Code** - Locate code snippets across GitHub
+
+### 👤 User Information (1 tool)
+Profile and organization data retrieval.
+
+- **User Profiles** - Get detailed user and org information
+
+---
+
+## 📋 Quick Start
 
 ### Prerequisites
 - Python 3.10 or higher
-- `pip` or `uv` package manager
+- GitHub Personal Access Token (optional, but recommended)
 
-### Install Dependencies
+### Installation
 
 ```bash
 # Using pip
@@ -42,146 +77,80 @@ pip install mcp httpx pydantic --break-system-packages
 uv pip install mcp httpx pydantic
 ```
 
-## 🔧 Configuration
+### Configuration
 
-### GitHub Authentication
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
-For public repository access, no authentication is required. For private repositories or to increase rate limits, provide a GitHub Personal Access Token:
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["/path/to/github_mcp.py"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate a new token with appropriate scopes:
+### Authentication
+
+Generate a GitHub Personal Access Token:
+
+1. Go to [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
+2. Generate a new token with these scopes:
    - `repo` - Full control of private repositories
    - `read:user` - Read user profile data
    - `read:org` - Read organization data
-3. Use the token in tool calls via the `token` parameter
+   - `workflow` - Update GitHub Action workflows (for Actions tools)
+3. Use the token in your configuration
 
-### Running the Server
+---
 
-#### Stdio Transport (recommended for Claude Desktop)
+## 🛠️ Available Tools
 
-```bash
-python github_mcp.py
-```
+### Repository Tools
 
-#### With UV
-
-```bash
-uv run github_mcp.py
-```
-
-## 🛠️ Tool Reference
-
-### github_get_repo_info
-
-Retrieve comprehensive information about a repository.
+#### `github_get_repo_info`
+Retrieve comprehensive repository information including statistics, configuration, and metadata.
 
 **Parameters:**
-- `owner` (str, required) - Repository owner username or organization
-- `repo` (str, required) - Repository name
-- `token` (str, optional) - GitHub personal access token
-- `response_format` (str, optional) - Output format: "markdown" (default) or "json"
-
-**Example:**
 ```json
 {
   "owner": "facebook",
   "repo": "react",
+  "token": "ghp_optional",
   "response_format": "markdown"
 }
 ```
 
-### github_list_issues
+**Returns:** Stars, forks, issues, license, topics, creation date, and more.
 
-List issues from a repository with filtering options.
+---
+
+#### `github_list_repo_contents`
+Browse files and directories in a repository, with support for specific branches or commits.
 
 **Parameters:**
-- `owner` (str, required) - Repository owner
-- `repo` (str, required) - Repository name
-- `state` (str, optional) - Issue state: "open" (default), "closed", or "all"
-- `limit` (int, optional) - Maximum results per page (1-100, default 20)
-- `page` (int, optional) - Page number for pagination (default 1)
-- `token` (str, optional) - GitHub token
-- `response_format` (str, optional) - Output format
-
-**Example:**
 ```json
 {
   "owner": "microsoft",
   "repo": "vscode",
-  "state": "open",
-  "limit": 10
+  "path": "src",
+  "ref": "main"
 }
 ```
 
-### github_create_issue
+**Returns:** Directory listing with file sizes and types.
 
-Create a new issue in a repository.
+---
 
-**Parameters:**
-- `owner` (str, required) - Repository owner
-- `repo` (str, required) - Repository name
-- `title` (str, required) - Issue title
-- `body` (str, optional) - Issue description in Markdown format
-- `labels` (list[str], optional) - Label names to apply (max 20)
-- `assignees` (list[str], optional) - Usernames to assign (max 10)
-- `token` (str, required) - GitHub token with repo access
-
-**Example:**
-```json
-{
-  "owner": "myorg",
-  "repo": "myproject",
-  "title": "Bug: Application crashes on startup",
-  "body": "## Description\n\nThe application crashes immediately after launch.\n\n## Steps to Reproduce\n1. Start the app\n2. Wait 2 seconds\n3. Crash occurs",
-  "labels": ["bug", "priority-high"],
-  "assignees": ["developer123"],
-  "token": "ghp_your_token_here"
-}
-```
-
-### github_search_repositories
-
-Search for repositories with advanced filtering.
+#### `github_get_file_content`
+Retrieve the complete contents of any file in a repository.
 
 **Parameters:**
-- `query` (str, required) - Search query with optional qualifiers
-- `sort` (str, optional) - Sort field: "stars", "forks", "updated", "help-wanted-issues"
-- `order` (str, optional) - Sort order: "asc" or "desc" (default)
-- `limit` (int, optional) - Maximum results (1-100, default 20)
-- `page` (int, optional) - Page number
-- `token` (str, optional) - GitHub token
-- `response_format` (str, optional) - Output format
-
-**Query Qualifiers:**
-- `language:python` - Repositories in Python
-- `stars:>1000` - More than 1000 stars
-- `topics:machine-learning` - Tagged with topic
-- `created:>2023-01-01` - Created after date
-- `fork:false` - Exclude forks
-- `archived:false` - Exclude archived repos
-
-**Example:**
-```json
-{
-  "query": "machine learning language:python stars:>5000",
-  "sort": "stars",
-  "order": "desc",
-  "limit": 20
-}
-```
-
-### github_get_file_content
-
-Retrieve file content from a repository.
-
-**Parameters:**
-- `owner` (str, required) - Repository owner
-- `repo` (str, required) - Repository name
-- `path` (str, required) - File path in repository
-- `ref` (str, optional) - Branch, tag, or commit SHA (defaults to default branch)
-- `token` (str, optional) - GitHub token
-
-**Example:**
 ```json
 {
   "owner": "torvalds",
@@ -191,39 +160,273 @@ Retrieve file content from a repository.
 }
 ```
 
-### github_list_pull_requests
+**Returns:** File content with metadata (size, encoding, SHA).
 
-List pull requests from a repository.
+---
+
+### Issue Management
+
+#### `github_list_issues`
+List repository issues with flexible state filtering and pagination.
 
 **Parameters:**
-- `owner` (str, required) - Repository owner
-- `repo` (str, required) - Repository name
-- `state` (str, optional) - PR state: "open" (default), "closed", or "all"
-- `limit` (int, optional) - Maximum results (1-100, default 20)
-- `page` (int, optional) - Page number
-- `token` (str, optional) - GitHub token
-- `response_format` (str, optional) - Output format
-
-**Example:**
 ```json
 {
   "owner": "tensorflow",
   "repo": "tensorflow",
   "state": "open",
-  "limit": 15
+  "limit": 30,
+  "page": 1
 }
 ```
 
-### github_get_user_info
+**Returns:** Issue list with titles, labels, assignees, and status.
 
-Get information about a GitHub user or organization.
+---
+
+#### `github_create_issue`
+Create new issues with markdown descriptions, labels, and assignees.
 
 **Parameters:**
-- `username` (str, required) - GitHub username
-- `token` (str, optional) - GitHub token
-- `response_format` (str, optional) - Output format
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "title": "Bug: Application crashes on startup",
+  "body": "## Description\n\nDetailed bug report...",
+  "labels": ["bug", "priority-high"],
+  "assignees": ["developer123"],
+  "token": "ghp_required"
+}
+```
 
-**Example:**
+**Returns:** Created issue details with number and URL.
+
+---
+
+#### `github_search_issues` 🆕
+Advanced issue search across GitHub with powerful filtering options.
+
+**Parameters:**
+```json
+{
+  "query": "is:open label:bug language:python",
+  "sort": "created",
+  "order": "desc",
+  "limit": 50
+}
+```
+
+**Query Qualifiers:**
+- `is:open` / `is:closed` - Filter by state
+- `label:bug` - Filter by labels
+- `author:username` - Filter by author
+- `assignee:username` - Filter by assignee
+- `repo:owner/name` - Filter by repository
+- `created:>2024-01-01` - Filter by date
+
+**Returns:** Matching issues with full metadata.
+
+---
+
+### Pull Request Operations
+
+#### `github_list_pull_requests`
+List pull requests with state filtering and pagination support.
+
+**Parameters:**
+```json
+{
+  "owner": "facebook",
+  "repo": "react",
+  "state": "open",
+  "limit": 20
+}
+```
+
+**Returns:** PR list with titles, authors, branches, and status.
+
+---
+
+#### `github_create_pull_request` 🆕
+Create pull requests with full control over branches, reviewers, and settings.
+
+**Parameters:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "title": "Add new feature",
+  "head": "feature-branch",
+  "base": "main",
+  "body": "## Changes\n\n- Added feature X\n- Fixed bug Y",
+  "draft": false,
+  "maintainer_can_modify": true,
+  "token": "ghp_required"
+}
+```
+
+**Features:**
+- ✅ Draft PR support
+- ✅ Maintainer modification permissions
+- ✅ Markdown descriptions
+- ✅ Branch validation
+
+**Returns:** Created PR details with number and URL.
+
+---
+
+#### `github_get_pr_details` 🆕
+Get comprehensive pull request information including reviews, commits, and file changes.
+
+**Parameters:**
+```json
+{
+  "owner": "facebook",
+  "repo": "react",
+  "pull_number": 123,
+  "include_reviews": true,
+  "include_commits": true,
+  "include_files": false
+}
+```
+
+**Returns:**
+- 📝 Full PR description and metadata
+- ✅ Review status (approved, changes requested, commented)
+- 💬 Review comments and feedback
+- 📊 Commit history with authors
+- 📁 Changed files summary (optional)
+- 🔀 Merge status and conflicts
+- 🎯 Mergeable state
+
+**Perfect for:** AI-assisted code review, PR analysis, and workflow automation.
+
+---
+
+### GitHub Actions
+
+#### `github_list_workflows` 🆕
+List all GitHub Actions workflows configured in a repository.
+
+**Parameters:**
+```json
+{
+  "owner": "microsoft",
+  "repo": "typescript",
+  "token": "ghp_optional"
+}
+```
+
+**Returns:** 
+- Workflow names and IDs
+- Configuration file paths
+- Current state and badges
+- Creation and update timestamps
+
+---
+
+#### `github_get_workflow_runs` 🆕
+Monitor workflow execution history with advanced filtering.
+
+**Parameters:**
+```json
+{
+  "owner": "vercel",
+  "repo": "next.js",
+  "workflow_id": "ci.yml",
+  "status": "completed",
+  "conclusion": "success",
+  "limit": 30
+}
+```
+
+**Status Filters:**
+- `queued` - Waiting to start
+- `in_progress` - Currently running
+- `completed` - Finished execution
+
+**Conclusion Filters:**
+- `success` ✅ - Passed successfully
+- `failure` ❌ - Failed with errors
+- `cancelled` - Manually cancelled
+- `timed_out` - Exceeded time limit
+
+**Returns:**
+- 🔄 Run status with visual indicators
+- 📊 Execution timing and duration
+- 👤 Triggered by user
+- 🌿 Branch and commit info
+- 🔗 Direct links to runs
+
+**Perfect for:** CI/CD monitoring, build status checks, deployment tracking.
+
+---
+
+### Search & Discovery
+
+#### `github_search_repositories`
+Search for repositories across GitHub with advanced filtering.
+
+**Parameters:**
+```json
+{
+  "query": "machine learning language:python stars:>5000",
+  "sort": "stars",
+  "order": "desc",
+  "limit": 50
+}
+```
+
+**Query Qualifiers:**
+- `language:python` - Filter by language
+- `stars:>1000` - Star count
+- `forks:>50` - Fork count
+- `topics:machine-learning` - Topics
+- `created:>2023-01-01` - Creation date
+- `archived:false` - Exclude archived
+
+**Returns:** Repository list with statistics and metadata.
+
+---
+
+#### `github_search_code` 🆕
+Search for code snippets across all of GitHub with powerful filters.
+
+**Parameters:**
+```json
+{
+  "query": "TODO language:python repo:org/repo",
+  "sort": "indexed",
+  "order": "desc",
+  "limit": 100
+}
+```
+
+**Query Qualifiers:**
+- `language:python` - Filter by language
+- `repo:owner/name` - Specific repository
+- `path:src/` - File path
+- `extension:py` - File extension
+- `size:>1000` - File size
+- `filename:test` - Filename
+
+**Returns:**
+- 📝 Code snippets with context
+- 📁 File locations and paths
+- 🔗 Direct links to code
+- ⭐ Repository information
+
+**Perfect for:** Finding code examples, locating TODOs, discovering patterns.
+
+---
+
+### User Information
+
+#### `github_get_user_info`
+Retrieve detailed information about GitHub users and organizations.
+
+**Parameters:**
 ```json
 {
   "username": "torvalds",
@@ -231,174 +434,307 @@ Get information about a GitHub user or organization.
 }
 ```
 
-### github_list_repo_contents
+**Returns:**
+- Profile information (bio, location, company)
+- Statistics (repos, followers, following)
+- Activity data
+- Social links
 
-List files and directories in a repository path.
-
-**Parameters:**
-- `owner` (str, required) - Repository owner
-- `repo` (str, required) - Repository name
-- `path` (str, optional) - Directory path (empty for root)
-- `ref` (str, optional) - Branch, tag, or commit
-- `token` (str, optional) - GitHub token
-- `response_format` (str, optional) - Output format
-
-**Example:**
-```json
-{
-  "owner": "facebook",
-  "repo": "react",
-  "path": "packages",
-  "ref": "main"
-}
-```
-
-## 📊 Rate Limits
-
-GitHub API has the following rate limits:
-
-- **Unauthenticated requests:** 60 requests per hour
-- **Authenticated requests:** 5,000 requests per hour
-- **Search API:** 10 requests per minute (authenticated) or 10 per minute (unauthenticated)
-
-**Recommendation:** Always use authentication tokens to avoid rate limit issues.
-
-## 🔒 Security Best Practices
-
-1. **Token Storage:** Never hardcode tokens in your code. Use environment variables or secure credential storage.
-
-2. **Token Scopes:** Only grant the minimum required permissions:
-   - Read-only operations: `public_repo` scope
-   - Private repositories: `repo` scope
-   - Creating issues: `repo` scope
-
-3. **Token Rotation:** Regularly rotate your GitHub tokens
-
-4. **Error Handling:** The server provides clear error messages without exposing sensitive information
+---
 
 ## 🎯 Use Cases
 
-### For Development Teams
-- **Code Review Workflow:** List and analyze pull requests
-- **Issue Tracking:** Create and search issues programmatically
-- **Documentation:** Fetch README and documentation files
-- **Repository Discovery:** Find relevant open-source projects
+### 🚀 For AI-Powered Development
 
-### For Project Management
-- **Sprint Planning:** List open issues and PRs
-- **Team Coordination:** Assign issues to team members
-- **Progress Tracking:** Monitor repository activity
+**Automated Code Review:**
+```
+1. Monitor PR with github_get_pr_details
+2. Check CI status with github_get_workflow_runs
+3. Analyze changes and provide feedback
+4. Track review comments automatically
+```
 
-### For Research & Analysis
-- **Repository Analysis:** Gather statistics on popular projects
-- **Trend Identification:** Search for repositories by topic and technology
-- **User Profiles:** Analyze developer contributions
+**Intelligent Issue Triage:**
+```
+1. Search for similar issues with github_search_issues
+2. Analyze patterns across repositories
+3. Auto-assign based on expertise
+4. Track issue resolution
+```
+
+**Repository Intelligence:**
+```
+1. Discover code patterns with github_search_code
+2. Find best practices across projects
+3. Locate security patterns
+4. Track dependency usage
+```
+
+### 💼 For Development Teams
+
+**CI/CD Monitoring:**
+- Monitor workflow runs across all repos
+- Track deployment success rates
+- Get instant failure notifications
+- Analyze build performance
+
+**PR Workflow Automation:**
+- Create PRs from feature branches
+- Auto-assign reviewers
+- Track review status
+- Monitor merge conflicts
+
+**Issue Management:**
+- Create issues from AI analysis
+- Search across all team repos
+- Track label patterns
+- Monitor issue velocity
+
+### 📊 For Project Management
+
+**Sprint Planning:**
+- List all open issues and PRs
+- Track team assignments
+- Monitor completion rates
+- Analyze workflow efficiency
+
+**Release Management:**
+- Track PR merge status
+- Monitor CI/CD pipelines
+- Validate release readiness
+- Generate release notes
+
+---
+
+## 📊 Rate Limits
+
+GitHub API rate limits (per hour):
+
+| Type | Unauthenticated | Authenticated |
+|------|----------------|---------------|
+| Core API | 60 | 5,000 |
+| Search API | 10 | 30 |
+| Actions API | 0 | 1,000 |
+
+**💡 Pro Tip:** Always use authentication to avoid rate limit issues!
+
+---
+
+## 🔒 Security Best Practices
+
+### Token Management
+1. **Never hardcode tokens** - Use environment variables
+2. **Use minimal scopes** - Only grant necessary permissions
+3. **Rotate regularly** - Change tokens every 90 days
+4. **Separate tokens** - Different tokens for different purposes
+
+### Permission Scopes
+
+**Read-Only Operations:**
+- `public_repo` - For public repositories only
+- `read:user` - User profile access
+- `read:org` - Organization data
+
+**Write Operations:**
+- `repo` - Full repository access (for creating issues/PRs)
+- `workflow` - GitHub Actions management
+
+**Enterprise:**
+- `admin:org` - Organization administration
+- `admin:repo_hook` - Webhook management
+
+---
 
 ## 🐛 Error Handling
 
-The server provides comprehensive error handling with actionable messages:
+Comprehensive error messages with actionable guidance:
 
-- **404 Not Found:** Resource doesn't exist - verify repository/user/file names
-- **401 Unauthorized:** Invalid or missing authentication token
-- **403 Forbidden:** Insufficient permissions - check token scopes
-- **422 Unprocessable Entity:** Invalid request parameters
-- **429 Rate Limited:** Too many requests - wait before retrying
+- **404 Not Found** - Resource doesn't exist (check owner/repo/file names)
+- **401 Unauthorized** - Invalid or missing token
+- **403 Forbidden** - Insufficient permissions (check token scopes)
+- **422 Unprocessable** - Invalid request parameters
+- **429 Rate Limited** - Too many requests (wait before retrying)
+
+All errors include suggestions for resolution!
+
+---
 
 ## 📝 Response Formats
 
-### Markdown Format (Default)
-Human-readable formatted text with:
-- Headers and sections
-- Emoji icons for visual clarity
-- Formatted timestamps
-- Clear hierarchical structure
-- Preview snippets for long content
+### Markdown (Default)
+Human-readable formatted output with:
+- 📊 Clear hierarchical structure
+- 🎨 Visual indicators and emojis
+- 📅 Formatted timestamps
+- 🔗 Direct links
+- 📝 Code snippets
 
-### JSON Format
+### JSON
 Machine-readable structured data:
 - Complete field information
 - Nested objects and arrays
-- Suitable for programmatic processing
-- Pagination metadata included
+- Perfect for programmatic processing
+- Includes pagination metadata
 
-## 🚦 Character Limits
+**Toggle format:**
+```json
+{
+  "response_format": "json"  // or "markdown"
+}
+```
 
-The server implements a 25,000 character limit per response to prevent overwhelming results. When limits are exceeded:
+---
 
-- Data is automatically truncated
-- Clear truncation notice is provided
-- Guidance on using filters/pagination is included
+## ⚡ Performance Tips
 
-## 🔄 Pagination
+1. **Use Pagination** - Request only what you need (default: 20 items)
+2. **Filter Results** - Use state, label, and date filters
+3. **Cache Responses** - Store frequently accessed data locally
+4. **Batch Operations** - Group related requests
+5. **Monitor Rate Limits** - Check `X-RateLimit-*` headers
+6. **Authenticate Always** - 5,000 vs 60 requests/hour
+7. **Optional Includes** - Skip heavy data (like file diffs) when not needed
 
-For endpoints returning multiple items:
-- Default limit: 20 items per page
-- Maximum limit: 100 items per page
-- Use `page` parameter to navigate through results
-- Response includes pagination metadata
+---
+
+## 🚦 Response Limits
+
+- **Character Limit:** 25,000 per response
+- **Auto-truncation:** Includes clear notices
+- **Pagination Guidance:** Suggestions for filtering
+
+When limits are exceeded, the server provides:
+- Truncation indicators
+- Pagination recommendations
+- Filter suggestions
+
+---
 
 ## 🧪 Testing
 
-To test the server:
-
+### Validate Installation
 ```bash
-# Verify Python syntax
+# Check Python syntax
 python -m py_compile github_mcp.py
 
-# Run with timeout for testing
+# Test with timeout
 timeout 5s python github_mcp.py
 ```
 
-For comprehensive testing, use the MCP evaluation harness or connect to Claude Desktop.
+### Claude Desktop Testing
+1. Add server to configuration
+2. Restart Claude Desktop
+3. Ask Claude: "List workflows in facebook/react"
+4. Verify tools appear in Claude's interface
 
-## 📚 Additional Resources
+---
 
-- [GitHub REST API Documentation](https://docs.github.com/en/rest)
-- [Model Context Protocol Specification](https://modelcontextprotocol.io)
-- [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+## 📚 Documentation
+
+- **[GitHub REST API](https://docs.github.com/en/rest)** - Official API documentation
+- **[Model Context Protocol](https://modelcontextprotocol.io)** - MCP specification
+- **[Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)** - Token creation guide
+- **[GitHub Actions](https://docs.github.com/en/actions)** - Actions documentation
+
+---
 
 ## 📜 License
 
-This project is available under a **dual licensing model**:
+### Dual Licensing Model
 
-### 🆓 Open Source License (AGPL v3)
-Free for open source projects, personal use, and educational purposes.  
-**Requirement:** You must share your source code.
+#### 🆓 Open Source (AGPL v3)
+**Perfect for:**
+- ✅ Open source projects
+- ✅ Personal use
+- ✅ Educational purposes
+- ✅ Non-commercial use
 
-### 💼 Commercial License
-For commercial/proprietary use without sharing source code.  
+**Requirement:** Share your source code
+
+#### 💼 Commercial License
+**Perfect for:**
+- ✅ Commercial applications
+- ✅ Proprietary software
+- ✅ SaaS products
+- ✅ Internal business tools
+
 **Pricing:** Starting at £399/year
 
 📄 **[View Full Licensing Details](LICENSING.md)**
 
-**Need a commercial license?** [Contact us](mailto:licensing@mcplabs.co.uk) or [open an issue](https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry)
+### License Comparison
+
+| Feature | AGPL v3 | Commercial |
+|---------|---------|------------|
+| Price | Free | £399+/year |
+| Source Sharing | Required | Not Required |
+| Commercial Use | ✅ (with source) | ✅ |
+| Proprietary Use | ❌ | ✅ |
+| Support | Community | Priority |
+| SLA | ❌ | ✅ (Enterprise) |
+
+### Contact
+
+**Need a commercial license?**
+- 📧 Email: [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
+- 🐛 GitHub: [Open an issue](https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry)
+- 🌐 Website: [mcplabs.co.uk](https://mcplabs.co.uk) (coming soon)
 
 ---
 
-## 🤔 Which License Do I Need?
-
-| Your Use Case | License Needed |
-|---------------|----------------|
-| Open source project | AGPL v3 (Free) ✅ |
-| Personal/hobby project | AGPL v3 (Free) ✅ |
-| Education/research | AGPL v3 (Free) ✅ |
-| Commercial SaaS product | Commercial 💼 |
-| Internal business tool (proprietary) | Commercial 💼 |
-| Closed-source software | Commercial 💼 |
-
 ## 🤝 Contributing
 
-Contributions are welcome! Areas for enhancement:
-- Additional GitHub API endpoints
-- Workflow automation tools
-- GitHub Actions integration
-- Enhanced search capabilities
-- Caching layer for common requests
+We welcome contributions! Key areas:
 
-## ⚡ Performance Tips
+### High Priority
+- **Phase 2 Features:** Release management, branch operations
+- **Performance:** Caching layer implementation
+- **Documentation:** Additional examples and use cases
+- **Testing:** Comprehensive test suite
 
-1. **Use Pagination:** Request only needed items
-2. **Filter Results:** Apply state and label filters
-3. **Cache Responses:** Implement caching for frequently accessed data
-4. **Batch Operations:** Group related requests when possible
-5. **Monitor Rate Limits:** Check X-RateLimit headers in responses
+### Medium Priority
+- **Error Recovery:** Retry logic and resilience
+- **Logging:** Enhanced debugging capabilities
+- **Monitoring:** Usage analytics and metrics
+
+### Future Features
+- **Webhook Management** (Enterprise)
+- **Repository Creation** (Enterprise)
+- **Advanced Analytics**
+
+**See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.**
+
+---
+
+## 🎉 What's Next?
+
+### Phase 2 (Coming Soon)
+- **Release Management** - List releases, get latest release
+- **Collaboration Tools** - Contributors, collaborators, permissions
+- **Branch Management** - List branches, create branches, protection status
+
+### Phase 3 (Future)
+- **Webhook Management** - Create and manage webhooks (Enterprise)
+- **Repository Management** - Create repos, fork repos (Enterprise)
+- **Advanced Analytics** - Custom metrics and insights (Enterprise)
+
+---
+
+## 💬 Support
+
+- **📖 Documentation:** You're reading it!
+- **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
+- **💡 Feature Requests:** [GitHub Discussions](https://github.com/crypto-ninja/github-mcp-server/discussions)
+- **📧 Email:** [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
+
+---
+
+## ⭐ Star History
+
+If you find this project useful, please star it on GitHub! ⭐
+
+---
+
+**Built with ❤️ by [MCP Labs](https://mcplabs.co.uk)**
+
+*Empowering AI-driven development workflows*
