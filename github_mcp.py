@@ -37,7 +37,7 @@ and more. It enables AI assistants to seamlessly integrate with GitHub workflows
 Features:
 - Repository management and exploration
 - Issue creation, search, and management
-- Pull request operations
+- Pull request operations (list, create, detailed view)
 - GitHub Actions workflow monitoring
 - File content retrieval
 - User and organization information
@@ -101,6 +101,20 @@ class WorkflowRunConclusion(str, Enum):
     SKIPPED = "skipped"
     TIMED_OUT = "timed_out"
     ACTION_REQUIRED = "action_required"
+
+class PRMergeMethod(str, Enum):
+    """GitHub pull request merge method."""
+    MERGE = "merge"
+    SQUASH = "squash"
+    REBASE = "rebase"
+
+class PRReviewState(str, Enum):
+    """GitHub pull request review state."""
+    APPROVED = "APPROVED"
+    CHANGES_REQUESTED = "CHANGES_REQUESTED"
+    COMMENTED = "COMMENTED"
+    DISMISSED = "DISMISSED"
+    PENDING = "PENDING"
 
 # Shared Utilities
 async def _make_github_request(
@@ -359,6 +373,41 @@ class GetWorkflowRunsInput(BaseModel):
     conclusion: Optional[WorkflowRunConclusion] = Field(default=None, description="Filter by run conclusion")
     limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
     page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class CreatePullRequestInput(BaseModel):
+    """Input model for creating GitHub pull requests."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    title: str = Field(..., description="Pull request title", min_length=1, max_length=256)
+    head: str = Field(..., description="Source branch name", min_length=1, max_length=100)
+    base: str = Field(..., description="Target branch name (default: main)", min_length=1, max_length=100)
+    body: Optional[str] = Field(default=None, description="Pull request description in Markdown format")
+    draft: Optional[bool] = Field(default=False, description="Create as draft pull request")
+    maintainer_can_modify: Optional[bool] = Field(default=True, description="Allow maintainers to modify the PR")
+    token: str = Field(..., description="GitHub personal access token (required for creating PRs)")
+
+class GetPullRequestDetailsInput(BaseModel):
+    """Input model for getting detailed pull request information."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    pull_number: int = Field(..., description="Pull request number", ge=1)
+    include_reviews: Optional[bool] = Field(default=True, description="Include review information")
+    include_commits: Optional[bool] = Field(default=True, description="Include commit information")
+    include_files: Optional[bool] = Field(default=False, description="Include changed files (can be large)")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
@@ -1270,6 +1319,277 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
                 markdown += "---\n\n"
         
         return _truncate_response(markdown, data['total_count'])
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_create_pull_request",
+    annotations={
+        "title": "Create Pull Request",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_pull_request(params: CreatePullRequestInput) -> str:
+    """
+    Create a new pull request in a GitHub repository.
+    
+    Creates a pull request from a source branch to a target branch with optional
+    draft status, description, and maintainer modification permissions.
+    
+    Args:
+        params (CreatePullRequestInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - title (str): Pull request title (required)
+            - head (str): Source branch name (required)
+            - base (str): Target branch name (required)
+            - body (Optional[str]): PR description in Markdown
+            - draft (bool): Create as draft PR (default: False)
+            - maintainer_can_modify (bool): Allow maintainer modifications (default: True)
+            - token (str): GitHub token (required)
+    
+    Returns:
+        str: Created pull request details including number and URL
+    
+    Examples:
+        - Use when: "Create a PR from feature-branch to main"
+        - Use when: "Open a draft PR for review"
+        - Use when: "Create a pull request for this feature"
+    
+    Error Handling:
+        - Returns error if branches don't exist
+        - Returns error if authentication fails
+        - Returns error if insufficient permissions
+        - Validates branch names and repository access
+    """
+    try:
+        payload = {
+            "title": params.title,
+            "head": params.head,
+            "base": params.base,
+            "draft": params.draft,
+            "maintainer_can_modify": params.maintainer_can_modify
+        }
+        
+        if params.body:
+            payload["body"] = params.body
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/pulls",
+            method="POST",
+            token=params.token,
+            json=payload
+        )
+        
+        # Status emoji based on draft status
+        status_emoji = "📝" if params.draft else "🔀"
+        
+        result = f"""✅ Pull Request Created Successfully!
+
+{status_emoji} **PR:** #{data['number']} - {data['title']}
+**State:** {data['state']}
+**Draft:** {'Yes' if data['draft'] else 'No'}
+**Base:** `{data['base']['ref']}` ← **Head:** `{data['head']['ref']}`
+**URL:** {data['html_url']}
+**Created:** {_format_timestamp(data['created_at'])}
+**Author:** @{data['user']['login']}
+
+"""
+        
+        if data.get('body'):
+            body_preview = data['body'][:200] + "..." if len(data['body']) > 200 else data['body']
+            result += f"**Description:** {body_preview}\n\n"
+        
+        result += f"**Mergeable:** {data.get('mergeable', 'Unknown')}\n"
+        result += f"**Maintainer Can Modify:** {'Yes' if data.get('maintainer_can_modify') else 'No'}\n"
+        
+        return result
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_get_pr_details",
+    annotations={
+        "title": "Get Pull Request Details",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
+    """
+    Get comprehensive details about a specific pull request.
+    
+    Retrieves detailed information including reviews, commits, status checks,
+    and optionally changed files. Essential for PR review workflows.
+    
+    Args:
+        params (GetPullRequestDetailsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - pull_number (int): Pull request number
+            - include_reviews (bool): Include review information (default: True)
+            - include_commits (bool): Include commit information (default: True)
+            - include_files (bool): Include changed files (default: False)
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Comprehensive PR details with reviews, commits, and status
+    
+    Examples:
+        - Use when: "Show me details for PR #42"
+        - Use when: "What's blocking PR #123?"
+        - Use when: "Get review status for this pull request"
+        - Use when: "Show me all commits in PR #456"
+    
+    Error Handling:
+        - Returns error if PR not found (404)
+        - Handles private repository access requirements
+        - Provides clear status for merge conflicts and checks
+    """
+    try:
+        # Get PR details
+        pr_data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = {"pr": pr_data}
+            
+            # Add additional data if requested
+            if params.include_reviews:
+                try:
+                    reviews = await _make_github_request(
+                        f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/reviews",
+                        token=params.token
+                    )
+                    result["reviews"] = reviews
+                except:
+                    result["reviews"] = "Error fetching reviews"
+            
+            if params.include_commits:
+                try:
+                    commits = await _make_github_request(
+                        f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/commits",
+                        token=params.token
+                    )
+                    result["commits"] = commits
+                except:
+                    result["commits"] = "Error fetching commits"
+            
+            if params.include_files:
+                try:
+                    files = await _make_github_request(
+                        f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/files",
+                        token=params.token
+                    )
+                    result["files"] = files
+                except:
+                    result["files"] = "Error fetching files"
+            
+            return json.dumps(result, indent=2)
+        
+        # Markdown format
+        status_emoji = "🔀" if not pr_data['draft'] else "📝"
+        merge_emoji = "✅" if pr_data.get('mergeable') else "❌" if pr_data.get('mergeable') is False else "⏳"
+        
+        markdown = f"""# {status_emoji} Pull Request #{pr_data['number']}: {pr_data['title']}
+
+**State:** {pr_data['state']} | **Draft:** {'Yes' if pr_data['draft'] else 'No'}
+**Base:** `{pr_data['base']['ref']}` ← **Head:** `{pr_data['head']['ref']}`
+**Mergeable:** {merge_emoji} {pr_data.get('mergeable', 'Unknown')}
+**Created:** {_format_timestamp(pr_data['created_at'])}
+**Updated:** {_format_timestamp(pr_data['updated_at'])}
+**Author:** @{pr_data['user']['login']}
+**URL:** {pr_data['html_url']}
+
+"""
+        
+        if pr_data.get('body'):
+            body_preview = pr_data['body'][:300] + "..." if len(pr_data['body']) > 300 else pr_data['body']
+            markdown += f"## Description\n\n{body_preview}\n\n"
+        
+        # Additions/Deletions
+        markdown += f"## Changes\n"
+        markdown += f"- **Additions:** +{pr_data['additions']:,} lines\n"
+        markdown += f"- **Deletions:** -{pr_data['deletions']:,} lines\n"
+        markdown += f"- **Changed Files:** {pr_data['changed_files']:,}\n\n"
+        
+        # Reviews section
+        if params.include_reviews:
+            try:
+                reviews = await _make_github_request(
+                    f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/reviews",
+                    token=params.token
+                )
+                
+                markdown += f"## Reviews ({len(reviews)})\n\n"
+                
+                if not reviews:
+                    markdown += "No reviews yet.\n\n"
+                else:
+                    for review in reviews:
+                        review_emoji = "✅" if review['state'] == "APPROVED" else "❌" if review['state'] == "CHANGES_REQUESTED" else "💬"
+                        markdown += f"- {review_emoji} **@{review['user']['login']}** - {review['state']}\n"
+                        if review.get('body'):
+                            body_preview = review['body'][:100] + "..." if len(review['body']) > 100 else review['body']
+                            markdown += f"  _{body_preview}_\n"
+                        markdown += f"  _{_format_timestamp(review['submitted_at'])}_\n\n"
+            except:
+                markdown += "## Reviews\n\nError fetching reviews.\n\n"
+        
+        # Commits section
+        if params.include_commits:
+            try:
+                commits = await _make_github_request(
+                    f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/commits",
+                    token=params.token
+                )
+                
+                markdown += f"## Commits ({len(commits)})\n\n"
+                
+                for commit in commits[:10]:  # Limit to first 10 commits
+                    commit_msg = commit['commit']['message'].split('\n')[0]  # First line only
+                    markdown += f"- **{commit['sha'][:8]}** - {commit_msg}\n"
+                    markdown += f"  _by @{commit['author']['login']} on {_format_timestamp(commit['commit']['author']['date'])}_\n"
+                
+                if len(commits) > 10:
+                    markdown += f"\n... and {len(commits) - 10} more commits\n"
+                
+                markdown += "\n"
+            except:
+                markdown += "## Commits\n\nError fetching commits.\n\n"
+        
+        # Files section (optional, can be large)
+        if params.include_files:
+            try:
+                files = await _make_github_request(
+                    f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/files",
+                    token=params.token
+                )
+                
+                markdown += f"## Changed Files ({len(files)})\n\n"
+                
+                for file in files[:20]:  # Limit to first 20 files
+                    status_icon = "📝" if file['status'] == "modified" else "➕" if file['status'] == "added" else "➖" if file['status'] == "removed" else "🔄"
+                    markdown += f"- {status_icon} `{file['filename']}` (+{file['additions']}, -{file['deletions']})\n"
+                
+                if len(files) > 20:
+                    markdown += f"\n... and {len(files) - 20} more files\n"
+                
+                markdown += "\n"
+            except:
+                markdown += "## Changed Files\n\nError fetching files.\n\n"
+        
+        return _truncate_response(markdown)
         
     except Exception as e:
         return _handle_api_error(e)
