@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-14-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-16-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, and intelligent code search. Built for AI-powered development teams.
 
@@ -47,6 +47,12 @@ Monitor and manage your CI/CD pipelines.
 
 - **🆕 List Workflows** - View all GitHub Actions workflows
 - **🆕 Workflow Runs** - Track execution status and results
+
+### 📦 Release Management (2 tools)
+Track and verify repository releases.
+
+- **🆕 List Releases** - View all releases with stats
+- **🆕 Get Release** - Detailed release information
 
 ### 🔍 Search & Discovery (2 tools)
 Powerful search across GitHub's entire ecosystem.
@@ -360,6 +366,47 @@ Monitor workflow execution history with advanced filtering.
 - 🔗 Direct links to runs
 
 **Perfect for:** CI/CD monitoring, build status checks, deployment tracking.
+
+---
+
+### Release Management
+
+#### `github_list_releases` 🆕
+List all releases from a repository with pagination support.
+
+**Parameters:**
+```json
+{
+  "owner": "facebook",
+  "repo": "react",
+  "limit": 10
+}
+```
+
+**Returns:**
+- Release tags and titles
+- Publication dates
+- Author information
+- Asset counts and downloads
+
+---
+
+#### `github_get_release` 🆕
+Get detailed information about a specific release or the latest release.
+
+**Parameters:**
+```json
+{
+  "owner": "microsoft",
+  "repo": "vscode",
+  "tag": "latest"
+}
+```
+
+**Features:**
+- Use `"tag": "latest"` for most recent
+- Use a specific tag (e.g., `"v1.2.3"`)
+- Full release notes and asset details
 
 ---
 
