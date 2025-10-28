@@ -443,6 +443,36 @@ class SearchIssuesInput(BaseModel):
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
+class ListReleasesInput(BaseModel):
+    """Input model for listing repository releases."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+
+class GetReleaseInput(BaseModel):
+    """Input model for getting a specific release or latest release."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    tag: Optional[str] = Field(default="latest", description="Release tag (e.g., 'v1.1.0') or 'latest' for most recent")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
 # Tool Implementations
 
 @mcp.tool(
@@ -1866,6 +1896,131 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
         
         return _truncate_response(markdown, data['total_count'])
         
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_list_releases",
+    annotations={
+        "title": "List Repository Releases",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_releases(params: ListReleasesInput) -> str:
+    """
+    List all releases from a GitHub repository.
+    """
+    try:
+        params_dict = {
+            "per_page": params.limit,
+            "page": params.page
+        }
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/releases",
+            token=params.token,
+            params=params_dict
+        )
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        markdown = f"# Releases for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} releases\n\n"
+        if not data:
+            markdown += "No releases found.\n"
+        else:
+            for release in data:
+                status = []
+                if release.get('draft'):
+                    status.append("🚧 Draft")
+                if release.get('prerelease'):
+                    status.append("🔬 Pre-release")
+                status_str = " | ".join(status) if status else "📦 Release"
+                markdown += f"## {release['name'] or release['tag_name']} {status_str}\n\n"
+                markdown += f"- **Tag:** `{release['tag_name']}`\n"
+                markdown += f"- **Published:** {_format_timestamp(release['published_at']) if release.get('published_at') else 'Draft'}\n"
+                markdown += f"- **Author:** {release['author']['login']}\n"
+                asset_count = len(release.get('assets', []))
+                if asset_count > 0:
+                    markdown += f"- **Assets:** {asset_count} file(s)\n"
+                if release.get('assets'):
+                    total_downloads = sum(asset.get('download_count', 0) for asset in release['assets'])
+                    if total_downloads > 0:
+                        markdown += f"- **Downloads:** {total_downloads:,}\n"
+                markdown += f"- **URL:** {release['html_url']}\n\n"
+                if release.get('body'):
+                    body_preview = release['body'][:300]
+                    if len(release['body']) > 300:
+                        body_preview += "..."
+                    markdown += f"{body_preview}\n\n"
+                markdown += "---\n\n"
+            if len(data) == params.limit:
+                markdown += f"*Showing page {params.page}. Use `page: {params.page + 1}` to see more.*\n"
+        return _truncate_response(markdown, len(data))
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_get_release",
+    annotations={
+        "title": "Get Release Details",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_release(params: GetReleaseInput) -> str:
+    """
+    Get detailed information about a specific release or the latest release.
+    """
+    try:
+        if params.tag == "latest":
+            endpoint = f"repos/{params.owner}/{params.repo}/releases/latest"
+        else:
+            endpoint = f"repos/{params.owner}/{params.repo}/releases/tags/{params.tag}"
+        data = await _make_github_request(
+            endpoint,
+            token=params.token
+        )
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result)
+        status = []
+        if data.get('draft'):
+            status.append("🚧 Draft")
+        if data.get('prerelease'):
+            status.append("🔬 Pre-release")
+        status_str = " | ".join(status) if status else "📦 Release"
+        markdown = f"# {data['name'] or data['tag_name']}\n\n"
+        markdown += f"**Status:** {status_str}\n\n"
+        markdown += "## Release Information\n\n"
+        markdown += f"- **Tag:** `{data['tag_name']}`\n"
+        markdown += f"- **Published:** {_format_timestamp(data['published_at']) if data.get('published_at') else 'Draft (not published)'}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Author:** {data['author']['login']}\n"
+        markdown += f"- **URL:** {data['html_url']}\n\n"
+        if data.get('assets'):
+            markdown += "## Assets\n\n"
+            total_downloads = 0
+            for asset in data['assets']:
+                downloads = asset.get('download_count', 0)
+                total_downloads += downloads
+                size_mb = asset['size'] / (1024 * 1024)
+                markdown += f"- **{asset['name']}**\n"
+                markdown += f"  - Size: {size_mb:.2f} MB\n"
+                markdown += f"  - Downloads: {downloads:,}\n"
+                markdown += f"  - [Download]({asset['browser_download_url']})\n\n"
+            markdown += f"**Total Downloads:** {total_downloads:,}\n\n"
+        if data.get('body'):
+            markdown += "## Release Notes\n\n"
+            markdown += data['body']
+            markdown += "\n\n"
+        if data.get('target_commitish'):
+            markdown += f"**Target:** `{data['target_commitish']}`\n"
+        return _truncate_response(markdown)
     except Exception as e:
         return _handle_api_error(e)
 
