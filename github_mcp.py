@@ -270,7 +270,7 @@ class CreateIssueInput(BaseModel):
     body: Optional[str] = Field(default=None, description="Issue description/body in Markdown format")
     labels: Optional[List[str]] = Field(default=None, description="List of label names to apply", max_items=20)
     assignees: Optional[List[str]] = Field(default=None, description="List of usernames to assign", max_items=10)
-    token: str = Field(..., description="GitHub personal access token (required for creating issues)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 class SearchRepositoriesInput(BaseModel):
     """Input model for searching GitHub repositories."""
@@ -392,7 +392,7 @@ class CreatePullRequestInput(BaseModel):
     body: Optional[str] = Field(default=None, description="Pull request description in Markdown format")
     draft: Optional[bool] = Field(default=False, description="Create as draft pull request")
     maintainer_can_modify: Optional[bool] = Field(default=True, description="Allow maintainers to modify the PR")
-    token: str = Field(..., description="GitHub personal access token (required for creating PRs)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 class GetPullRequestDetailsInput(BaseModel):
     """Input model for getting detailed pull request information."""
@@ -681,7 +681,7 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             - body (Optional[str]): Issue description in Markdown
             - labels (Optional[List[str]]): Label names to apply
             - assignees (Optional[List[str]]): Usernames to assign
-            - token (str): GitHub token (required)
+            - token (Optional[str]): GitHub token (optional - uses GITHUB_TOKEN env var if not provided)
     
     Returns:
         str: Created issue details including issue number and URL
@@ -696,6 +696,18 @@ async def github_create_issue(params: CreateIssueInput) -> str:
         - Returns error if insufficient permissions (403)
         - Returns error if labels/assignees don't exist (422)
     """
+    import os
+    
+    # Get token from parameter or environment
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating issues. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "success": False
+        }, indent=2)
+    
     try:
         payload = {
             "title": params.title,
@@ -711,7 +723,7 @@ async def github_create_issue(params: CreateIssueInput) -> str:
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",
             method="POST",
-            token=params.token,
+            token=auth_token,
             json=payload
         )
         
@@ -1412,7 +1424,7 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             - body (Optional[str]): PR description in Markdown
             - draft (bool): Create as draft PR (default: False)
             - maintainer_can_modify (bool): Allow maintainer modifications (default: True)
-            - token (str): GitHub token (required)
+            - token (Optional[str]): GitHub token (optional - uses GITHUB_TOKEN env var if not provided)
     
     Returns:
         str: Created pull request details including number and URL
@@ -1428,6 +1440,18 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
         - Returns error if insufficient permissions
         - Validates branch names and repository access
     """
+    import os
+    
+    # Get token from parameter or environment
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating pull requests. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "success": False
+        }, indent=2)
+    
     try:
         payload = {
             "title": params.title,
@@ -1443,7 +1467,7 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/pulls",
             method="POST",
-            token=params.token,
+            token=auth_token,
             json=payload
         )
         
