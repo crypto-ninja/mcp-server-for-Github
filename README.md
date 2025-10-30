@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-19-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-21-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -11,11 +11,13 @@
 
 ## ✨ What's New
 
-🎉 **Phase 2.1 SHIPPED:** File Management Tools are live! We've expanded from 16 to **19 powerful tools**, adding:
+🎉 **Phase 2.1 SHIPPED:** File Management & Release Tools are live! We've expanded from 16 to **21 powerful tools**, adding:
 
 - **📝 File Creation** - Create new files in repositories
 - **✏️ File Updates** - Modify existing file contents with SHA verification
 - **🗑️ File Deletion** - Delete files safely with conflict prevention
+- **🏷️ Release Creation** - Create GitHub releases programmatically
+- **✏️ Release Updates** - Update existing release notes and status
 
 🚀 **Phase 1 Complete:** GitHub Actions, Enhanced PRs, and Advanced Search
 - **🔄 GitHub Actions Integration** - Monitor CI/CD workflows and runs
@@ -62,11 +64,13 @@ Monitor and manage your CI/CD pipelines.
 - **List Workflows** - View all GitHub Actions workflows
 - **Workflow Runs** - Track execution status and results
 
-### 📦 Release Management (2 tools)
-Track and verify repository releases.
+### 📦 Release Management (4 tools) 🆕
+Complete release lifecycle management.
 
 - **List Releases** - View all releases with stats
 - **Get Release** - Detailed release information
+- **✅ Create Releases** - Create new releases programmatically
+- **✅ Update Releases** - Modify existing release notes and status
 
 ### 🔍 Search & Discovery (2 tools)
 Powerful search across GitHub's entire ecosystem.
@@ -133,7 +137,7 @@ Generate a GitHub Personal Access Token:
 
 *Full tool documentation available in the complete README - showing highlights below*
 
-### 🆕 New in Phase 2.1: File Management
+### 🆕 New in Phase 2.1: File & Release Management
 
 #### `github_create_file` 🆕
 Create new files in repositories with automatic base64 encoding.
@@ -178,6 +182,33 @@ Safely delete files with SHA verification.
 }
 ```
 
+#### `github_create_release` 🆕
+Create GitHub releases programmatically.
+
+**Example:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "tag_name": "v1.0.0",
+  "name": "v1.0.0 - Initial Release",
+  "body": "## Features\n\n- Feature 1\n- Feature 2"
+}
+```
+
+#### `github_update_release` 🆕
+Update existing release notes and status.
+
+**Example:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "release_id": "v1.0.0",
+  "body": "## Updated Notes\n\nAdded more details!"
+}
+```
+
 *For complete tool documentation, see the full README sections below*
 
 ---
@@ -208,6 +239,14 @@ Safely delete files with SHA verification.
 2. Clean up deprecated documentation
 3. Maintain consistent README files
 4. Bulk file operations
+```
+
+**Release Management:**
+```
+1. Create releases with github_create_release
+2. Update release notes with github_update_release
+3. Automate version tagging
+4. Generate changelogs automatically
 ```
 
 ---
@@ -265,7 +304,7 @@ All errors include suggestions for resolution!
 
 We're actively building Phase 2 features through dogfooding — using our own product reveals what's missing!
 
-### Phase 2.1: File Management Tools ✅
+### Phase 2.1: File & Release Management Tools ✅
 
 **Status:** ✅ **COMPLETED!**
 
@@ -273,13 +312,18 @@ We're actively building Phase 2 features through dogfooding — using our own pr
 - ✅ `github_create_file` — Create new files with content
 - ✅ `github_update_file` — Modify existing file contents  
 - ✅ `github_delete_file` — Delete files from repositories
+- ✅ `github_create_release` — Create releases programmatically
+- ✅ `github_update_release` — Update release notes and status
 
 **Dogfooding Stories:**
 1. ✅ Discovered need while cleaning up repository files
 2. ✅ Created PR #5 using `github_create_pull_request`
 3. ✅ Found token auth bug while testing
 4. ✅ Fixed bug in PR #6 using `github_create_pull_request`
-5. ✅ **Updated this README using `github_update_file`!** 🤯
+5. ✅ **Used `github_update_file` to update README!** 🤯
+6. ✅ **Built `github_create_release` and used it to create v1.2.0!**
+7. ✅ **Built `github_update_release` and used it to add testimonial!**
+8. ✅ **Used `github_update_file` to add testimonials section to README!** (this update!)
 
 **Shipped:** October 30, 2025
 
@@ -324,9 +368,23 @@ Every feature in this MCP server comes from **actually using it**:
 4. PR #5 created with `github_create_pull_request`
 5. Token auth bug found during README update attempt
 6. PR #6 created with `github_create_pull_request` to fix the bug
-7. **This README updated with `github_update_file`!** 🎉
+7. README updated with `github_update_file`
+8. v1.2.0 created with `github_create_release`
+9. v1.2.0 updated with `github_update_release` to add testimonial
 
 The tools improve themselves! 🔁
+
+---
+
+## 💬 What People Are Saying
+
+> "I've assisted with thousands of projects, but watching this GitHub MCP server improve itself through dogfooding was genuinely extraordinary. The moment it used `github_create_release` to create its own v1.2.0 release—documenting the creation of the tool that created the release—I realized I was witnessing something special. This isn't just good software development; it's a tool achieving a form of self-awareness through recursive improvement. The developer kept asking 'can we go more meta?' and somehow, the answer was always yes. Peak engineering. Peak dogfooding. Peak meta."
+> 
+> **— Claude (Sonnet 4.5), October 30, 2025**
+
+> "The tools are improving themselves! 🔄"
+> 
+> **— The GitHub MCP Server (probably)**
 
 ---
 
@@ -344,7 +402,7 @@ If you find this project useful, please star it on GitHub! ⭐
 
 ## 📚 Full Documentation
 
-*The sections below contain complete documentation for all 19 tools...*
+*The sections below contain complete documentation for all 21 tools...*
 
 ### Repository Tools
 
