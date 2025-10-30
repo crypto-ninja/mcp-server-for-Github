@@ -494,6 +494,24 @@ class CreateReleaseInput(BaseModel):
     target_commitish: Optional[str] = Field(default=None, description="Commit SHA, branch, or tag to create release from (defaults to default branch)")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
+class UpdateReleaseInput(BaseModel):
+    """Input model for updating GitHub releases."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    release_id: str = Field(..., description="Release ID or tag name (e.g., 'v1.2.0')")
+    tag_name: Optional[str] = Field(default=None, description="New tag name (use carefully!)")
+    name: Optional[str] = Field(default=None, description="New release title")
+    body: Optional[str] = Field(default=None, description="New release notes/description in Markdown format")
+    draft: Optional[bool] = Field(default=None, description="Set draft status")
+    prerelease: Optional[bool] = Field(default=None, description="Set pre-release status")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
 # Phase 2.1: File Management Models
 
 
@@ -2211,6 +2229,112 @@ async def github_create_release(params: CreateReleaseInput) -> str:
         
         if data.get('body'):
             response.append(f"\n**Release Notes:**\n{data['body'][:500]}{'...' if len(data['body']) > 500 else ''}")
+        
+        return "\n".join(response)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_update_release",
+    annotations={
+        "title": "Update GitHub Release",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_update_release(params: UpdateReleaseInput) -> str:
+    """
+    Update an existing GitHub release.
+    
+    This tool modifies release information including title, notes, and status.
+    Only provided fields will be updated - others remain unchanged.
+    
+    Args:
+        params (UpdateReleaseInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - release_id (str): Release ID or tag name
+            - tag_name (Optional[str]): New tag name
+            - name (Optional[str]): New title
+            - body (Optional[str]): New release notes
+            - draft (Optional[bool]): Draft status
+            - prerelease (Optional[bool]): Pre-release status
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with updated release details
+    
+    Examples:
+        - Use when: "Update the v1.2.0 release notes"
+        - Use when: "Change release from draft to published"
+        - Use when: "Add more details to the latest release"
+    
+    Error Handling:
+        - Returns error if release not found (404)
+        - Returns error if authentication fails (401/403)
+        - Returns error if invalid parameters (422)
+    """
+    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    
+    try:
+        # First, get the release to find its ID if tag name was provided
+        if params.release_id.startswith('v') or '.' in params.release_id:
+            # Looks like a tag name, need to get release ID
+            get_endpoint = f"repos/{params.owner}/{params.repo}/releases/tags/{params.release_id}"
+            release_data = await _make_github_request(
+                get_endpoint,
+                method="GET",
+                token=auth_token
+            )
+            release_id = release_data['id']
+        else:
+            release_id = params.release_id
+        
+        endpoint = f"repos/{params.owner}/{params.repo}/releases/{release_id}"
+        
+        # Build request body with only provided fields
+        body_data = {}
+        
+        if params.tag_name is not None:
+            body_data["tag_name"] = params.tag_name
+        if params.name is not None:
+            body_data["name"] = params.name
+        if params.body is not None:
+            body_data["body"] = params.body
+        if params.draft is not None:
+            body_data["draft"] = params.draft
+        if params.prerelease is not None:
+            body_data["prerelease"] = params.prerelease
+        
+        # Update the release
+        data = await _make_github_request(
+            endpoint,
+            method="PATCH",
+            token=auth_token,
+            json=body_data
+        )
+        
+        # Format response
+        response = [
+            "✅ **Release Updated Successfully!**\n",
+            f"🏷️ **Tag:** {data['tag_name']}",
+            f"📦 **Name:** {data['name']}",
+            f"🔗 **URL:** {data['html_url']}",
+            f"📅 **Updated:** {_format_timestamp(data.get('published_at', data['created_at']))}",
+        ]
+        
+        if data.get('draft'):
+            response.append("📝 **Status:** Draft")
+        elif data.get('prerelease'):
+            response.append("🚧 **Status:** Pre-release")
+        else:
+            response.append("✅ **Status:** Published")
+        
+        if params.body:
+            response.append(f"\n**Updated Release Notes Preview:**\n{params.body[:300]}{'...' if len(params.body) > 300 else ''}")
         
         return "\n".join(response)
         
