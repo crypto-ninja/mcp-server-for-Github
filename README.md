@@ -767,6 +767,65 @@ We welcome contributions! Key areas:
 
 ---
 
+## 🗺️ Phase 2 Development Roadmap
+
+We're actively building Phase 2 features through dogfooding — using our own product reveals what's missing!
+
+### Phase 2.1: File Management Tools 🔨
+
+**Status:** Planning → Issue #2
+
+**Tools to Add:**
+- `github_delete_file` — Delete files from repositories
+- `github_create_file` — Create new files with content
+- `github_update_file` — Modify existing file contents
+- `github_commit_changes` — Batch commits with custom messages
+
+**Why:** Discovered while cleaning up our own repository — we could read files but not modify them!
+
+**Timeline:** Q4 2025
+
+### Phase 2.2: Repository Management Tools 🏗️
+
+**Status:** Planning → Issue #3
+
+**Tools to Add:**
+- `github_create_repository` — Create new repos (personal & org)
+- `github_delete_repository` — Delete repos (with safety checks)
+- `github_update_repository` — Modify repo settings
+- `github_transfer_repository` — Transfer ownership
+- `github_archive_repository` — Archive/unarchive repos
+
+**Why:** While reviewing workflows, we realized we can do everything TO a repo except CREATE it!
+
+**Timeline:** Q4 2025
+
+### Phase 3: Enterprise Features 🏢
+
+**Status:** Future Planning
+
+- Webhook management
+- Collaborator management
+- Team permissions
+- Advanced analytics
+- Organization administration
+
+**Timeline:** 2026
+
+### 🐕🍖 The Dogfooding Process
+
+Each feature comes from actually using the tool:
+
+1. Use the product on our own repo
+2. Hit a limitation — "Wait, I can't do X?"
+3. Create an issue — using the tool itself!
+4. Build the feature — fill the gap
+5. Ship and repeat ✨
+
+Want to contribute? Check out the Phase 2 issues and share your use cases!
+
+---
+
 ## 💬 Support
 
 - **📖 Documentation:** You're reading it!
