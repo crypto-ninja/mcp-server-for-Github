@@ -41,6 +41,7 @@ Features:
 - GitHub Actions workflow monitoring
 - Advanced search (code and issues across GitHub)
 - File content retrieval
+- **File management (create, update, delete files)** ← NEW!
 - User and organization information
 """
 
@@ -49,6 +50,7 @@ from enum import Enum
 import json
 import httpx
 from datetime import datetime
+import base64
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
 
@@ -472,6 +474,60 @@ class GetReleaseInput(BaseModel):
     tag: Optional[str] = Field(default="latest", description="Release tag (e.g., 'v1.1.0') or 'latest' for most recent")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Phase 2.1: File Management Models
+
+
+class CreateFileInput(BaseModel):
+    """Input model for creating files in a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    path: str = Field(..., description="File path (e.g., 'docs/README.md', 'src/main.py')", min_length=1, max_length=500)
+    content: str = Field(..., description="File content (will be base64 encoded automatically)")
+    message: str = Field(..., description="Commit message", min_length=1, max_length=500)
+    branch: Optional[str] = Field(default=None, description="Branch name (defaults to repository's default branch)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class UpdateFileInput(BaseModel):
+    """Input model for updating files in a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    path: str = Field(..., description="File path to update", min_length=1, max_length=500)
+    content: str = Field(..., description="New file content")
+    message: str = Field(..., description="Commit message", min_length=1, max_length=500)
+    sha: str = Field(..., description="SHA of the file being replaced (get from github_get_file_content)")
+    branch: Optional[str] = Field(default=None, description="Branch name (defaults to repository's default branch)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class DeleteFileInput(BaseModel):
+    """Input model for deleting files from a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    path: str = Field(..., description="File path to delete", min_length=1, max_length=500)
+    message: str = Field(..., description="Commit message", min_length=1, max_length=500)
+    sha: str = Field(..., description="SHA of the file being deleted (get from github_get_file_content)")
+    branch: Optional[str] = Field(default=None, description="Branch name (defaults to repository's default branch)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 # Tool Implementations
 
@@ -2047,6 +2103,295 @@ async def github_get_release(params: GetReleaseInput) -> str:
         return _truncate_response(markdown)
     except Exception as e:
         return _handle_api_error(e)
+
+# Phase 2.1: File Management Tools
+
+
+@mcp.tool(
+    name="github_create_file",
+    annotations={
+        "title": "Create File in Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_create_file(params: CreateFileInput) -> str:
+    """
+    Create a new file in a GitHub repository.
+    
+    This tool creates a new file with the specified content and commits it to the repository.
+    If the file already exists, this will fail - use github_update_file instead.
+    
+    Args:
+        params (CreateFileInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - path (str): File path in repository
+            - content (str): File content
+            - message (str): Commit message
+            - branch (Optional[str]): Target branch
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with commit details
+    
+    Examples:
+        - Use when: "Create a new README.md file"
+        - Use when: "Add a LICENSE file to the repository"
+        - Use when: "Create docs/API.md with content..."
+    
+    Error Handling:
+        - Returns error if file already exists (422)
+        - Returns error if authentication fails (401/403)
+        - Returns error if branch doesn't exist (404)
+    """
+    try:
+        # Encode content to base64
+        content_bytes = params.content.encode('utf-8')
+        content_base64 = base64.b64encode(content_bytes).decode('utf-8')
+        
+        # Prepare request body
+        body = {
+            "message": params.message,
+            "content": content_base64
+        }
+        
+        if params.branch:
+            body["branch"] = params.branch
+        
+        # Make API request
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            method="PUT",
+            token=params.token,
+            json=body
+        )
+        
+        # Format success response
+        result = f"""✅ **File Created Successfully!**
+
+
+**Repository:** {params.owner}/{params.repo}
+**File:** {params.path}
+**Branch:** {params.branch or 'default'}
+**Commit Message:** {params.message}
+
+
+**Commit Details:**
+- SHA: {data['commit']['sha']}
+- Author: {data['commit']['author']['name']}
+- Date: {data['commit']['author']['date']}
+
+
+**File URL:** {data['content']['html_url']}
+"""
+        
+        return result
+        
+    except Exception as e:
+        error_msg = _handle_api_error(e)
+        
+        # Add helpful context for common errors
+        if "422" in error_msg or "already exists" in error_msg.lower():
+            error_msg += "\n\n💡 Tip: This file already exists. Use 'github_update_file' to modify it, or 'github_delete_file' to remove it first."
+        
+        return error_msg
+
+
+@mcp.tool(
+    name="github_update_file",
+    annotations={
+        "title": "Update File in Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_update_file(params: UpdateFileInput) -> str:
+    """
+    Update an existing file in a GitHub repository.
+    
+    This tool modifies the content of an existing file and commits the changes.
+    Requires the current SHA of the file (get it from github_get_file_content first).
+    
+    Args:
+        params (UpdateFileInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - path (str): File path in repository
+            - content (str): New file content
+            - message (str): Commit message
+            - sha (str): Current file SHA (required)
+            - branch (Optional[str]): Target branch
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with commit details
+    
+    Examples:
+        - Use when: "Update the README.md file"
+        - Use when: "Modify src/config.py"
+        - Use when: "Change the content of docs/API.md"
+    
+    Error Handling:
+        - Returns error if file doesn't exist (404)
+        - Returns error if SHA doesn't match (409 conflict)
+        - Returns error if authentication fails (401/403)
+    """
+    try:
+        # Encode content to base64
+        content_bytes = params.content.encode('utf-8')
+        content_base64 = base64.b64encode(content_bytes).decode('utf-8')
+        
+        # Prepare request body
+        body = {
+            "message": params.message,
+            "content": content_base64,
+            "sha": params.sha
+        }
+        
+        if params.branch:
+            body["branch"] = params.branch
+        
+        # Make API request
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            method="PUT",
+            token=params.token,
+            json=body
+        )
+        
+        # Format success response
+        result = f"""✅ **File Updated Successfully!**
+
+
+**Repository:** {params.owner}/{params.repo}
+**File:** {params.path}
+**Branch:** {params.branch or 'default'}
+**Commit Message:** {params.message}
+
+
+**Commit Details:**
+- SHA: {data['commit']['sha']}
+- Author: {data['commit']['author']['name']}
+- Date: {data['commit']['author']['date']}
+
+
+**File URL:** {data['content']['html_url']}
+"""
+        
+        return result
+        
+    except Exception as e:
+        error_msg = _handle_api_error(e)
+        
+        # Add helpful context for common errors
+        if "409" in error_msg or "does not match" in error_msg.lower():
+            error_msg += "\n\n💡 Tip: The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
+        elif "404" in error_msg:
+            error_msg += "\n\n💡 Tip: File not found. Use 'github_create_file' to create it first."
+        
+        return error_msg
+
+
+@mcp.tool(
+    name="github_delete_file",
+    annotations={
+        "title": "Delete File from Repository",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_delete_file(params: DeleteFileInput) -> str:
+    """
+    Delete a file from a GitHub repository.
+    
+    ⚠️ DESTRUCTIVE OPERATION: This permanently deletes the file from the repository.
+    Requires the current SHA of the file (get it from github_get_file_content first).
+    
+    Args:
+        params (DeleteFileInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - path (str): File path to delete
+            - message (str): Commit message explaining deletion
+            - sha (str): Current file SHA (required for safety)
+            - branch (Optional[str]): Target branch
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with commit details
+    
+    Examples:
+        - Use when: "Delete the old config file"
+        - Use when: "Remove docs/deprecated.md"
+        - Use when: "Clean up temporary files"
+    
+    Error Handling:
+        - Returns error if file doesn't exist (404)
+        - Returns error if SHA doesn't match (409 conflict)
+        - Returns error if authentication fails (401/403)
+        
+    Safety Notes:
+        - Requires explicit SHA to prevent accidental deletions
+        - Creates a commit that can be reverted if needed
+        - File history is preserved in Git
+    """
+    try:
+        # Prepare request body
+        body = {
+            "message": params.message,
+            "sha": params.sha
+        }
+        
+        if params.branch:
+            body["branch"] = params.branch
+        
+        # Make API request
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            method="DELETE",
+            token=params.token,
+            json=body
+        )
+        
+        # Format success response
+        result = f"""✅ **File Deleted Successfully!**
+
+
+**Repository:** {params.owner}/{params.repo}
+**File:** {params.path}
+**Branch:** {params.branch or 'default'}
+**Commit Message:** {params.message}
+
+
+**Commit Details:**
+- SHA: {data['commit']['sha']}
+- Author: {data['commit']['author']['name']}
+- Date: {data['commit']['author']['date']}
+
+
+⚠️ **Note:** File has been removed from the repository but remains in Git history.
+You can restore it by reverting this commit if needed.
+"""
+        
+        return result
+        
+    except Exception as e:
+        error_msg = _handle_api_error(e)
+        
+        # Add helpful context for common errors
+        if "409" in error_msg or "does not match" in error_msg.lower():
+            error_msg += "\n\n💡 Tip: The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
+        elif "404" in error_msg:
+            error_msg += "\n\n💡 Tip: File not found. It may have already been deleted or the path is incorrect."
+        
+        return error_msg
 
 # Entry point
 if __name__ == "__main__":
