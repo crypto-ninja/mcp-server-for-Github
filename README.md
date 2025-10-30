@@ -773,7 +773,7 @@ We're actively building Phase 2 features through dogfooding — using our own pr
 
 ### Phase 2.1: File Management Tools 🔨
 
-**Status:** Planning → Issue #2
+**Status:** Planning → [Issue #2](https://github.com/crypto-ninja/github-mcp-server/issues/2)
 
 **Tools to Add:**
 - `github_delete_file` — Delete files from repositories
@@ -787,7 +787,7 @@ We're actively building Phase 2 features through dogfooding — using our own pr
 
 ### Phase 2.2: Repository Management Tools 🏗️
 
-**Status:** Planning → Issue #3
+**Status:** Planning → [Issue #3](https://github.com/crypto-ninja/github-mcp-server/issues/3)
 
 **Tools to Add:**
 - `github_create_repository` — Create new repos (personal & org)
