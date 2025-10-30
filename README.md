@@ -7,6 +7,8 @@
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, and intelligent code search. Built for AI-powered development teams.
 
+👉 New here? Start with the quick guide: [START_HERE.md](START_HERE.md)
+
 ## ✨ What's New in Phase 1
 
 🎉 **Major Update:** We've expanded from 8 to **14 powerful tools**, adding:
