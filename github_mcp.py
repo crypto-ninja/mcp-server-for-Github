@@ -48,6 +48,7 @@ Features:
 from typing import Optional, List, Dict, Any
 from enum import Enum
 import json
+import os
 import httpx
 from datetime import datetime
 import base64
@@ -2147,6 +2148,8 @@ async def github_create_file(params: CreateFileInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if branch doesn't exist (404)
     """
+    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+
     try:
         # Encode content to base64
         content_bytes = params.content.encode('utf-8')
@@ -2165,7 +2168,7 @@ async def github_create_file(params: CreateFileInput) -> str:
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/contents/{params.path}",
             method="PUT",
-            token=params.token,
+            token=auth_token,
             json=body
         )
         
@@ -2241,6 +2244,8 @@ async def github_update_file(params: UpdateFileInput) -> str:
         - Returns error if SHA doesn't match (409 conflict)
         - Returns error if authentication fails (401/403)
     """
+    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+
     try:
         # Encode content to base64
         content_bytes = params.content.encode('utf-8')
@@ -2260,7 +2265,7 @@ async def github_update_file(params: UpdateFileInput) -> str:
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/contents/{params.path}",
             method="PUT",
-            token=params.token,
+            token=auth_token,
             json=body
         )
         
@@ -2342,6 +2347,8 @@ async def github_delete_file(params: DeleteFileInput) -> str:
         - Creates a commit that can be reverted if needed
         - File history is preserved in Git
     """
+    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+
     try:
         # Prepare request body
         body = {
@@ -2356,7 +2363,7 @@ async def github_delete_file(params: DeleteFileInput) -> str:
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/contents/{params.path}",
             method="DELETE",
-            token=params.token,
+            token=auth_token,
             json=body
         )
         
