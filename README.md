@@ -3,16 +3,21 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-16-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-19-brightgreen.svg)](#-available-tools)
 
-> **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, and intelligent code search. Built for AI-powered development teams.
+> **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
 👉 New here? Start with the quick guide: [START_HERE.md](START_HERE.md)
 
-## ✨ What's New in Phase 1
+## ✨ What's New
 
-🎉 **Major Update:** We've expanded from 8 to **14 powerful tools**, adding:
+🎉 **Phase 2.1 SHIPPED:** File Management Tools are live! We've expanded from 16 to **19 powerful tools**, adding:
 
+- **📝 File Creation** - Create new files in repositories
+- **✏️ File Updates** - Modify existing file contents with SHA verification
+- **🗑️ File Deletion** - Delete files safely with conflict prevention
+
+🚀 **Phase 1 Complete:** GitHub Actions, Enhanced PRs, and Advanced Search
 - **🔄 GitHub Actions Integration** - Monitor CI/CD workflows and runs
 - **🔀 Enhanced PR Management** - Create PRs with reviews and detailed analysis  
 - **🔍 Advanced Search** - Search code and issues across all of GitHub
@@ -30,37 +35,44 @@ Complete repository exploration and file access capabilities.
 - **Browse Contents** - Navigate directory structures and file trees
 - **File Access** - Retrieve file contents from any branch or commit
 
+### 📝 File Management (3 tools) 🆕
+Complete CRUD operations for repository files.
+
+- **✅ Create Files** - Add new files with content to any repository
+- **✅ Update Files** - Modify existing files with SHA-based conflict prevention
+- **✅ Delete Files** - Remove files safely with validation
+
 ### 🐛 Issue Management (3 tools)
 Full issue lifecycle from creation to advanced search.
 
 - **List Issues** - Browse with state filtering and pagination
 - **Create Issues** - Open issues with labels and assignees
-- **🆕 Search Issues** - Advanced search across repositories with filters
+- **Search Issues** - Advanced search across repositories with filters
 
 ### 🔀 Pull Request Operations (3 tools)
 Complete PR workflow from creation to detailed analysis.
 
 - **List PRs** - View all pull requests with state filtering
-- **🆕 Create PRs** - Open pull requests with draft support
-- **🆕 PR Details** - Comprehensive analysis with reviews, commits, and files
+- **Create PRs** - Open pull requests with draft support
+- **PR Details** - Comprehensive analysis with reviews, commits, and files
 
 ### ⚡ GitHub Actions (2 tools)
 Monitor and manage your CI/CD pipelines.
 
-- **🆕 List Workflows** - View all GitHub Actions workflows
-- **🆕 Workflow Runs** - Track execution status and results
+- **List Workflows** - View all GitHub Actions workflows
+- **Workflow Runs** - Track execution status and results
 
 ### 📦 Release Management (2 tools)
 Track and verify repository releases.
 
-- **🆕 List Releases** - View all releases with stats
-- **🆕 Get Release** - Detailed release information
+- **List Releases** - View all releases with stats
+- **Get Release** - Detailed release information
 
 ### 🔍 Search & Discovery (2 tools)
 Powerful search across GitHub's entire ecosystem.
 
 - **Search Repositories** - Find repos with advanced filters
-- **🆕 Search Code** - Locate code snippets across GitHub
+- **Search Code** - Locate code snippets across GitHub
 
 ### 👤 User Information (1 tool)
 Profile and organization data retrieval.
@@ -118,6 +130,221 @@ Generate a GitHub Personal Access Token:
 ---
 
 ## 🛠️ Available Tools
+
+*Full tool documentation available in the complete README - showing highlights below*
+
+### 🆕 New in Phase 2.1: File Management
+
+#### `github_create_file` 🆕
+Create new files in repositories with automatic base64 encoding.
+
+**Example:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "path": "docs/API.md",
+  "content": "# API Documentation\n\nWelcome!",
+  "message": "docs: Add API documentation"
+}
+```
+
+#### `github_update_file` 🆕
+Update existing files with SHA-based conflict prevention.
+
+**Example:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "path": "README.md",
+  "content": "# Updated content",
+  "message": "docs: Update README",
+  "sha": "abc123" 
+}
+```
+
+#### `github_delete_file` 🆕
+Safely delete files with SHA verification.
+
+**Example:**
+```json
+{
+  "owner": "myorg",
+  "repo": "myproject",
+  "path": "old-file.md",
+  "message": "chore: Remove old file",
+  "sha": "abc123"
+}
+```
+
+*For complete tool documentation, see the full README sections below*
+
+---
+
+## 🎯 Use Cases
+
+### 🚀 For AI-Powered Development
+
+**Automated Documentation:**
+```
+1. Create docs with github_create_file
+2. Update existing docs with github_update_file
+3. Clean up old files with github_delete_file
+4. Maintain consistency across repositories
+```
+
+**Automated Code Review:**
+```
+1. Monitor PR with github_get_pr_details
+2. Check CI status with github_get_workflow_runs
+3. Analyze changes and provide feedback
+4. Track review comments automatically
+```
+
+**Repository Maintenance:**
+```
+1. Update configuration files automatically
+2. Clean up deprecated documentation
+3. Maintain consistent README files
+4. Bulk file operations
+```
+
+---
+
+## 🐛 Error Handling
+
+Comprehensive error messages with actionable guidance:
+
+- **404 Not Found** - Resource doesn't exist (check owner/repo/file names)
+- **401 Unauthorized** - Invalid or missing token
+- **403 Forbidden** - Insufficient permissions (check token scopes)
+- **422 Unprocessable** - Invalid request parameters
+- **429 Rate Limited** - Too many requests (wait before retrying)
+
+All errors include suggestions for resolution!
+
+---
+
+## 📜 License
+
+### Dual Licensing Model
+
+#### 🆓 Open Source (AGPL v3)
+**Perfect for:**
+- ✅ Open source projects
+- ✅ Personal use
+- ✅ Educational purposes
+- ✅ Non-commercial use
+
+**Requirement:** Share your source code
+
+#### 💼 Commercial License
+**Perfect for:**
+- ✅ Commercial applications
+- ✅ Proprietary software
+- ✅ SaaS products
+- ✅ Internal business tools
+
+**Pricing:** Starting at £399/year
+
+📄 **[View Full Licensing Details](LICENSING.md)**
+
+---
+
+## 🔗 Links
+
+- **📖 Full Documentation:** [Complete README](https://github.com/crypto-ninja/github-mcp-server)
+- **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
+- **💡 Discussions:** [GitHub Discussions](https://github.com/crypto-ninja/github-mcp-server/discussions)
+- **📧 Licensing:** [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
+
+---
+
+## 🗺️ Phase 2 Development Roadmap
+
+We're actively building Phase 2 features through dogfooding — using our own product reveals what's missing!
+
+### Phase 2.1: File Management Tools ✅
+
+**Status:** ✅ **COMPLETED!**
+
+**Shipped Tools:**
+- ✅ `github_create_file` — Create new files with content
+- ✅ `github_update_file` — Modify existing file contents  
+- ✅ `github_delete_file` — Delete files from repositories
+
+**Dogfooding Stories:**
+1. ✅ Discovered need while cleaning up repository files
+2. ✅ Created PR #5 using `github_create_pull_request`
+3. ✅ Found token auth bug while testing
+4. ✅ Fixed bug in PR #6 using `github_create_pull_request`
+5. ✅ **Updated this README using `github_update_file`!** 🤯
+
+**Shipped:** October 30, 2025
+
+### Phase 2.2: Repository Management Tools 🚧
+
+**Status:** Next Up → [Issue #3](https://github.com/crypto-ninja/github-mcp-server/issues/3)
+
+**Tools to Add:**
+- `github_create_repository` — Create new repos
+- `github_delete_repository` — Delete repos (with safety)
+- `github_update_repository` — Modify repo settings
+- `github_transfer_repository` — Transfer ownership
+- `github_archive_repository` — Archive/unarchive repos
+
+**Timeline:** Q4 2025
+
+### Phase 3: Enterprise Features 🏢
+
+**Status:** 2026 Planning
+
+- Webhook management
+- Team permissions
+- Organization administration
+- Advanced analytics
+
+---
+
+## 🐕🍖 The Dogfooding Philosophy
+
+Every feature in this MCP server comes from **actually using it**:
+
+1. 🚀 Use the product on our own repo
+2. 🐛 Hit a limitation — "Wait, I can't do X?"
+3. 📝 Create an issue — using the tool itself!
+4. 🔨 Build the feature — fill the gap
+5. 📦 Ship and repeat
+
+**Latest Stories:**
+1. Missing release verification tools (shipped v1.1.1 same day)
+2. Token handling inconsistency (fixed immediately)
+3. Issue #3 created with `github_create_issue`
+4. PR #5 created with `github_create_pull_request`
+5. Token auth bug found during README update attempt
+6. PR #6 created with `github_create_pull_request` to fix the bug
+7. **This README updated with `github_update_file`!** 🎉
+
+The tools improve themselves! 🔁
+
+---
+
+## ⭐ Star History
+
+If you find this project useful, please star it on GitHub! ⭐
+
+---
+
+**Built with ❤️ by [MCP Labs](https://mcplabs.co.uk)**
+
+*Empowering AI-driven development workflows*
+
+---
+
+## 📚 Full Documentation
+
+*The sections below contain complete documentation for all 19 tools...*
 
 ### Repository Tools
 
@@ -212,7 +439,7 @@ Create new issues with markdown descriptions, labels, and assignees.
 
 ---
 
-#### `github_search_issues` 🆕
+#### `github_search_issues`
 Advanced issue search across GitHub with powerful filtering options.
 
 **Parameters:**
@@ -256,7 +483,7 @@ List pull requests with state filtering and pagination support.
 
 ---
 
-#### `github_create_pull_request` 🆕
+#### `github_create_pull_request`
 Create pull requests with full control over branches, reviewers, and settings.
 
 **Parameters:**
@@ -284,7 +511,7 @@ Create pull requests with full control over branches, reviewers, and settings.
 
 ---
 
-#### `github_get_pr_details` 🆕
+#### `github_get_pr_details`
 Get comprehensive pull request information including reviews, commits, and file changes.
 
 **Parameters:**
@@ -314,7 +541,7 @@ Get comprehensive pull request information including reviews, commits, and file 
 
 ### GitHub Actions
 
-#### `github_list_workflows` 🆕
+#### `github_list_workflows`
 List all GitHub Actions workflows configured in a repository.
 
 **Parameters:**
@@ -334,7 +561,7 @@ List all GitHub Actions workflows configured in a repository.
 
 ---
 
-#### `github_get_workflow_runs` 🆕
+#### `github_get_workflow_runs`
 Monitor workflow execution history with advanced filtering.
 
 **Parameters:**
@@ -373,7 +600,7 @@ Monitor workflow execution history with advanced filtering.
 
 ### Release Management
 
-#### `github_list_releases` 🆕
+#### `github_list_releases`
 List all releases from a repository with pagination support.
 
 **Parameters:**
@@ -393,7 +620,7 @@ List all releases from a repository with pagination support.
 
 ---
 
-#### `github_get_release` 🆕
+#### `github_get_release`
 Get detailed information about a specific release or the latest release.
 
 **Parameters:**
@@ -439,7 +666,7 @@ Search for repositories across GitHub with advanced filtering.
 
 ---
 
-#### `github_search_code` 🆕
+#### `github_search_code`
 Search for code snippets across all of GitHub with powerful filters.
 
 **Parameters:**
@@ -491,70 +718,6 @@ Retrieve detailed information about GitHub users and organizations.
 
 ---
 
-## 🎯 Use Cases
-
-### 🚀 For AI-Powered Development
-
-**Automated Code Review:**
-```
-1. Monitor PR with github_get_pr_details
-2. Check CI status with github_get_workflow_runs
-3. Analyze changes and provide feedback
-4. Track review comments automatically
-```
-
-**Intelligent Issue Triage:**
-```
-1. Search for similar issues with github_search_issues
-2. Analyze patterns across repositories
-3. Auto-assign based on expertise
-4. Track issue resolution
-```
-
-**Repository Intelligence:**
-```
-1. Discover code patterns with github_search_code
-2. Find best practices across projects
-3. Locate security patterns
-4. Track dependency usage
-```
-
-### 💼 For Development Teams
-
-**CI/CD Monitoring:**
-- Monitor workflow runs across all repos
-- Track deployment success rates
-- Get instant failure notifications
-- Analyze build performance
-
-**PR Workflow Automation:**
-- Create PRs from feature branches
-- Auto-assign reviewers
-- Track review status
-- Monitor merge conflicts
-
-**Issue Management:**
-- Create issues from AI analysis
-- Search across all team repos
-- Track label patterns
-- Monitor issue velocity
-
-### 📊 For Project Management
-
-**Sprint Planning:**
-- List all open issues and PRs
-- Track team assignments
-- Monitor completion rates
-- Analyze workflow efficiency
-
-**Release Management:**
-- Track PR merge status
-- Monitor CI/CD pipelines
-- Validate release readiness
-- Generate release notes
-
----
-
 ## 📊 Rate Limits
 
 GitHub API rate limits (per hour):
@@ -585,26 +748,12 @@ GitHub API rate limits (per hour):
 - `read:org` - Organization data
 
 **Write Operations:**
-- `repo` - Full repository access (for creating issues/PRs)
+- `repo` - Full repository access (for creating issues/PRs/files)
 - `workflow` - GitHub Actions management
 
 **Enterprise:**
 - `admin:org` - Organization administration
 - `admin:repo_hook` - Webhook management
-
----
-
-## 🐛 Error Handling
-
-Comprehensive error messages with actionable guidance:
-
-- **404 Not Found** - Resource doesn't exist (check owner/repo/file names)
-- **401 Unauthorized** - Invalid or missing token
-- **403 Forbidden** - Insufficient permissions (check token scopes)
-- **422 Unprocessable** - Invalid request parameters
-- **429 Rate Limited** - Too many requests (wait before retrying)
-
-All errors include suggestions for resolution!
 
 ---
 
@@ -687,56 +836,12 @@ timeout 5s python github_mcp.py
 
 ---
 
-## 📜 License
-
-### Dual Licensing Model
-
-#### 🆓 Open Source (AGPL v3)
-**Perfect for:**
-- ✅ Open source projects
-- ✅ Personal use
-- ✅ Educational purposes
-- ✅ Non-commercial use
-
-**Requirement:** Share your source code
-
-#### 💼 Commercial License
-**Perfect for:**
-- ✅ Commercial applications
-- ✅ Proprietary software
-- ✅ SaaS products
-- ✅ Internal business tools
-
-**Pricing:** Starting at £399/year
-
-📄 **[View Full Licensing Details](LICENSING.md)**
-
-### License Comparison
-
-| Feature | AGPL v3 | Commercial |
-|---------|---------|------------|
-| Price | Free | £399+/year |
-| Source Sharing | Required | Not Required |
-| Commercial Use | ✅ (with source) | ✅ |
-| Proprietary Use | ❌ | ✅ |
-| Support | Community | Priority |
-| SLA | ❌ | ✅ (Enterprise) |
-
-### Contact
-
-**Need a commercial license?**
-- 📧 Email: [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
-- 🐛 GitHub: [Open an issue](https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry)
-- 🌐 Website: [mcplabs.co.uk](https://mcplabs.co.uk) (coming soon)
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions! Key areas:
 
 ### High Priority
-- **Phase 2 Features:** Release management, branch operations
+- **Phase 2.2 Features:** Repository management tools
 - **Performance:** Caching layer implementation
 - **Documentation:** Additional examples and use cases
 - **Testing:** Comprehensive test suite
@@ -755,94 +860,9 @@ We welcome contributions! Key areas:
 
 ---
 
-## 🎉 What's Next?
-
-### Phase 2 (Coming Soon)
-- **Release Management** - List releases, get latest release
-- **Collaboration Tools** - Contributors, collaborators, permissions
-- **Branch Management** - List branches, create branches, protection status
-
-### Phase 3 (Future)
-- **Webhook Management** - Create and manage webhooks (Enterprise)
-- **Repository Management** - Create repos, fork repos (Enterprise)
-- **Advanced Analytics** - Custom metrics and insights (Enterprise)
-
----
-
-## 🗺️ Phase 2 Development Roadmap
-
-We're actively building Phase 2 features through dogfooding — using our own product reveals what's missing!
-
-### Phase 2.1: File Management Tools 🔨
-
-**Status:** Planning → [Issue #2](https://github.com/crypto-ninja/github-mcp-server/issues/2)
-
-**Tools to Add:**
-- `github_delete_file` — Delete files from repositories
-- `github_create_file` — Create new files with content
-- `github_update_file` — Modify existing file contents
-- `github_commit_changes` — Batch commits with custom messages
-
-**Why:** Discovered while cleaning up our own repository — we could read files but not modify them!
-
-**Timeline:** Q4 2025
-
-### Phase 2.2: Repository Management Tools 🏗️
-
-**Status:** Planning → [Issue #3](https://github.com/crypto-ninja/github-mcp-server/issues/3)
-
-**Tools to Add:**
-- `github_create_repository` — Create new repos (personal & org)
-- `github_delete_repository` — Delete repos (with safety checks)
-- `github_update_repository` — Modify repo settings
-- `github_transfer_repository` — Transfer ownership
-- `github_archive_repository` — Archive/unarchive repos
-
-**Why:** While reviewing workflows, we realized we can do everything TO a repo except CREATE it!
-
-**Timeline:** Q4 2025
-
-### Phase 3: Enterprise Features 🏢
-
-**Status:** Future Planning
-
-- Webhook management
-- Collaborator management
-- Team permissions
-- Advanced analytics
-- Organization administration
-
-**Timeline:** 2026
-
-### 🐕🍖 The Dogfooding Process
-
-Each feature comes from actually using the tool:
-
-1. Use the product on our own repo
-2. Hit a limitation — "Wait, I can't do X?"
-3. Create an issue — using the tool itself!
-4. Build the feature — fill the gap
-5. Ship and repeat ✨
-
-Want to contribute? Check out the Phase 2 issues and share your use cases!
-
----
-
 ## 💬 Support
 
 - **📖 Documentation:** You're reading it!
 - **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
 - **💡 Feature Requests:** [GitHub Discussions](https://github.com/crypto-ninja/github-mcp-server/discussions)
 - **📧 Email:** [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
-
----
-
-## ⭐ Star History
-
-If you find this project useful, please star it on GitHub! ⭐
-
----
-
-**Built with ❤️ by [MCP Labs](https://mcplabs.co.uk)**
-
-*Empowering AI-driven development workflows*
