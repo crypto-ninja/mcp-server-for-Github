@@ -476,6 +476,24 @@ class GetReleaseInput(BaseModel):
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
+class CreateReleaseInput(BaseModel):
+    """Input model for creating GitHub releases."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    tag_name: str = Field(..., description="Git tag name for the release (e.g., 'v1.2.0')", min_length=1, max_length=100)
+    name: Optional[str] = Field(default=None, description="Release title (defaults to tag_name if not provided)")
+    body: Optional[str] = Field(default=None, description="Release notes/description in Markdown format")
+    draft: Optional[bool] = Field(default=False, description="Create as draft release (not visible publicly)")
+    prerelease: Optional[bool] = Field(default=False, description="Mark as pre-release (not production ready)")
+    target_commitish: Optional[str] = Field(default=None, description="Commit SHA, branch, or tag to create release from (defaults to default branch)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
 # Phase 2.1: File Management Models
 
 
@@ -2102,6 +2120,100 @@ async def github_get_release(params: GetReleaseInput) -> str:
         if data.get('target_commitish'):
             markdown += f"**Target:** `{data['target_commitish']}`\n"
         return _truncate_response(markdown)
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_create_release",
+    annotations={
+        "title": "Create GitHub Release",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_release(params: CreateReleaseInput) -> str:
+    """
+    Create a new release in a GitHub repository.
+    
+    This tool creates a GitHub release with a tag, title, and release notes.
+    Can create draft or pre-release versions. Requires write access to the repository.
+    
+    Args:
+        params (CreateReleaseInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - tag_name (str): Git tag for the release (e.g., 'v1.2.0')
+            - name (Optional[str]): Release title
+            - body (Optional[str]): Release notes in Markdown
+            - draft (Optional[bool]): Create as draft
+            - prerelease (Optional[bool]): Mark as pre-release
+            - target_commitish (Optional[str]): Commit/branch to release from
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with release details and URL
+    
+    Examples:
+        - Use when: "Create a v1.2.0 release"
+        - Use when: "Tag and release the current version"
+        - Use when: "Create a pre-release for testing"
+    
+    Error Handling:
+        - Returns error if tag already exists (422)
+        - Returns error if authentication fails (401/403)
+        - Returns error if invalid parameters (422)
+    """
+    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+
+    try:
+        endpoint = f"repos/{params.owner}/{params.repo}/releases"
+        
+        # Build request body
+        body_data = {
+            "tag_name": params.tag_name,
+            "name": params.name or params.tag_name,
+            "draft": params.draft or False,
+            "prerelease": params.prerelease or False
+        }
+        
+        # Add optional fields
+        if params.body:
+            body_data["body"] = params.body
+        if params.target_commitish:
+            body_data["target_commitish"] = params.target_commitish
+        
+        # Create the release
+        data = await _make_github_request(
+            endpoint,
+            method="POST",
+            token=auth_token,
+            json=body_data
+        )
+        
+        # Format response
+        response = [
+            "✅ **Release Created Successfully!**\n",
+            f"🏷️ **Tag:** {data['tag_name']}",
+            f"📦 **Name:** {data['name']}",
+            f"🔗 **URL:** {data['html_url']}",
+            f"📅 **Created:** {_format_timestamp(data['created_at'])}",
+            f"👤 **Author:** @{data['author']['login']}",
+        ]
+        
+        if data.get('draft'):
+            response.append("📝 **Status:** Draft (not publicly visible)")
+        elif data.get('prerelease'):
+            response.append("🚧 **Status:** Pre-release")
+        else:
+            response.append("✅ **Status:** Published")
+        
+        if data.get('body'):
+            response.append(f"\n**Release Notes:**\n{data['body'][:500]}{'...' if len(data['body']) > 500 else ''}")
+        
+        return "\n".join(response)
+        
     except Exception as e:
         return _handle_api_error(e)
 
