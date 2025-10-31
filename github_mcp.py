@@ -37,12 +37,13 @@ and more. It enables AI assistants to seamlessly integrate with GitHub workflows
 Features:
 - Repository management and exploration
 - Issue creation, search, and management
-- Pull request operations (list, create, detailed view)
+- Pull request operations (list, create, detailed view, merge)
 - GitHub Actions workflow monitoring
 - Advanced search (code and issues across GitHub)
 - File content retrieval
 - **File management (create, update, delete files)** ← NEW!
 - Workflow advisor (suggest API vs local vs hybrid)
+ - Repository management (create, update, delete, transfer, archive)
 - User and organization information
 """
 
@@ -529,6 +530,81 @@ class WorkflowSuggestionInput(BaseModel):
     description: Optional[str] = Field(default=None, description="Additional context about the task")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Phase 2.2: Repository Management Models
+
+class CreateRepositoryInput(BaseModel):
+    """Input model for creating repositories (user or org)."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+    
+    owner: Optional[str] = Field(default=None, description="Organization owner (if creating in an org); omit for user repo")
+    name: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    description: Optional[str] = Field(default=None, description="Repository description")
+    private: Optional[bool] = Field(default=False, description="Create as private repository")
+    auto_init: Optional[bool] = Field(default=True, description="Initialize with README")
+    gitignore_template: Optional[str] = Field(default=None, description="Gitignore template name (e.g., 'Python')")
+    license_template: Optional[str] = Field(default=None, description="License template (e.g., 'mit')")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token")
+
+class DeleteRepositoryInput(BaseModel):
+    """Input model for deleting a repository."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="GitHub personal access token")
+
+class UpdateRepositoryInput(BaseModel):
+    """Input model for updating repository settings."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    name: Optional[str] = Field(default=None, description="New repository name")
+    description: Optional[str] = Field(default=None, description="New description")
+    homepage: Optional[str] = Field(default=None, description="Homepage URL")
+    private: Optional[bool] = Field(default=None, description="Set repository visibility")
+    has_issues: Optional[bool] = Field(default=None, description="Enable issues")
+    has_projects: Optional[bool] = Field(default=None, description="Enable projects")
+    has_wiki: Optional[bool] = Field(default=None, description="Enable wiki")
+    default_branch: Optional[str] = Field(default=None, description="Set default branch")
+    archived: Optional[bool] = Field(default=None, description="Archive/unarchive repository")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token")
+
+class TransferRepositoryInput(BaseModel):
+    """Input model for transferring repository ownership."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+    
+    owner: str = Field(..., description="Current repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    new_owner: str = Field(..., description="New owner (user or org)", min_length=1, max_length=100)
+    team_ids: Optional[List[int]] = Field(default=None, description="IDs of teams to add to the repository (org only)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token")
+
+class ArchiveRepositoryInput(BaseModel):
+    """Input model for archiving or unarchiving repositories."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    archived: bool = Field(..., description="True to archive, False to unarchive")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token")
+
+class MergePullRequestInput(BaseModel):
+    """Input model for merging pull requests."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    pull_number: int = Field(..., description="Pull request number", ge=1)
+    merge_method: Optional[str] = Field(default="squash", description="Merge method: 'merge', 'squash', or 'rebase'")
+    commit_title: Optional[str] = Field(default=None, description="Custom commit title for merge commit")
+    commit_message: Optional[str] = Field(default=None, description="Custom commit message for merge commit")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 # Phase 2.1: File Management Models
 
@@ -2748,6 +2824,241 @@ async def github_suggest_workflow(params: WorkflowSuggestionInput) -> str:
         lines.append("- Do bulk changes locally, then use API tools for final small edits")
 
     return _truncate_response("\n".join(lines))
+
+# Phase 2.2: Repository Management Tools
+
+@mcp.tool(
+    name="github_create_repository",
+    annotations={
+        "title": "Create Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_repository(params: CreateRepositoryInput) -> str:
+    """
+    Create a new repository for the authenticated user or in an organization.
+    """
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    try:
+        body = {
+            "name": params.name,
+            "description": params.description,
+            "private": params.private,
+            "auto_init": params.auto_init,
+        }
+        if params.gitignore_template:
+            body["gitignore_template"] = params.gitignore_template
+        if params.license_template:
+            body["license_template"] = params.license_template
+
+        if params.owner:
+            endpoint = f"orgs/{params.owner}/repos"
+        else:
+            endpoint = "user/repos"
+
+        data = await _make_github_request(endpoint, method="POST", token=auth_token, json=body)
+        return f"✅ Repository created: {data['full_name']}\nURL: {data['html_url']}"
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@mcp.tool(
+    name="github_delete_repository",
+    annotations={
+        "title": "Delete Repository",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_delete_repository(params: DeleteRepositoryInput) -> str:
+    """
+    Delete a repository. Destructive; requires appropriate permissions.
+    """
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    try:
+        await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
+        return f"✅ Repository deleted: {params.owner}/{params.repo}"
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@mcp.tool(
+    name="github_update_repository",
+    annotations={
+        "title": "Update Repository Settings",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_repository(params: UpdateRepositoryInput) -> str:
+    """
+    Update repository settings such as description, visibility, and features.
+    """
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    try:
+        body: Dict[str, Any] = {}
+        for field in ["name", "description", "homepage", "private", "has_issues", "has_projects", "has_wiki", "default_branch", "archived"]:
+            value = getattr(params, field)
+            if value is not None:
+                body[field] = value
+        data = await _make_github_request(f"repos/{params.owner}/{params.repo}", method="PATCH", token=auth_token, json=body)
+        return f"✅ Repository updated: {data['full_name']}\nURL: {data['html_url']}"
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@mcp.tool(
+    name="github_transfer_repository",
+    annotations={
+        "title": "Transfer Repository Ownership",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_transfer_repository(params: TransferRepositoryInput) -> str:
+    """
+    Transfer a repository to a new owner (user or organization).
+    """
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    try:
+        body: Dict[str, Any] = {"new_owner": params.new_owner}
+        if params.team_ids:
+            body["team_ids"] = params.team_ids
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/transfer",
+            method="POST",
+            token=auth_token,
+            json=body
+        )
+        return f"✅ Transfer initiated: {data['full_name']} -> {params.new_owner}\nURL: {data['html_url']}"
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@mcp.tool(
+    name="github_archive_repository",
+    annotations={
+        "title": "Archive/Unarchive Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
+    """
+    Archive or unarchive a repository by toggling the archived flag.
+    """
+    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    try:
+        body = {"archived": params.archived}
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}",
+            method="PATCH",
+            token=auth_token,
+            json=body
+        )
+        state = "archived" if data.get("archived") else "active"
+        return f"✅ Repository state updated: {data['full_name']} is now {state}"
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@mcp.tool(
+    name="github_merge_pull_request",
+    annotations={
+        "title": "Merge Pull Request",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_merge_pull_request(params: MergePullRequestInput) -> str:
+    """
+    Merge a pull request using the specified merge method.
+    
+    This tool merges an open pull request into its base branch. Supports
+    merge commits, squash merging, and rebase merging.
+    
+    Args:
+        params (MergePullRequestInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - pull_number (int): Pull request number
+            - merge_method (Optional[str]): 'merge', 'squash', or 'rebase' (default: squash)
+            - commit_title (Optional[str]): Custom commit title
+            - commit_message (Optional[str]): Custom commit message
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Merge confirmation with commit details
+    
+    Examples:
+        - Use when: "Merge PR #8"
+        - Use when: "Squash and merge this pull request"
+        - Use when: "Merge the feature branch"
+    
+    Error Handling:
+        - Returns error if PR not found (404)
+        - Returns error if not mergeable (405)
+        - Returns error if insufficient permissions (403)
+        - Returns error if conflicts exist (409)
+    """
+    try:
+        # Get token from env if not provided
+        token = params.token or os.environ.get("GITHUB_TOKEN")
+        
+        # Build merge data
+        merge_data = {
+            "merge_method": params.merge_method or "squash"
+        }
+        
+        if params.commit_title:
+            merge_data["commit_title"] = params.commit_title
+        if params.commit_message:
+            merge_data["commit_message"] = params.commit_message
+        
+        # Merge the pull request
+        result = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/merge",
+            method="PUT",
+            token=token,
+            json=merge_data
+        )
+        
+        response = f"""✅ **Pull Request Merged Successfully!**
+
+
+📦 **Repository:** {params.owner}/{params.repo}
+🔀 **PR:** #{params.pull_number}
+✅ **Status:** {result.get('message', 'Merged')}
+
+
+**Merge Details:**
+
+- 📝 **Commit SHA:** {result.get('sha', 'N/A')}
+- 🔀 **Method:** {params.merge_method or 'squash'}
+- ✅ **Merged:** {result.get('merged', False)}
+
+
+The pull request has been successfully merged! 🎉
+
+"""
+        
+        return response
+        
+    except Exception as e:
+        return _handle_api_error(e)
 
 # Entry point
 if __name__ == "__main__":
