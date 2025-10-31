@@ -1,4 +1,23 @@
 # Changelog
+## [1.2.1] - 2025-10-31
+
+### 🧠 The Self-Aware Update
+
+Added the workflow advisor tool that recommends when to use API tools vs local git vs a hybrid approach, including rough token cost estimates and dogfooding detection.
+
+### ✨ Added
+- `github_create_release` - Create releases programmatically
+- `github_update_release` - Update existing releases (title, notes, status)
+- `github_suggest_workflow` - Recommend optimal workflow (API/local/hybrid)
+
+### 📊 Statistics
+- New Tools: 3 (total 22)
+
+### 🐕🍖 Dogfooding Story #11
+We built the self-aware tool while deciding how to document itself. It recommended using itself to document itself. META LEVEL: ∞ 🤯
+
+[1.2.1]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.2.1
+
 
 All notable changes to this project will be documented in this file.
 

@@ -42,6 +42,7 @@ Features:
 - Advanced search (code and issues across GitHub)
 - File content retrieval
 - **File management (create, update, delete files)** ← NEW!
+- Workflow advisor (suggest API vs local vs hybrid)
 - User and organization information
 """
 
@@ -511,6 +512,23 @@ class UpdateReleaseInput(BaseModel):
     draft: Optional[bool] = Field(default=None, description="Set draft status")
     prerelease: Optional[bool] = Field(default=None, description="Set pre-release status")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+# Workflow Optimization Model
+class WorkflowSuggestionInput(BaseModel):
+    """Input model for workflow optimization suggestions."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    operation: str = Field(..., description="Operation type (e.g., 'update_readme', 'create_release', 'multiple_file_edits')", min_length=1, max_length=200)
+    file_size: Optional[int] = Field(default=None, description="Estimated file size in bytes", ge=0)
+    num_edits: Optional[int] = Field(default=1, description="Number of separate edit operations", ge=1)
+    file_count: Optional[int] = Field(default=1, description="Number of files being modified", ge=1)
+    description: Optional[str] = Field(default=None, description="Additional context about the task")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
 # Phase 2.1: File Management Models
 
@@ -2635,6 +2653,101 @@ You can restore it by reverting this commit if needed.
             error_msg += "\n\n💡 Tip: File not found. It may have already been deleted or the path is incorrect."
         
         return error_msg
+
+# Workflow Optimization Tool
+
+@mcp.tool(
+    name="github_suggest_workflow",
+    annotations={
+        "title": "Suggest Optimal Workflow (API vs Local vs Hybrid)",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_suggest_workflow(params: WorkflowSuggestionInput) -> str:
+    """
+    Recommend whether to use API tools, local git, or a hybrid approach.
+
+    Heuristics consider operation type, file size, number of edits, and file count.
+    Includes meta-level dogfooding detection and rough token cost estimates.
+    """
+    operation = (params.operation or "").lower()
+    description = (params.description or "").lower()
+    file_size = params.file_size or 0
+    num_edits = params.num_edits or 1
+    file_count = params.file_count or 1
+
+    # Token estimate: ~4 bytes per token (very rough)
+    def bytes_to_tokens(b: int) -> int:
+        return max(1, b // 4)
+
+    # Detect cases where API is required
+    api_only_ops = {"create_release", "github_release", "publish_release"}
+    if operation in api_only_ops or "create_release" in operation:
+        recommendation = "api"
+        rationale = "Operation requires GitHub API (releases cannot be done locally only)."
+    # Dogfooding detection
+    elif any(x in operation for x in ["dogfood", "dogfooding", "test"]) or any(x in description for x in ["dogfood", "test", "github_", "mcp"]):
+        recommendation = "api"
+        rationale = "Dogfooding detected. Use API tools to test features end-to-end."
+    # Single small edit → API
+    elif file_count == 1 and num_edits == 1 and file_size <= 10_000:
+        recommendation = "api"
+        rationale = "Single small edit is fastest via API with minimal overhead."
+    # Large/bulk changes → Local
+    elif file_count > 1 or num_edits >= 3 or file_size >= 40_000:
+        recommendation = "local"
+        rationale = "Multiple edits or large files are more efficient with local git."
+    # Otherwise → Hybrid
+    else:
+        recommendation = "hybrid"
+        rationale = "Mix approaches: structure changes locally, finalize small pieces via API."
+
+    # Simple token cost model
+    api_tokens = bytes_to_tokens(file_size) * max(1, num_edits)
+    local_tokens = bytes_to_tokens(min(file_size, 1024))  # local coordination minimal
+    savings_tokens = max(0, api_tokens - local_tokens)
+
+    if params.response_format == ResponseFormat.JSON:
+        return _truncate_response(json.dumps({
+            "recommendation": recommendation,
+            "rationale": rationale,
+            "estimates": {
+                "api_tokens": api_tokens,
+                "local_tokens": local_tokens,
+                "potential_savings_tokens": savings_tokens
+            },
+            "meta": {
+                "dogfooding": recommendation == "api" and ("dogfood" in operation or "test" in operation or "dogfood" in description or "test" in description)
+            }
+        }, indent=2))
+
+    # Markdown output
+    lines = [
+        f"# Workflow Suggestion",
+        f"**Recommendation:** {recommendation.upper()}",
+        f"**Rationale:** {rationale}",
+        "",
+        "## Estimates",
+        f"- API tokens (rough): {api_tokens}",
+        f"- Local tokens (rough): {local_tokens}",
+        f"- Potential savings: {savings_tokens} tokens",
+    ]
+
+    if recommendation == "api" and ("dogfood" in operation or "test" in operation or "dogfood" in description or "test" in description):
+        lines.append("\n🐕🍖 Dogfooding detected: Use API tools to validate new features end-to-end.")
+
+    lines.append("\n## Next Steps")
+    if recommendation == "api":
+        lines.append("- Use targeted API tools for atomic changes (e.g., github_update_file, github_create_release)")
+    elif recommendation == "local":
+        lines.append("- Make edits locally, commit logically, and push a PR for review")
+    else:
+        lines.append("- Do bulk changes locally, then use API tools for final small edits")
+
+    return _truncate_response("\n".join(lines))
 
 # Entry point
 if __name__ == "__main__":

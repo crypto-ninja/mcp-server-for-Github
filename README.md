@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-21-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-22-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -11,7 +11,11 @@
 
 ## ✨ What's New
 
-🎉 **Phase 2.1 SHIPPED:** File Management & Release Tools are live! We've expanded from 16 to **21 powerful tools**, adding:
+🎉 **Tool #22 SHIPPED:** Self-Aware Workflow Optimization! We've expanded to **22 powerful tools**, adding:
+
+- **🧠 Workflow Advisor** - Recommends API vs local vs hybrid with token estimates
+
+🎉 **Phase 2.1 SHIPPED:** File & Release Tools are live! We expanded from 16 to **21 powerful tools**, adding:
 
 - **📝 File Creation** - Create new files in repositories
 - **✏️ File Updates** - Modify existing file contents with SHA verification
@@ -64,19 +68,24 @@ Monitor and manage your CI/CD pipelines.
 - **List Workflows** - View all GitHub Actions workflows
 - **Workflow Runs** - Track execution status and results
 
-### 📦 Release Management (4 tools) 🆕
+### 📦 Release Management (4 tools)
 Complete release lifecycle management.
 
 - **List Releases** - View all releases with stats
 - **Get Release** - Detailed release information
-- **✅ Create Releases** - Create new releases programmatically
-- **✅ Update Releases** - Modify existing release notes and status
+- **Create Release** - Programmatically create releases
+- **Update Release** - Update title, notes, status
 
 ### 🔍 Search & Discovery (2 tools)
 Powerful search across GitHub's entire ecosystem.
 
 - **Search Repositories** - Find repos with advanced filters
 - **Search Code** - Locate code snippets across GitHub
+
+### 🧠 Workflow Optimization (1 tool) 🆕
+The self-aware advisor that recommends the best approach.
+
+- **Smart Advisor** - API vs Local vs Hybrid, token estimates, dogfooding detection
 
 ### 👤 User Information (1 tool)
 Profile and organization data retrieval.
@@ -210,6 +219,26 @@ Update existing release notes and status.
 ```
 
 *For complete tool documentation, see the full README sections below*
+
+---
+
+### 🧠 Workflow Optimization (1 tool) 🆕
+
+#### `github_suggest_workflow` 🆕 🧠
+Recommend API vs Local vs Hybrid with token estimates and dogfooding detection.
+
+**Parameters:**
+```json
+{
+  "operation": "update_documentation",
+  "file_size": 25000,
+  "num_edits": 5,
+  "file_count": 2,
+  "description": "Adding new tool documentation"
+}
+```
+
+**Returns:** Recommendation, rationale, token estimates, and next steps.
 
 ---
 
@@ -402,7 +431,7 @@ If you find this project useful, please star it on GitHub! ⭐
 
 ## 📚 Full Documentation
 
-*The sections below contain complete documentation for all 21 tools...*
+*The sections below contain complete documentation for all 22 tools...*
 
 ### Repository Tools
 
