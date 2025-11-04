@@ -1,4 +1,15 @@
 # Changelog
+## [Unreleased]
+
+### Added
+- `list_commits` tool for viewing repository commit history with filtering
+- `batch_file_operations` tool for efficient multi-file operations in single commits
+- `create_pr_review` tool for adding reviews to pull requests (closes #9)
+
+### Improved
+- Enhanced file management capabilities with batch operations
+- Better support for code review workflows
+
 ## [1.2.1] - 2025-10-31
 
 ### 🧠 The Self-Aware Update

@@ -37,13 +37,14 @@ and more. It enables AI assistants to seamlessly integrate with GitHub workflows
 Features:
 - Repository management and exploration
 - Issue creation, search, and management
-- Pull request operations (list, create, detailed view, merge)
+- Pull request operations (list, create, detailed view, merge, review)
 - GitHub Actions workflow monitoring
 - Advanced search (code and issues across GitHub)
 - File content retrieval
-- **File management (create, update, delete files)** ← NEW!
+- **File management (create, update, delete files, batch operations)**
+- **Commit history and tracking**
 - Workflow advisor (suggest API vs local vs hybrid)
- - Repository management (create, update, delete, transfer, archive)
+- Repository management (create, update, delete, transfer, archive)
 - User and organization information
 """
 
@@ -307,6 +308,26 @@ class GetFileContentInput(BaseModel):
     ref: Optional[str] = Field(default=None, description="Branch, tag, or commit SHA (defaults to repository's default branch)")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
 
+class ListCommitsInput(BaseModel):
+    """Input model for listing repository commits."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    sha: Optional[str] = Field(default=None, description="Branch name, tag, or commit SHA (defaults to default branch)")
+    path: Optional[str] = Field(default=None, description="Only commits containing this file path")
+    author: Optional[str] = Field(default=None, description="Filter by commit author (username or email)")
+    since: Optional[str] = Field(default=None, description="Only commits after this date (ISO 8601 format)")
+    until: Optional[str] = Field(default=None, description="Only commits before this date (ISO 8601 format)")
+    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
 class ListPullRequestsInput(BaseModel):
     """Input model for listing pull requests."""
     model_config = ConfigDict(
@@ -546,6 +567,60 @@ class CreateRepositoryInput(BaseModel):
     license_template: Optional[str] = Field(default=None, description="License template (e.g., 'mit')")
     token: Optional[str] = Field(default=None, description="GitHub personal access token")
 
+class PRReviewComment(BaseModel):
+    """Single review comment on a PR."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    path: str = Field(..., description="File path in the PR", min_length=1, max_length=500)
+    position: Optional[int] = Field(default=None, description="Line position in the diff (deprecated, use line)")
+    line: Optional[int] = Field(default=None, description="Line number in the file")
+    side: Optional[str] = Field(default="RIGHT", description="Side of diff: 'LEFT' (old) or 'RIGHT' (new)")
+    body: str = Field(..., description="Comment text in Markdown", min_length=1, max_length=65536)
+    
+    @field_validator('side')
+    @classmethod
+    def validate_side(cls, v):
+        if v not in ['LEFT', 'RIGHT']:
+            raise ValueError("side must be 'LEFT' or 'RIGHT'")
+        return v
+
+class CreatePRReviewInput(BaseModel):
+    """Input model for creating pull request reviews."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    pull_number: int = Field(..., description="Pull request number", ge=1)
+    event: str = Field(default="COMMENT", description="Review action: 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'")
+    body: Optional[str] = Field(default=None, description="General review comment (Markdown)")
+    comments: Optional[List[PRReviewComment]] = Field(default=None, description="Line-specific comments", max_items=100)
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+    
+    @field_validator('event')
+    @classmethod
+    def validate_event(cls, v):
+        if v not in ['APPROVE', 'REQUEST_CHANGES', 'COMMENT']:
+            raise ValueError("event must be 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'")
+        return v
+    
+    @field_validator('body')
+    @classmethod
+    def validate_body(cls, v, info):
+        event = info.data.get('event')
+        comments = info.data.get('comments')
+        if event in ['APPROVE', 'REQUEST_CHANGES']:
+            if not v and not comments:
+                raise ValueError(f"{event} requires either body or comments")
+        return v
+
 class DeleteRepositoryInput(BaseModel):
     """Input model for deleting a repository."""
     model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
@@ -605,7 +680,6 @@ class MergePullRequestInput(BaseModel):
     commit_title: Optional[str] = Field(default=None, description="Custom commit title for merge commit")
     commit_message: Optional[str] = Field(default=None, description="Custom commit message for merge commit")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
-
 # Phase 2.1: File Management Models
 
 
@@ -658,6 +732,57 @@ class DeleteFileInput(BaseModel):
     message: str = Field(..., description="Commit message", min_length=1, max_length=500)
     sha: str = Field(..., description="SHA of the file being deleted (get from github_get_file_content)")
     branch: Optional[str] = Field(default=None, description="Branch name (defaults to repository's default branch)")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+class FileOperation(BaseModel):
+    """Single file operation within a batch."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    operation: str = Field(..., description="Operation type: 'create', 'update', or 'delete'")
+    path: str = Field(..., description="File path in repository", min_length=1, max_length=500)
+    content: Optional[str] = Field(default=None, description="File content (required for create/update)")
+    sha: Optional[str] = Field(default=None, description="Current file SHA (required for update/delete)")
+    
+    @field_validator('operation')
+    @classmethod
+    def validate_operation(cls, v):
+        if v not in ['create', 'update', 'delete']:
+            raise ValueError("operation must be 'create', 'update', or 'delete'")
+        return v
+    
+    @field_validator('content')
+    @classmethod
+    def validate_content(cls, v, info):
+        operation = info.data.get('operation')
+        if operation in ['create', 'update'] and not v:
+            raise ValueError(f"content is required for {operation} operations")
+        return v
+    
+    @field_validator('sha')
+    @classmethod
+    def validate_sha(cls, v, info):
+        operation = info.data.get('operation')
+        if operation in ['update', 'delete'] and not v:
+            raise ValueError(f"sha is required for {operation} operations")
+        return v
+
+class BatchFileOperationsInput(BaseModel):
+    """Input model for batch file operations."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    operations: List[FileOperation] = Field(..., description="List of file operations to perform", min_items=1, max_items=50)
+    message: str = Field(..., description="Commit message for all operations", min_length=1, max_length=500)
+    branch: Optional[str] = Field(default=None, description="Target branch (defaults to default branch)")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 # Tool Implementations
@@ -1112,6 +1237,127 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
 """
         
         return _truncate_response(result)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_list_commits",
+    annotations={
+        "title": "List Repository Commits",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_commits(params: ListCommitsInput) -> str:
+    """
+    List commits from a GitHub repository.
+    
+    Retrieves commit history with optional filtering by branch, author, path, and date range.
+    Shows commit SHA, author, date, message, and statistics.
+    
+    Args:
+        params (ListCommitsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - sha (Optional[str]): Branch, tag, or commit SHA
+            - path (Optional[str]): File path filter
+            - author (Optional[str]): Author filter
+            - since (Optional[str]): Start date (ISO 8601)
+            - until (Optional[str]): End date (ISO 8601)
+            - limit (int): Maximum results (1-100, default 20)
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of commits with details
+    
+    Examples:
+        - Use when: "Show me recent commits in the main branch"
+        - Use when: "List commits by user octocat"
+        - Use when: "Get commits that modified README.md"
+    
+    Error Handling:
+        - Returns error if repository not found (404)
+        - Returns error if branch/SHA doesn't exist (404)
+        - Handles pagination for large histories
+    """
+    try:
+        token = params.token or os.getenv("GITHUB_TOKEN")
+        query_params = {
+            "per_page": params.limit,
+            "page": params.page
+        }
+        if params.sha:
+            query_params["sha"] = params.sha
+        if params.path:
+            query_params["path"] = params.path
+        if params.author:
+            query_params["author"] = params.author
+        if params.since:
+            query_params["since"] = params.since
+        if params.until:
+            query_params["until"] = params.until
+        
+        commits = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/commits",
+            token=token,
+            params=query_params
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(commits, indent=2)
+        
+        response = f"# Commits for {params.owner}/{params.repo}\n\n"
+        if params.sha:
+            response += f"**Branch/SHA:** {params.sha}\n"
+        if params.path:
+            response += f"**Path:** {params.path}\n"
+        if params.author:
+            response += f"**Author:** {params.author}\n"
+        if params.since or params.until:
+            response += f"**Date Range:** {params.since or 'beginning'} to {params.until or 'now'}\n"
+        
+        response += f"\n**Page:** {params.page} | **Showing:** {len(commits)} commits\n\n"
+        response += "---\n\n"
+        
+        for commit in commits:
+            sha_short = commit['sha'][:7]
+            author_name = commit['commit']['author']['name']
+            author_email = commit['commit']['author']['email']
+            date = _format_timestamp(commit['commit']['author']['date'])
+            message_first = commit['commit']['message'].split('\n')[0]
+            
+            stats = ""
+            if 'stats' in commit:
+                additions = commit['stats'].get('additions', 0)
+                deletions = commit['stats'].get('deletions', 0)
+                stats = f" (+{additions}/-{deletions})"
+            
+            response += f"### {sha_short} - {message_first}{stats}\n\n"
+            response += f"**Author:** {author_name} <{author_email}>  \n"
+            response += f"**Date:** {date}  \n"
+            response += f"**Full SHA:** `{commit['sha']}`  \n"
+            
+            if commit.get('parents'):
+                parent_shas = [p['sha'][:7] for p in commit['parents']]
+                response += f"**Parents:** {', '.join(parent_shas)}  \n"
+            
+            response += f"**URL:** {commit['html_url']}\n\n"
+            
+            full_message = commit['commit']['message']
+            if '\n' in full_message:
+                response += f"**Full message:**\n```\n{full_message}\n```\n\n"
+            
+            response += "---\n\n"
+        
+        if len(commits) == params.limit:
+            response += f"\n*More commits may be available. Use `page={params.page + 1}` to see the next page.*\n"
+        
+        return _truncate_response(response, len(commits))
         
     except Exception as e:
         return _handle_api_error(e)
@@ -2730,6 +2976,144 @@ You can restore it by reverting this commit if needed.
         
         return error_msg
 
+@mcp.tool(
+    name="github_batch_file_operations",
+    annotations={
+        "title": "Batch File Operations (Single Commit)",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_batch_file_operations(params: BatchFileOperationsInput) -> str:
+    """
+    Perform multiple file operations (create/update/delete) in a single commit.
+    
+    This is much more efficient than individual file operations. All changes are committed
+    together atomically - either all succeed or all fail.
+    
+    Args:
+        params (BatchFileOperationsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - operations (List[FileOperation]): List of file operations
+            - message (str): Commit message
+            - branch (Optional[str]): Target branch
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with commit details
+    
+    Examples:
+        - Use when: "Update README.md and LICENSE in one commit"
+        - Use when: "Create multiple documentation files"
+        - Use when: "Refactor: delete old files and create new ones"
+    
+    Error Handling:
+        - Returns error if any file operation is invalid
+        - Returns error if branch doesn't exist (404)
+        - Validates all operations before making changes
+    """
+    try:
+        token = params.token or os.getenv("GITHUB_TOKEN")
+        if not token:
+            return "Error: GitHub token required for batch file operations. Set GITHUB_TOKEN environment variable or provide token parameter."
+        
+        branch_name = params.branch or "main"
+        if not params.branch:
+            repo_info = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}",
+                token=token
+            )
+            branch_name = repo_info['default_branch']
+        
+        branch_data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/git/ref/heads/{branch_name}",
+            token=token
+        )
+        latest_commit_sha = branch_data['object']['sha']
+        
+        commit_data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/git/commits/{latest_commit_sha}",
+            token=token
+        )
+        base_tree_sha = commit_data['tree']['sha']
+        
+        tree: List[Dict[str, Any]] = []
+        for op in params.operations:
+            if op.operation == 'delete':
+                tree.append({
+                    "path": op.path,
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": None
+                })
+            else:
+                content_bytes = op.content.encode('utf-8')
+                encoded_content = base64.b64encode(content_bytes).decode('utf-8')
+                blob_data = await _make_github_request(
+                    f"repos/{params.owner}/{params.repo}/git/blobs",
+                    method="POST",
+                    token=token,
+                    json={
+                        "content": encoded_content,
+                        "encoding": "base64"
+                    }
+                )
+                tree.append({
+                    "path": op.path,
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": blob_data['sha']
+                })
+        
+        new_tree = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/git/trees",
+            method="POST",
+            token=token,
+            json={
+                "base_tree": base_tree_sha,
+                "tree": tree
+            }
+        )
+        
+        new_commit = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/git/commits",
+            method="POST",
+            token=token,
+            json={
+                "message": params.message,
+                "tree": new_tree['sha'],
+                "parents": [latest_commit_sha]
+            }
+        )
+        
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/git/refs/heads/{branch_name}",
+            method="PATCH",
+            token=token,
+            json={
+                "sha": new_commit['sha']
+            }
+        )
+        
+        response = f"# Batch File Operations Complete! ✅\n\n"
+        response += f"**Repository:** {params.owner}/{params.repo}  \n"
+        response += f"**Branch:** {branch_name}  \n"
+        response += f"**Commit Message:** {params.message}  \n"
+        response += f"**Commit SHA:** `{new_commit['sha']}`  \n"
+        response += f"**Operations:** {len(params.operations)} files modified  \n\n"
+        response += "## Changes:\n\n"
+        for op in params.operations:
+            emoji = "📝" if op.operation == "update" else "✨" if op.operation == "create" else "🗑️"
+            response += f"- {emoji} **{op.operation.upper()}**: `{op.path}`\n"
+        response += f"\n**View Commit:** https://github.com/{params.owner}/{params.repo}/commit/{new_commit['sha']}\n"
+        return response
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
 # Workflow Optimization Tool
 
 @mcp.tool(
@@ -2972,7 +3356,6 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-
 @mcp.tool(
     name="github_merge_pull_request",
     annotations={
@@ -3060,6 +3443,104 @@ The pull request has been successfully merged! 🎉
     except Exception as e:
         return _handle_api_error(e)
 
+@mcp.tool(
+    name="github_create_pr_review",
+    annotations={
+        "title": "Create Pull Request Review",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_pr_review(params: CreatePRReviewInput) -> str:
+    """
+    Create a review on a pull request with optional line-specific comments.
+    
+    This tool allows you to review pull requests by:
+    - Adding general review comments
+    - Adding line-specific comments to code
+    - Approving the PR
+    - Requesting changes to the PR
+    
+    Args:
+        params (CreatePRReviewInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - pull_number (int): Pull request number
+            - event (str): 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'
+            - body (Optional[str]): General review comment
+            - comments (Optional[List[PRReviewComment]]): Line-specific comments
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation with review details
+    
+    Examples:
+        - Use when: "Approve PR #42"
+        - Use when: "Request changes on line 15 of main.py"
+        - Use when: "Add review comment suggesting improvements"
+    
+    Error Handling:
+        - Returns error if PR not found (404)
+        - Returns error if already reviewed (422)
+        - Returns error if insufficient permissions (403)
+    """
+    try:
+        token = params.token or os.getenv("GITHUB_TOKEN")
+        if not token:
+            return "Error: GitHub token required for creating PR reviews. Set GITHUB_TOKEN environment variable or provide token parameter."
+        
+        review_data: Dict[str, Any] = {
+            "event": params.event
+        }
+        if params.body:
+            review_data["body"] = params.body
+        if params.comments:
+            review_data["comments"] = []
+            for comment in params.comments:
+                comment_data: Dict[str, Any] = {
+                    "path": comment.path,
+                    "body": comment.body,
+                    "side": comment.side
+                }
+                if comment.line:
+                    comment_data["line"] = comment.line
+                elif comment.position:
+                    comment_data["position"] = comment.position
+                else:
+                    return f"Error: Comment on {comment.path} must specify either 'line' or 'position'"
+                review_data["comments"].append(comment_data)
+        
+        review = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}/reviews",
+            method="POST",
+            token=token,
+            json=review_data
+        )
+        
+        response = f"# Pull Request Review Created! ✅\n\n"
+        response += f"**Repository:** {params.owner}/{params.repo}  \n"
+        response += f"**Pull Request:** #{params.pull_number}  \n"
+        response += f"**Review ID:** {review['id']}  \n"
+        response += f"**State:** {review['state']}  \n"
+        if review.get('user'):
+            response += f"**Reviewer:** {review['user']['login']}  \n"
+        if review.get('submitted_at'):
+            response += f"**Submitted:** {_format_timestamp(review['submitted_at'])}  \n\n"
+        if params.body:
+            response += f"## Review Comment:\n\n{params.body}\n\n"
+        if params.comments:
+            response += f"## Line Comments: {len(params.comments)}\n\n"
+            for comment in params.comments:
+                line_info = f"line {comment.line}" if comment.line else f"position {comment.position}"
+                response += f"- **{comment.path}** ({line_info}, {comment.side}): {comment.body[:100]}...\n"
+        if review.get('html_url'):
+            response += f"\n**View Review:** {review['html_url']}\n"
+        return response
+        
+    except Exception as e:
+        return _handle_api_error(e)
 # Entry point
 if __name__ == "__main__":
     mcp.run()
