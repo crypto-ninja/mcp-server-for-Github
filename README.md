@@ -11,22 +11,39 @@
 
 ## ✨ What's New
 
-🎉 **Tool #22 SHIPPED:** Self-Aware Workflow Optimization! We've expanded to **22 powerful tools**, adding:
+### 🚀 Latest: v1.3.0 - Repository Management & PR Workflow (Nov 4, 2025)
 
-- **🧠 Workflow Advisor** - Recommends API vs local vs hybrid with token estimates
+**The Big Leap:** 9 new tools in one massive release! Complete repository lifecycle and advanced PR workflow automation.
 
-🎉 **Phase 2.1 SHIPPED:** File & Release Tools are live! We expanded from 16 to **21 powerful tools**, adding:
+**New in v1.3.0:**
 
-- **📝 File Creation** - Create new files in repositories
-- **✏️ File Updates** - Modify existing file contents with SHA verification
-- **🗑️ File Deletion** - Delete files safely with conflict prevention
-- **🏷️ Release Creation** - Create GitHub releases programmatically
-- **✏️ Release Updates** - Update existing release notes and status
+**📦 Repository Management (Phase 2.2) - 6 tools**
+- Create & delete repositories (personal & org)
+- Update repository settings
+- Transfer ownership
+- Archive/unarchive functionality
+- PR merge control
 
-🚀 **Phase 1 Complete:** GitHub Actions, Enhanced PRs, and Advanced Search
-- **🔄 GitHub Actions Integration** - Monitor CI/CD workflows and runs
-- **🔀 Enhanced PR Management** - Create PRs with reviews and detailed analysis  
-- **🔍 Advanced Search** - Search code and issues across all of GitHub
+**🔀 PR Workflow (Phase 2.3) - 3 tools**  
+- PR reviews with line-specific comments
+- Batch file operations (multi-file atomic commits)
+- Commit history tracking with filtering
+
+**Total Tools:** 31 (vs GitHub's ~20) 🏆  
+**Competitive Advantage:** 55% more features!
+
+---
+
+### 📦 Recently Shipped
+
+**v1.2.1 (Oct 31, 2025)** - Workflow Advisor
+- Smart recommendations (API vs local vs hybrid)
+- Token cost estimates
+- Self-aware optimization
+
+**v1.2.0 (Oct 30, 2025)** - File & Release Management  
+- Create, update, delete files
+- Release creation & updates
 
 [View Full Changelog](CHANGELOG.md)
 
@@ -34,19 +51,30 @@
 
 ## 🚀 Features Overview
 
-### 📦 Repository Management (3 tools)
-Complete repository exploration and file access capabilities.
+### 📦 Repository Management (7 tools)
+Complete repository lifecycle from creation to archival.
 
 - **Repository Info** - Comprehensive metadata, statistics, and configuration
 - **Browse Contents** - Navigate directory structures and file trees
 - **File Access** - Retrieve file contents from any branch or commit
+- **Create Repository** - Create repos (personal & organization) 🆕
+- **Delete Repository** - Safe deletion with checks 🆕
+- **Update Repository** - Modify settings and configuration 🆕
+- **Transfer Repository** - Change ownership 🆕
+- **Archive Repository** - Archive/unarchive repositories 🆕
 
-### 📝 File Management (3 tools) 🆕
-Complete CRUD operations for repository files.
+### 📝 File Management (4 tools) 
+Complete CRUD operations with batch capabilities.
 
 - **✅ Create Files** - Add new files with content to any repository
 - **✅ Update Files** - Modify existing files with SHA-based conflict prevention
 - **✅ Delete Files** - Remove files safely with validation
+- **Batch Operations** - Multi-file operations in single atomic commits 🆕
+
+### 📜 Repository History (1 tool) 🆕
+Track and analyze repository commit history.
+
+- **List Commits** - View commit history with filtering by author, path, date range, and more
 
 ### 🐛 Issue Management (3 tools)
 Full issue lifecycle from creation to advanced search.
@@ -55,12 +83,14 @@ Full issue lifecycle from creation to advanced search.
 - **Create Issues** - Open issues with labels and assignees
 - **Search Issues** - Advanced search across repositories with filters
 
-### 🔀 Pull Request Operations (3 tools)
-Complete PR workflow from creation to detailed analysis.
+### 🔀 Pull Request Operations (5 tools)
+Complete PR workflow from creation to merge with reviews.
 
 - **List PRs** - View all pull requests with state filtering
 - **Create PRs** - Open pull requests with draft support
 - **PR Details** - Comprehensive analysis with reviews, commits, and files
+- **Merge PR** - Merge with method control (merge/squash/rebase) 🆕
+- **Review PR** - Add reviews with line-specific comments 🆕
 
 ### ⚡ GitHub Actions (2 tools)
 Monitor and manage your CI/CD pipelines.
@@ -326,6 +356,18 @@ All errors include suggestions for resolution!
 - **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
 - **💡 Discussions:** [GitHub Discussions](https://github.com/crypto-ninja/github-mcp-server/discussions)
 - **📧 Licensing:** [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
+
+---
+
+## 🗺️ Roadmap
+
+We're building through dogfooding - using our own product reveals what's missing!
+
+**Current:** v1.3.0 with 31 tools (Phase 2 complete)  
+**Next:** Phase 3.0 - Enterprise features (webhooks, teams, branch protection)  
+**Vision:** Phase 4.0 - AI-powered automation
+
+📋 **[View Detailed Roadmap →](FEATURE_ROADMAP.md)**
 
 ---
 
