@@ -57,6 +57,7 @@ from datetime import datetime
 import base64
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
+from license_manager import check_license_on_startup, get_license_manager
 
 # Initialize the MCP server
 mcp = FastMCP("github_mcp")
@@ -870,6 +871,56 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
         
     except Exception as e:
         return _handle_api_error(e)
+
+@mcp.tool()
+async def github_license_info() -> str:
+    """
+    Display current license information and status for the GitHub MCP Server.
+    
+    Returns:
+        Formatted license information including tier, expiration, and status
+    """
+    license_manager = get_license_manager()
+    license_info = await license_manager.verify_license()
+    
+    if license_info.get('valid'):
+        tier = license_info.get('tier', 'free')
+        tier_info = license_manager.get_tier_info(tier)
+        
+        response = f'''# GitHub MCP Server License
+
+
+**Status:** ✅ Valid
+**Tier:** {tier_info['name']}
+**License Type:** {tier.upper()}
+'''
+        if tier != 'free':
+            response += f'''
+**Expires:** {license_info.get('expires_at', 'N/A').split('T')[0]}
+**Max Developers:** {license_info.get('max_developers') or 'Unlimited'}
+**Status:** {license_info.get('status', 'unknown').upper()}
+'''
+        else:
+            response += '''
+**License:** AGPL v3 (Open Source)
+**Commercial Use:** Requires commercial license
+**Purchase:** https://mcplabs.co.uk/pricing
+**Contact:** licensing@mcplabs.co.uk
+'''
+        return response
+    else:
+        return f'''# License Verification Failed
+
+
+**Error:** {license_info.get('error', 'Unknown')}
+**Message:** {license_info.get('message', '')}
+
+
+**Options:**
+1. Get free AGPL license: https://github.com/crypto-ninja/github-mcp-server
+2. Purchase commercial license: https://mcplabs.co.uk/pricing
+3. Contact support: licensing@mcplabs.co.uk
+'''
 
 @mcp.tool(
     name="github_list_issues",
@@ -3543,4 +3594,11 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
         return _handle_api_error(e)
 # Entry point
 if __name__ == "__main__":
-    mcp.run()
+    import asyncio
+    
+    async def startup():
+        """Run startup checks before starting the MCP server."""
+        await check_license_on_startup()
+        await mcp.run()
+    
+    asyncio.run(startup())
