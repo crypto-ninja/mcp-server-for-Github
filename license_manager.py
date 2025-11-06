@@ -222,7 +222,7 @@ class LicenseManager:
         print("=" * 60)
         
         if not license_info.get("valid"):
-            print("⚠️  LICENSE VERIFICATION FAILED")
+            print("[!] LICENSE VERIFICATION FAILED")
             print("=" * 60)
             print(f"Error: {license_info.get('error', 'Unknown error')}")
             print(f"Message: {license_info.get('message', '')}")
@@ -238,7 +238,7 @@ class LicenseManager:
         tier = license_info.get("tier", "free")
         tier_info = self.get_tier_info(tier)
         
-        print("✅ GitHub MCP Server - License Valid")
+        print("[OK] GitHub MCP Server - License Valid")
         print("=" * 60)
         print(f"License: {tier_info['name']}")
         print(f"Tier: {tier.upper()}")
@@ -256,10 +256,10 @@ class LicenseManager:
                     print(f"Max Developers: {max_devs}")
         else:
             print("License: AGPL v3 (Open Source)")
-            print("⚠️  For commercial use, purchase a license at https://mcplabs.co.uk")
+            print("[!] For commercial use, purchase a license at https://mcplabs.co.uk")
         
         if "warning" in license_info:
-            print(f"\n⚠️  Warning: {license_info['warning']}")
+            print(f"\n[!] Warning: {license_info['warning']}")
         
         print("=" * 60)
         print()
