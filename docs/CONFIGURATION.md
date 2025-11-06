@@ -61,8 +61,14 @@ If you're using UV for dependency management:
 
 ## Environment Variables
 
-### GITHUB_TOKEN (Optional but Recommended)
-Your GitHub Personal Access Token for authenticated requests.
+### GitHub App (recommended for orgs)
+- `GITHUB_AUTH_MODE=app`
+- `GITHUB_APP_ID` (numeric)
+- `GITHUB_APP_PRIVATE_KEY` (PEM string)
+- `GITHUB_APP_INSTALLATION_ID` (numeric)
+
+### Personal Access Token (PAT)
+- `GITHUB_TOKEN` (fine-grained or classic)
 
 **How to create:**
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
@@ -75,11 +81,19 @@ Your GitHub Personal Access Token for authenticated requests.
 5. Click "Generate token"
 6. Copy the token and add it to your configuration
 
-**Benefits of using a token:**
+**Benefits of PAT:**
 - 5,000 requests per hour (vs 60 without token)
 - Access to private repositories
 - Ability to create issues and perform write operations
 - Access to more detailed information
+
+## Scopes & Permissions (minimum)
+
+- File writes (create/update/delete): contents:write
+- PR operations (create/merge/review): pull_requests:write
+- Issues (create/search): issues:write (for writes)
+- Releases: contents:write (publish)
+- Actions (list runs/workflows): actions:read
 
 ## Testing the Configuration
 

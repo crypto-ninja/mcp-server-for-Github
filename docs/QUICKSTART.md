@@ -20,7 +20,26 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv pip install mcp httpx pydantic
 ```
 
-## Step 2: Get Your GitHub Token (2 minutes)
+## Step 2: Choose Authentication
+
+### Option A: GitHub App (Recommended for orgs)
+
+Set the following environment variables in your MCP client config:
+
+```json
+{
+  "env": {
+    "GITHUB_AUTH_MODE": "app",
+    "GITHUB_APP_ID": "123456",
+    "GITHUB_APP_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----...",
+    "GITHUB_APP_INSTALLATION_ID": "7890123"
+  }
+}
+```
+
+Benefits: short-lived tokens, fine-grained permissions.
+
+### Option B: Personal Access Token (PAT)
 
 1. Go to https://github.com/settings/tokens
 2. Click "Generate new token (classic)"

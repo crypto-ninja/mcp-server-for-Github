@@ -58,6 +58,9 @@ import base64
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
 from license_manager import check_license_on_startup, get_license_manager
+from github_client import GhClient
+from auth.github_app import get_installation_token_from_env
+from graphql_client import GraphQLClient
 
 # Initialize the MCP server
 mcp = FastMCP("github_mcp")
@@ -131,41 +134,39 @@ async def _make_github_request(
     **kwargs
 ) -> Dict[str, Any]:
     """
-    Reusable function for all GitHub API calls.
-    
-    Args:
-        endpoint: API endpoint (without base URL)
-        method: HTTP method (GET, POST, PATCH, etc.)
-        token: Optional GitHub personal access token
-        **kwargs: Additional arguments for httpx request
-    
-    Returns:
-        Dict containing the API response
-    
-    Raises:
-        httpx.HTTPStatusError: For HTTP errors
+    Reusable function for all GitHub API calls using a shared pooled client.
+
+    Returns parsed JSON. For 304, returns a marker dict {"_from_cache": True}.
     """
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
-    }
-    
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    
-    if "headers" in kwargs:
-        headers.update(kwargs.pop("headers"))
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.request(
-            method,
-            f"{API_BASE_URL}/{endpoint}",
-            headers=headers,
-            timeout=30.0,
-            **kwargs
-        )
-        response.raise_for_status()
-        return response.json()
+    headers = kwargs.pop("headers", None)
+    params = kwargs.pop("params", None)
+    json_body = kwargs.pop("json", None)
+    data_body = kwargs.pop("data", None)
+
+    # If no token provided, optionally use GitHub App installation token when configured
+    if token is None and os.getenv("GITHUB_AUTH_MODE", "pat").lower() == "app":
+        app_token = await get_installation_token_from_env()
+        if app_token:
+            token = app_token
+
+    client = GhClient.instance()
+    response = await client.request(
+        method=method,
+        path=f"/{endpoint}",
+        token=token,
+        params=params,
+        headers=headers,
+        json=json_body,
+        data=data_body,
+    )
+    # Raise for non-2xx (except we allow 304 to fall through as cache marker)
+    if response.status_code == 304:
+        return {"_from_cache": True}
+    response.raise_for_status()
+    # Some endpoints (DELETE) may return empty body
+    if response.content is None or len(response.content) == 0:
+        return {"success": True}
+    return response.json()
 
 def _handle_api_error(e: Exception) -> str:
     """
@@ -179,17 +180,46 @@ def _handle_api_error(e: Exception) -> str:
     """
     if isinstance(e, httpx.HTTPStatusError):
         status_code = e.response.status_code
+        # Avoid echoing full response text to prevent leaking sensitive data
+        safe_excerpt = ""
+        try:
+            txt = e.response.text or ""
+            safe_excerpt = (txt[:200] + "...") if len(txt) > 200 else txt
+        except Exception:
+            safe_excerpt = ""
+
+        if status_code == 401:
+            return (
+                "Error: Authentication required. Provide a valid token.\n"
+                "Hint: Set GITHUB_TOKEN or enable GitHub App auth (GITHUB_APP_ID, PRIVATE_KEY, INSTALLATION_ID)."
+            )
+        if status_code == 403:
+            return (
+                "Error: Permission denied.\n"
+                "Hint: Check token scopes/installation permissions. Common needs: contents:write for file ops; pull_requests:write for PR ops."
+            )
         if status_code == 404:
-            return "Error: Resource not found. Please verify the repository, issue, or user exists."
-        elif status_code == 403:
-            return "Error: Permission denied. You may need authentication or lack access to this resource."
-        elif status_code == 401:
-            return "Error: Authentication required. Please provide a valid GitHub token."
-        elif status_code == 422:
-            return "Error: Invalid request. Please check your input parameters."
-        elif status_code == 429:
-            return "Error: Rate limit exceeded. Please wait before making more requests."
-        return f"Error: GitHub API request failed with status {status_code}. {e.response.text}"
+            return (
+                "Error: Resource not found.\n"
+                "Hint: Verify owner/repo/number and token access to private repos."
+            )
+        if status_code == 409:
+            return (
+                "Error: Conflict.\n"
+                "Hint: For file updates, ensure SHA matches current head; for merges, resolve conflicts first."
+            )
+        if status_code == 422:
+            return (
+                "Error: Validation failed.\n"
+                "Hint: Check required fields and enum values; see API docs for this endpoint."
+            )
+        if status_code == 429:
+            retry_after = e.response.headers.get("Retry-After")
+            retry_hint = f"retry after {retry_after}s" if retry_after else "retry later"
+            return f"Error: Rate limit exceeded, {retry_hint}. Consider enabling conditional requests and backoff."
+        if 500 <= status_code < 600:
+            return "Error: GitHub service error. Hint: Retry shortly (transient)."
+        return f"Error: GitHub API request failed with status {status_code}. {safe_excerpt}"
     elif isinstance(e, httpx.TimeoutException):
         return "Error: Request timed out. Please try again."
     elif isinstance(e, httpx.NetworkError):
@@ -435,6 +465,16 @@ class GetPullRequestDetailsInput(BaseModel):
     include_reviews: Optional[bool] = Field(default=True, description="Include review information")
     include_commits: Optional[bool] = Field(default=True, description="Include commit information")
     include_files: Optional[bool] = Field(default=False, description="Include changed files (can be large)")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GraphQLPROverviewInput(BaseModel):
+    """Input for GraphQL PR overview query (batch read)."""
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
+
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    pull_number: int = Field(..., description="Pull request number", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
@@ -786,7 +826,74 @@ class BatchFileOperationsInput(BaseModel):
     branch: Optional[str] = Field(default=None, description="Target branch (defaults to default branch)")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
+# Safe local file chunk reading
+class ReadFileChunkInput(BaseModel):
+    """Input model for reading a chunk of a local file (repo-root constrained)."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    path: str = Field(..., description="Relative path under the server's repository root", min_length=1, max_length=500)
+    start_line: int = Field(default=1, description="1-based starting line number", ge=1)
+    num_lines: int = Field(default=200, description="Number of lines to read (max 500)", ge=1, le=500)
+
 # Tool Implementations
+
+@mcp.tool(
+    name="repo_read_file_chunk",
+    annotations={
+        "title": "Read Local File Chunk (Safe)",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
+    """
+    Read a specific range of lines from a local file under the server's repo root.
+
+    Security:
+    - Normalizes path
+    - Denies parent traversal (..)
+    - Enforces repo-root constraint
+    - Caps lines read
+    """
+    try:
+        base_dir = os.path.abspath(os.getcwd())
+        norm_path = os.path.normpath(params.path)
+
+        if norm_path.startswith("..") or os.path.isabs(norm_path):
+            return "Error: Path traversal is not allowed."
+
+        abs_path = os.path.abspath(os.path.join(base_dir, norm_path))
+        if not abs_path.startswith(base_dir + os.sep) and abs_path != base_dir:
+            return "Error: Access outside repository root is not allowed."
+
+        if not os.path.exists(abs_path):
+            return "Error: File does not exist."
+        if os.path.isdir(abs_path):
+            return "Error: Path is a directory."
+
+        start = max(1, params.start_line)
+        end = start + params.num_lines - 1
+
+        lines: List[str] = []
+        with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
+            for current_idx, line in enumerate(f, start=1):
+                if current_idx < start:
+                    continue
+                if current_idx > end:
+                    break
+                lines.append(line.rstrip("\n"))
+
+        header = f"# {norm_path}\n\nLines {start}-{end} (max {params.num_lines})\n\n"
+        content = "\n".join(lines) if lines else "(no content in range)"
+        return _truncate_response(header + "```\n" + content + "\n```")
+    except Exception as e:
+        return _handle_api_error(e)
 
 @mcp.tool(
     name="github_get_repo_info",
@@ -2161,6 +2268,83 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
         
         return _truncate_response(markdown)
         
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_get_pr_overview_graphql",
+    annotations={
+        "title": "Get PR Overview (GraphQL)",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_pr_overview_graphql(params: GraphQLPROverviewInput) -> str:
+    """
+    Fetch PR title, author, review states, commits count, and files changed in one GraphQL query.
+    """
+    try:
+        token = params.token or os.getenv("GITHUB_TOKEN")
+        if token is None and os.getenv("GITHUB_AUTH_MODE", "pat").lower() == "app":
+            app_token = await get_installation_token_from_env()
+            if app_token:
+                token = app_token
+        if not token:
+            return "Error: Authentication required for GraphQL. Set GITHUB_TOKEN or GitHub App env vars."
+
+        gql = GraphQLClient()
+        query = """
+        query($owner: String!, $repo: String!, $number: Int!) {
+          repository(owner: $owner, name: $repo) {
+            pullRequest(number: $number) {
+              number
+              title
+              author { login }
+              state
+              additions
+              deletions
+              changedFiles
+              reviews(last: 20) { nodes { author { login } state submittedAt } }
+              commits(last: 1) { totalCount }
+              files(first: 20) { totalCount nodes { path additions deletions } }
+              url
+              createdAt
+              merged
+            }
+          }
+        }
+        """
+        variables = {"owner": params.owner, "repo": params.repo, "number": params.pull_number}
+        data = await gql.query(token, query, variables)
+        pr = (((data or {}).get("data") or {}).get("repository") or {}).get("pullRequest")
+        if not pr:
+            return "Error: PR not found."
+
+        if params.response_format == ResponseFormat.JSON:
+            return _truncate_response(json.dumps(pr, indent=2))
+
+        md = [
+            f"# PR #{pr['number']}: {pr['title']}",
+            f"Author: @{pr['author']['login']} | State: {pr['state']}",
+            f"Additions: +{pr['additions']} | Deletions: -{pr['deletions']} | Files: {pr['changedFiles']}",
+            f"Commits: {pr['commits']['totalCount']} | URL: {pr['url']}",
+            "",
+            "## Recent Reviews",
+        ]
+        reviews = (pr.get("reviews") or {}).get("nodes") or []
+        if not reviews:
+            md.append("(no reviews)")
+        else:
+            for rv in reviews:
+                md.append(f"- {rv['state']} by @{rv['author']['login']} at {rv.get('submittedAt','')} ")
+        files = (pr.get("files") or {}).get("nodes") or []
+        if files:
+            md.append("\n## Changed Files (first 20)")
+            for f in files:
+                md.append(f"- {f['path']} (+{f['additions']}, -{f['deletions']})")
+        return _truncate_response("\n".join(md))
     except Exception as e:
         return _handle_api_error(e)
 
@@ -3595,6 +3779,21 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
 # Entry point
 if __name__ == "__main__":
     import asyncio
+    import argparse
+    import os as _os
+
+    parser = argparse.ArgumentParser(description="GitHub MCP Server")
+    parser.add_argument("--auth", choices=["pat", "app"], default=None, help="Authentication mode: pat (default) or app")
+    parser.add_argument("--transport", choices=["stdio", "http", "sse"], default=None, help="Transport type")
+    parser.add_argument("--port", type=int, default=None, help="Port for HTTP/SSE transport")
+    args, unknown = parser.parse_known_args()
+
+    if args.auth:
+        _os.environ["GITHUB_AUTH_MODE"] = args.auth
+
     # Run license check first on its own event loop, then start MCP server
     asyncio.run(check_license_on_startup())
-    mcp.run()
+    if args.transport in ("http", "sse"):
+        mcp.run(transport=args.transport, port=(args.port or 8080))
+    else:
+        mcp.run()
