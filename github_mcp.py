@@ -275,8 +275,8 @@ class CreateIssueInput(BaseModel):
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     title: str = Field(..., description="Issue title", min_length=1, max_length=256)
     body: Optional[str] = Field(default=None, description="Issue description/body in Markdown format")
-    labels: Optional[List[str]] = Field(default=None, description="List of label names to apply", max_items=20)
-    assignees: Optional[List[str]] = Field(default=None, description="List of usernames to assign", max_items=10)
+    labels: Optional[List[str]] = Field(default=None, description="List of label names to apply", max_length=20)
+    assignees: Optional[List[str]] = Field(default=None, description="List of usernames to assign", max_length=10)
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 class SearchRepositoriesInput(BaseModel):
@@ -602,7 +602,7 @@ class CreatePRReviewInput(BaseModel):
     pull_number: int = Field(..., description="Pull request number", ge=1)
     event: str = Field(default="COMMENT", description="Review action: 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'")
     body: Optional[str] = Field(default=None, description="General review comment (Markdown)")
-    comments: Optional[List[PRReviewComment]] = Field(default=None, description="Line-specific comments", max_items=100)
+    comments: Optional[List[PRReviewComment]] = Field(default=None, description="Line-specific comments", max_length=100)
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
     
     @field_validator('event')
@@ -781,7 +781,7 @@ class BatchFileOperationsInput(BaseModel):
     
     owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    operations: List[FileOperation] = Field(..., description="List of file operations to perform", min_items=1, max_items=50)
+    operations: List[FileOperation] = Field(..., description="List of file operations to perform", min_length=1, max_length=50)
     message: str = Field(..., description="Commit message for all operations", min_length=1, max_length=500)
     branch: Optional[str] = Field(default=None, description="Target branch (defaults to default branch)")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
@@ -3595,10 +3595,6 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
 # Entry point
 if __name__ == "__main__":
     import asyncio
-    
-    async def startup():
-        """Run startup checks before starting the MCP server."""
-        await check_license_on_startup()
-        await mcp.run()
-    
-    asyncio.run(startup())
+    # Run license check first on its own event loop, then start MCP server
+    asyncio.run(check_license_on_startup())
+    mcp.run()

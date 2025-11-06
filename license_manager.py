@@ -17,6 +17,7 @@ Email: licensing@mcplabs.co.uk
 """
 
 import os
+import sys
 import httpx
 import json
 from datetime import datetime, timedelta
@@ -219,50 +220,50 @@ class LicenseManager:
     
     def print_license_status(self, license_info: Dict[str, Any]) -> None:
         """Print license status to console."""
-        print("=" * 60)
+        print("=" * 60, file=sys.stderr)
         
         if not license_info.get("valid"):
-            print("[!] LICENSE VERIFICATION FAILED")
-            print("=" * 60)
-            print(f"Error: {license_info.get('error', 'Unknown error')}")
-            print(f"Message: {license_info.get('message', '')}")
-            print()
-            print("Options:")
-            print("1. Get free AGPL license: https://github.com/crypto-ninja/github-mcp-server")
-            print("2. Purchase commercial license: https://mcplabs.co.uk/pricing")
-            print("3. Contact support: licensing@mcplabs.co.uk")
-            print("=" * 60)
+            print("[!] LICENSE VERIFICATION FAILED", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
+            print(f"Error: {license_info.get('error', 'Unknown error')}", file=sys.stderr)
+            print(f"Message: {license_info.get('message', '')}", file=sys.stderr)
+            print(file=sys.stderr)
+            print("Options:", file=sys.stderr)
+            print("1. Get free AGPL license: https://github.com/crypto-ninja/github-mcp-server", file=sys.stderr)
+            print("2. Purchase commercial license: https://mcplabs.co.uk/pricing", file=sys.stderr)
+            print("3. Contact support: licensing@mcplabs.co.uk", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
             return
         
         # Print valid license info
         tier = license_info.get("tier", "free")
         tier_info = self.get_tier_info(tier)
         
-        print("[OK] GitHub MCP Server - License Valid")
-        print("=" * 60)
-        print(f"License: {tier_info['name']}")
-        print(f"Tier: {tier.upper()}")
+        print("[OK] GitHub MCP Server - License Valid", file=sys.stderr)
+        print("=" * 60, file=sys.stderr)
+        print(f"License: {tier_info['name']}", file=sys.stderr)
+        print(f"Tier: {tier.upper()}", file=sys.stderr)
         
         if tier != "free":
-            print(f"Status: {license_info.get('status', 'unknown').upper()}")
+            print(f"Status: {license_info.get('status', 'unknown').upper()}", file=sys.stderr)
             if "expires_at" in license_info:
                 expires = license_info['expires_at'].split('T')[0]
-                print(f"Expires: {expires}")
+                print(f"Expires: {expires}", file=sys.stderr)
             if "max_developers" in license_info:
                 max_devs = license_info["max_developers"]
                 if max_devs is None:
-                    print("Max Developers: Unlimited")
+                    print("Max Developers: Unlimited", file=sys.stderr)
                 else:
-                    print(f"Max Developers: {max_devs}")
+                    print(f"Max Developers: {max_devs}", file=sys.stderr)
         else:
-            print("License: AGPL v3 (Open Source)")
-            print("[!] For commercial use, purchase a license at https://mcplabs.co.uk")
+            print("License: AGPL v3 (Open Source)", file=sys.stderr)
+            print("[!] For commercial use, purchase a license at https://mcplabs.co.uk", file=sys.stderr)
         
         if "warning" in license_info:
-            print(f"\n[!] Warning: {license_info['warning']}")
+            print(f"\n[!] Warning: {license_info['warning']}", file=sys.stderr)
         
-        print("=" * 60)
-        print()
+        print("=" * 60, file=sys.stderr)
+        print(file=sys.stderr)
 
 
 async def check_license_on_startup() -> bool:
