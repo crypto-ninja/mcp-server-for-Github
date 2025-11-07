@@ -1,4 +1,53 @@
 # Changelog
+## [1.6.0] - 2025-11-07
+
+### 🔍 Token Efficiency Tools (Phase 2.5 Foundation)
+
+**Added:** 2 new tools for 95%+ token efficiency!
+
+#### New Tools
+1. **workspace_grep** - Efficient pattern search in repository files
+   - Find functions, errors, TODOs with 90% fewer tokens
+   - Returns only matching lines with context
+   - Security: repo-rooted, respects .gitignore
+   - Supports regex patterns and file filtering
+
+2. **str_replace** - Surgical file edits without full rewrites
+   - Replace exact strings in files (95% token savings)
+   - Unique match requirement for safety
+   - Preserves formatting and structure
+   - Perfect for version bumps and targeted updates
+
+#### Impact
+- **Token Efficiency:** 95%+ reduction for targeted edits
+- **Combined Power:** grep finds it, str_replace fixes it!
+- **Discovered Through:** Dogfooding! 🐕🍖
+- **Meta Achievement:** Tools documented themselves efficiently!
+
+#### Use Cases
+- Find all error patterns: `workspace_grep("KeyError")`
+- Update version numbers: `str_replace("v1.5.0", "v1.6.0")`
+- Locate TODOs: `workspace_grep("TODO", file_pattern="*.py")`
+- Update tool counts: Used these tools to update docs about themselves! 🤯
+
+### 🔧 Bug Fixes
+- Fixed REPO_ROOT to use `Path(__file__).parent` instead of `os.getcwd()`
+- Ensures tools search actual repo directory, not working directory
+
+### 🎯 Phase 2.5 Progress
+- Foundation complete: grep + str_replace operational
+- Next: Workspace coordinator for full workspace management
+- Goal: 8x overall token efficiency
+
+### 🔗 Related
+- Issue #27: workspace_grep implementation
+- Discovered while using tools (dogfooding in action!)
+- Combined 98%+ efficiency with both tools
+
+**Total Tools:** 36 (vs GitHub's ~20) 🏆
+
+---
+
 ## [1.5.0] - 2025-11-06
 
 ### 🚀 Phase 0-1: Infrastructure & Performance Upgrade

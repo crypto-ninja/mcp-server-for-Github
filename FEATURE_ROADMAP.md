@@ -1,7 +1,7 @@
 # 🗺️ GitHub MCP Server - Feature Roadmap
 
 **Last Updated:** November 7, 2025  
-**Current Version:** Phase 2.3 Complete + Phase 0-1 Infrastructure (34 tools)  
+**Current Version:** Phase 2.3 Complete + Phase 0-1 Infrastructure (36 tools)  
 **Status:** Production Ready 🚀
 
 ---
@@ -168,7 +168,7 @@
 
 | Phase | Tools | Total | Gap vs GitHub |
 |-------|-------|-------|---------------|
-| **Current (Phase 0-2)** | 34 | 34 | +14 🏆 |
+| **Current (Phase 0-2)** | 36 | 36 | +16 🏆 |
 | **Phase 2.5** | +3 | 37 | +17 🎯 |
 | **Phase 3.0** | +20 | 57 | +37 🚀 |
 | **Phase 3.1** | +31 | 88 | +68 🔥 |
@@ -181,7 +181,7 @@
 
 ### Our Unique Advantages:
 
-1. ✅ **Most Comprehensive** - 34 tools (vs ~20 from GitHub)
+1. ✅ **Most Comprehensive** - 36 tools (vs ~20 from GitHub)
 2. ✅ **Complete Lifecycle** - Create to archive
 3. ✅ **Batch Operations** - Maximum efficiency
 4. ✅ **Infrastructure Foundation** - Workspace architecture ready

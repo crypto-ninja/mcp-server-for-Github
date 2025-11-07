@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-34-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-36-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -61,14 +61,16 @@ Complete repository lifecycle from creation to archival.
 - **Transfer Repository** - Change ownership
 - **Archive Repository** - Archive/unarchive repositories
 
-### 📝 File Management (5 tools) 
-Complete CRUD operations with batch capabilities and chunk reading.
+### 📝 File Management (7 tools) 
+Complete CRUD operations with batch capabilities, chunk reading, and efficient search/replace.
 
 - **✅ Create Files** - Add new files with content to any repository
 - **✅ Update Files** - Modify existing files with SHA-based conflict prevention
 - **✅ Delete Files** - Remove files safely with validation
 - **Batch Operations** - Multi-file operations in single atomic commits
 - **Read File Chunks** - Read specific line ranges from local repo files 🆕
+- **Workspace Grep** - Efficient pattern search in repository files 🆕
+- **String Replace** - Surgical file edits without full rewrites 🆕
 
 ### 📜 Repository History (1 tool)
 Track and analyze repository commit history.
@@ -146,7 +148,7 @@ Profile and organization data retrieval.
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v1.5.0 with 34 tools (Phase 0-2 complete)  
+**Current:** v1.5.0 with 36 tools (Phase 0-2 complete + grep/replace)  
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
@@ -189,7 +191,7 @@ Every feature in this MCP server comes from **actually using it**:
 | Who | What They Built | Score |
 |-----|----------------|-------|
 | **GitHub** | The entire platform + API | ∞ |
-| **Us** | 34 tools using their API | 34 |
+| **Us** | 36 tools using their API | 36 |
 | **Math** | We're winning! (at using their stuff) | 📊 |
 
 **Translation:** GitHub built the Lego set. We just used all the pieces! 🧱
@@ -205,7 +207,7 @@ Every feature in this MCP server comes from **actually using it**:
 **Us:**
 - ✅ Gets to build on world-class infrastructure  
 - ✅ Benefits from amazing API documentation
-- ✅ Has 34 tools to brag about
+- ✅ Has 36 tools to brag about
 - ✅ Can say we out-featured their server *(thanks for the API!)* 😉
 
 **You:**
@@ -220,7 +222,7 @@ Every feature in this MCP server comes from **actually using it**:
 
 *"Thanks for building such a powerful API that we could do this! Your official MCP server showed us what was possible - we just couldn't resist seeing how far we could take it. The fact that we can build something with 70% more features shows how comprehensive your API is. That's actually a compliment! 💪*
 
-*Now... about catching up to our 34 tools... we'll wait here.* 😉🍿"
+*Now... about catching up to our 36 tools... we'll wait here.* 😉🍿"
 
 ---
 
