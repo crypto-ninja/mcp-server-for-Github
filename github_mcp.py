@@ -55,6 +55,9 @@ import os
 import httpx
 from datetime import datetime
 import base64
+import subprocess
+import re
+from pathlib import Path
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
 from license_manager import check_license_on_startup, get_license_manager
@@ -69,6 +72,7 @@ mcp = FastMCP("github_mcp")
 API_BASE_URL = "https://api.github.com"
 CHARACTER_LIMIT = 25000  # Maximum response size in characters
 DEFAULT_LIMIT = 20
+REPO_ROOT = Path(os.path.abspath(os.getcwd()))  # Repository root directory
 
 # Enums
 class ResponseFormat(str, Enum):
@@ -839,6 +843,35 @@ class ReadFileChunkInput(BaseModel):
     start_line: int = Field(default=1, description="1-based starting line number", ge=1)
     num_lines: int = Field(default=200, description="Number of lines to read (max 500)", ge=1, le=500)
 
+class WorkspaceGrepInput(BaseModel):
+    """Input model for workspace grep search."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    pattern: str = Field(..., description="Regex pattern to search for", min_length=1, max_length=500)
+    repo_path: str = Field(default="", description="Optional subdirectory to search within (relative to repo root)", max_length=500)
+    context_lines: int = Field(default=2, description="Number of lines before/after match to include (0-5)", ge=0, le=5)
+    max_results: int = Field(default=100, description="Maximum matches to return (1-500)", ge=1, le=500)
+    file_pattern: str = Field(default="*", description="Glob pattern for files to search (e.g., '*.py', '*.md')", max_length=100)
+    case_sensitive: bool = Field(default=True, description="Whether search is case-sensitive")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format (markdown or json)")
+
+class StrReplaceInput(BaseModel):
+    """Input model for string replacement in files."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    path: str = Field(..., description="Relative path to file under repository root", min_length=1, max_length=500)
+    old_str: str = Field(..., description="Exact string to find and replace (must be unique match)", min_length=1)
+    new_str: str = Field(..., description="Replacement string", min_length=0)
+    description: Optional[str] = Field(default=None, description="Optional description of the change", max_length=200)
+
 # Tool Implementations
 
 @mcp.tool(
@@ -892,6 +925,478 @@ async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
         header = f"# {norm_path}\n\nLines {start}-{end} (max {params.num_lines})\n\n"
         content = "\n".join(lines) if lines else "(no content in range)"
         return _truncate_response(header + "```\n" + content + "\n```")
+    except Exception as e:
+        return _handle_api_error(e)
+
+def _validate_search_path(repo_path: str) -> Path:
+    """Validate and normalize search path, ensuring it's within repo root."""
+    base_dir = REPO_ROOT
+    norm_path = Path(repo_path).as_posix() if repo_path else ""
+    
+    # Normalize path
+    if norm_path:
+        # Remove leading slashes
+        norm_path = norm_path.lstrip('/')
+        # Check for parent traversal
+        if '..' in norm_path or norm_path.startswith('..'):
+            raise ValueError("Path traversal detected: parent directory access not allowed")
+        search_path = (base_dir / norm_path).resolve()
+    else:
+        search_path = base_dir
+    
+    # Ensure it's within repo root
+    try:
+        search_path.relative_to(base_dir)
+    except ValueError:
+        raise ValueError(f"Path outside repository root: {repo_path}")
+    
+    if not search_path.exists():
+        raise ValueError(f"Search path does not exist: {repo_path}")
+    
+    return search_path
+
+def _is_binary_file(file_path: Path) -> bool:
+    """Check if a file is binary."""
+    # Check by extension
+    binary_extensions = {'.pyc', '.pyo', '.pyd', '.so', '.dll', '.exe', '.bin', 
+                        '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip', '.tar',
+                        '.gz', '.bz2', '.xz', '.ico', '.woff', '.woff2', '.ttf',
+                        '.eot', '.otf', '.mp3', '.mp4', '.avi', '.mov', '.wmv'}
+    if file_path.suffix.lower() in binary_extensions:
+        return True
+    
+    # Check by content (first 512 bytes)
+    try:
+        with open(file_path, 'rb') as f:
+            chunk = f.read(512)
+            # Check for null bytes (common in binary files)
+            if b'\x00' in chunk:
+                return True
+            # Check if it's valid UTF-8
+            try:
+                chunk.decode('utf-8')
+            except UnicodeDecodeError:
+                return True
+    except Exception:
+        return True
+    
+    return False
+
+def _load_gitignore(base_dir: Path) -> List[re.Pattern]:
+    """Load and parse .gitignore patterns."""
+    gitignore_path = base_dir / '.gitignore'
+    patterns = []
+    
+    # Always ignore .git directory
+    patterns.append(re.compile(r'^\.git(/|$)'))
+    
+    if not gitignore_path.exists():
+        return patterns
+    
+    try:
+        with open(gitignore_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                # Convert gitignore pattern to regex
+                pattern = line.replace('.', r'\.').replace('*', '.*').replace('?', '.')
+                if pattern.startswith('/'):
+                    pattern = pattern[1:]
+                else:
+                    pattern = f'.*{pattern}'
+                patterns.append(re.compile(pattern))
+    except Exception:
+        pass
+    
+    return patterns
+
+def _should_ignore_file(file_path: Path, base_dir: Path, gitignore_patterns: List[re.Pattern]) -> bool:
+    """Check if a file should be ignored based on .gitignore patterns."""
+    rel_path = file_path.relative_to(base_dir).as_posix()
+    
+    for pattern in gitignore_patterns:
+        if pattern.search(rel_path):
+            return True
+    
+    return False
+
+def _python_grep_search(search_path: Path, pattern: str, file_pattern: str, 
+                       case_sensitive: bool, max_results: int, context_lines: int,
+                       gitignore_patterns: List[re.Pattern], base_dir: Path) -> List[Dict[str, Any]]:
+    """Python-based grep search as fallback."""
+    matches = []
+    compiled_pattern = re.compile(pattern, re.IGNORECASE if not case_sensitive else 0)
+    
+    # Convert file_pattern glob to regex
+    if file_pattern == "*":
+        file_regex = re.compile(r'.*')
+    else:
+        # Simple glob to regex conversion
+        file_regex_str = file_pattern.replace('.', r'\.').replace('*', '.*').replace('?', '.')
+        file_regex = re.compile(file_regex_str, re.IGNORECASE)
+    
+    try:
+        for root, dirs, files in os.walk(search_path):
+            # Skip .git directory
+            if '.git' in dirs:
+                dirs.remove('.git')
+            
+            for file_name in files:
+                file_path = Path(root) / file_name
+                
+                # Check if file matches pattern
+                if not file_regex.search(file_name):
+                    continue
+                
+                # Check if binary
+                if _is_binary_file(file_path):
+                    continue
+                
+                # Check gitignore
+                if _should_ignore_file(file_path, base_dir, gitignore_patterns):
+                    continue
+                
+                if len(matches) >= max_results:
+                    break
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                        lines = f.readlines()
+                        for line_num, line in enumerate(lines, start=1):
+                            if len(matches) >= max_results:
+                                break
+                            if compiled_pattern.search(line):
+                                # Get context
+                                start_line = max(1, line_num - context_lines)
+                                end_line = min(len(lines), line_num + context_lines)
+                                context_before = [l.rstrip('\n\r') for l in lines[start_line-1:line_num-1]]
+                                context_after = [l.rstrip('\n\r') for l in lines[line_num:end_line]]
+                                
+                                matches.append({
+                                    'file': str(file_path.relative_to(base_dir)),
+                                    'line_number': line_num,
+                                    'line': line.rstrip('\n\r'),
+                                    'context_before': context_before,
+                                    'context_after': context_after
+                                })
+                except Exception:
+                    continue
+    except Exception:
+        pass
+    
+    return matches
+
+@mcp.tool(
+    name="workspace_grep",
+    annotations={
+        "title": "Search Workspace Files with Grep",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def workspace_grep(params: WorkspaceGrepInput) -> str:
+    """
+    Search for patterns in workspace repository files using grep.
+    
+    This tool efficiently searches through files in the repository,
+    returning only matching lines with context instead of full files.
+    Ideal for finding functions, errors, TODOs, or any code pattern.
+    
+    Security: Repository-rooted, no parent traversal allowed.
+    
+    Args:
+        params (WorkspaceGrepInput): Validated input parameters containing:
+            - pattern (str): Regex pattern to search for
+            - repo_path (str): Optional subdirectory to search within
+            - context_lines (int): Number of lines before/after match (0-5)
+            - max_results (int): Maximum matches to return (1-500)
+            - file_pattern (str): Glob pattern for files (e.g., '*.py', '*.md')
+            - case_sensitive (bool): Whether search is case-sensitive
+            - response_format (ResponseFormat): Output format (markdown or json)
+    
+    Returns:
+        str: Formatted search results with file paths, line numbers, and matches
+    
+    Examples:
+        - Use when: "Find all KeyError occurrences"
+        - Use when: "Search for function definitions matching github_*"
+        - Use when: "Find all TODOs in Python files"
+        - Use when: "Search for import statements in src directory"
+    
+    Error Handling:
+        - Returns error if pattern is invalid
+        - Returns error if path traversal detected
+        - Handles binary files gracefully
+        - Respects .gitignore patterns
+    """
+    try:
+        # Validate inputs
+        if not params.pattern:
+            return "Error: Pattern cannot be empty"
+        
+        # Validate and get search path
+        try:
+            search_path = _validate_search_path(params.repo_path)
+            base_dir = REPO_ROOT
+        except ValueError as e:
+            return f"Error: {str(e)}"
+        
+        # Load gitignore patterns
+        gitignore_patterns = _load_gitignore(base_dir)
+        
+        # Try ripgrep first, then grep, then Python fallback
+        matches = []
+        files_searched = 0
+        
+        # Try ripgrep
+        try:
+            cmd = ['rg', '--json', '--no-heading', '--with-filename', '--line-number']
+            if params.context_lines > 0:
+                cmd.extend(['-C', str(params.context_lines)])
+            if not params.case_sensitive:
+                cmd.append('--ignore-case')
+            if params.file_pattern != '*':
+                cmd.extend(['--glob', params.file_pattern])
+            cmd.extend([params.pattern, str(search_path)])
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                # Parse ripgrep JSON output
+                for line in result.stdout.strip().split('\n'):
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if data.get('type') == 'match':
+                            file_path_str = data['data']['path']['text']
+                            file_path = Path(file_path_str)
+                            line_num = data['data']['line_number']
+                            line_text = data['data']['lines']['text'].rstrip('\n\r')
+                            
+                            # Convert to relative path if absolute
+                            try:
+                                rel_path = file_path.relative_to(base_dir)
+                            except ValueError:
+                                # If it's already relative or outside base_dir, use as-is
+                                rel_path = file_path
+                            
+                            # Get context - ripgrep JSON doesn't include context directly
+                            # We'll read it from the file if needed
+                            context_before = []
+                            context_after = []
+                            if params.context_lines > 0:
+                                try:
+                                    full_path = base_dir / rel_path if not rel_path.is_absolute() else rel_path
+                                    if full_path.exists() and full_path.is_file():
+                                        with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
+                                            all_lines = f.readlines()
+                                            if line_num <= len(all_lines):
+                                                start_idx = max(0, line_num - 1 - params.context_lines)
+                                                end_idx = min(len(all_lines), line_num + params.context_lines)
+                                                context_before = [l.rstrip('\n\r') for l in all_lines[start_idx:line_num-1]]
+                                                context_after = [l.rstrip('\n\r') for l in all_lines[line_num:end_idx]]
+                                except Exception:
+                                    pass
+                            
+                            matches.append({
+                                'file': str(rel_path),
+                                'line_number': line_num,
+                                'line': line_text,
+                                'context_before': context_before,
+                                'context_after': context_after
+                            })
+                        elif data.get('type') == 'summary':
+                            files_searched = data.get('data', {}).get('stats', {}).get('searched', 0)
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            # Fallback to Python-based search
+            matches = _python_grep_search(
+                search_path, params.pattern, params.file_pattern,
+                params.case_sensitive, params.max_results, params.context_lines,
+                gitignore_patterns, base_dir
+            )
+            files_searched = len(set(m['file'] for m in matches))
+        
+        # Limit results
+        matches = matches[:params.max_results]
+        
+        # Format response
+        if params.response_format == ResponseFormat.JSON:
+            result = {
+                'pattern': params.pattern,
+                'files_searched': files_searched or len(set(m['file'] for m in matches)),
+                'total_matches': len(matches),
+                'matches': matches,
+                'truncated': len(matches) >= params.max_results
+            }
+            return json.dumps(result, indent=2)
+        
+        # Markdown format
+        markdown = f"# Grep Results\n\n"
+        markdown += f"**Pattern:** `{params.pattern}`\n"
+        markdown += f"**Files Searched:** {files_searched or len(set(m['file'] for m in matches))}\n"
+        markdown += f"**Total Matches:** {len(matches)}\n"
+        markdown += f"**Showing:** {len(matches)} matches\n\n"
+        
+        if not matches:
+            markdown += "No matches found.\n"
+        else:
+            # Group by file
+            by_file: Dict[str, List[Dict[str, Any]]] = {}
+            for match in matches:
+                file_path = match['file']
+                if file_path not in by_file:
+                    by_file[file_path] = []
+                by_file[file_path].append(match)
+            
+            for file_path, file_matches in by_file.items():
+                markdown += f"## {file_path}\n\n"
+                for match in file_matches:
+                    line_num = match['line_number']
+                    line_text = match['line']
+                    context_before = match.get('context_before', [])
+                    context_after = match.get('context_after', [])
+                    
+                    markdown += f"**Line {line_num}:**\n"
+                    markdown += "```\n"
+                    
+                    # Show context before
+                    for i, ctx_line in enumerate(context_before):
+                        ctx_line_num = line_num - len(context_before) + i
+                        markdown += f"{ctx_line_num}: {ctx_line}\n"
+                    
+                    # Show matching line
+                    markdown += f"{line_num}: {line_text}\n"
+                    
+                    # Show context after
+                    for i, ctx_line in enumerate(context_after):
+                        ctx_line_num = line_num + 1 + i
+                        markdown += f"{ctx_line_num}: {ctx_line}\n"
+                    
+                    markdown += "```\n\n"
+                
+                markdown += "---\n\n"
+        
+        markdown += f"\n**Summary:**\n"
+        if matches:
+            by_file = {match['file'] for match in matches}
+            markdown += f"- {len(by_file)} files with matches\n"
+        else:
+            markdown += f"- 0 files with matches\n"
+        markdown += f"- {len(matches)} total occurrences\n"
+        markdown += f"- Pattern: `{params.pattern}`\n"
+        
+        return _truncate_response(markdown, len(matches))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="str_replace",
+    annotations={
+        "title": "Replace String in File",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def str_replace(params: StrReplaceInput) -> str:
+    """
+    Replace an exact string match in a file with a new string.
+    
+    This tool finds an exact match of old_str in the file and replaces it with new_str.
+    The match must be unique (exactly one occurrence) to prevent accidental replacements.
+    
+    Security: Repository-rooted, no parent traversal allowed.
+    
+    Args:
+        params (StrReplaceInput): Validated input parameters containing:
+            - path (str): Relative path to file under repository root
+            - old_str (str): Exact string to find and replace (must be unique)
+            - new_str (str): Replacement string
+            - description (Optional[str]): Optional description of the change
+    
+    Returns:
+        str: Confirmation message with details of the replacement
+    
+    Examples:
+        - Use when: "Replace function name in file"
+        - Use when: "Update configuration value"
+        - Use when: "Fix typo in documentation"
+        - Use when: "Update version number"
+    
+    Error Handling:
+        - Returns error if file not found
+        - Returns error if old_str not found
+        - Returns error if multiple matches found (must be unique)
+        - Returns error if path traversal detected
+    """
+    try:
+        # Validate and normalize path
+        base_dir = REPO_ROOT
+        norm_path = Path(params.path).as_posix()
+        
+        # Check for path traversal
+        if '..' in norm_path or norm_path.startswith('..') or os.path.isabs(norm_path):
+            return "Error: Path traversal is not allowed."
+        
+        abs_path = (base_dir / norm_path).resolve()
+        
+        # Ensure it's within repo root
+        try:
+            abs_path.relative_to(base_dir)
+        except ValueError:
+            return "Error: Access outside repository root is not allowed."
+        
+        if not abs_path.exists():
+            return f"Error: File does not exist: {params.path}"
+        
+        if abs_path.is_dir():
+            return f"Error: Path is a directory, not a file: {params.path}"
+        
+        # Read file content
+        try:
+            with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+        except Exception as e:
+            return f"Error: Could not read file: {str(e)}"
+        
+        # Count occurrences
+        count = content.count(params.old_str)
+        
+        if count == 0:
+            return f"Error: String not found in file '{params.path}'. The exact string '{params.old_str[:50]}{'...' if len(params.old_str) > 50 else ''}' was not found."
+        
+        if count > 1:
+            return f"Error: Multiple matches found ({count} occurrences). The string must appear exactly once for safety. Found at {count} locations in '{params.path}'."
+        
+        # Perform replacement
+        new_content = content.replace(params.old_str, params.new_str, 1)
+        
+        # Write back to file
+        try:
+            with open(abs_path, 'w', encoding='utf-8', newline='') as f:
+                f.write(new_content)
+        except Exception as e:
+            return f"Error: Could not write to file: {str(e)}"
+        
+        # Build confirmation message
+        result = f"✅ String replacement successful!\n\n"
+        result += f"**File:** `{params.path}`\n"
+        if params.description:
+            result += f"**Description:** {params.description}\n"
+        result += f"**Occurrences:** 1 (unique match)\n"
+        result += f"**Replaced:** `{params.old_str[:100]}{'...' if len(params.old_str) > 100 else ''}`\n"
+        result += f"**With:** `{params.new_str[:100]}{'...' if len(params.new_str) > 100 else ''}`\n"
+        
+        return result
+        
     except Exception as e:
         return _handle_api_error(e)
 
@@ -1369,6 +1874,26 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
             params=params_dict
         )
         
+        # Handle cache marker (304 Not Modified response)
+        if isinstance(data, dict) and data.get('_from_cache'):
+            # For 304 responses, we need to make a fresh request without conditional headers
+            # This is a workaround - ideally we'd cache the actual response data
+            # For now, retry without cache to get the actual data
+            client = GhClient.instance()
+            response = await client.request(
+                method="GET",
+                path=f"/repos/{params.owner}/{params.repo}/contents/{params.path}",
+                token=params.token,
+                params=params_dict,
+                headers={"Cache-Control": "no-cache"}  # Force fresh request
+            )
+            response.raise_for_status()
+            data = response.json()
+        
+        # Validate that we have the expected structure
+        if not isinstance(data, dict) or 'name' not in data:
+            return f"Error: Unexpected response format from GitHub API. Expected file data, got: {type(data).__name__}"
+        
         # Handle file content
         if data.get('encoding') == 'base64':
             import base64
@@ -1376,14 +1901,14 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
         else:
             content = data.get('content', '')
         
-        result = f"""# File: {data['name']}
+        result = f"""# File: {data.get('name', 'unknown')}
 
-**Path:** {data['path']}
-**Size:** {data['size']:,} bytes
-**Type:** {data['type']}
+**Path:** {data.get('path', 'unknown')}
+**Size:** {data.get('size', 0):,} bytes
+**Type:** {data.get('type', 'unknown')}
 **Encoding:** {data.get('encoding', 'none')}
-**SHA:** {data['sha']}
-**URL:** {data['html_url']}
+**SHA:** {data.get('sha', 'unknown')}
+**URL:** {data.get('html_url', 'unknown')}
 
 ---
 
@@ -1753,6 +2278,22 @@ async def github_list_repo_contents(params: ListRepoContentsInput) -> str:
             params=params_dict
         )
         
+        # Handle cache marker (304 Not Modified response)
+        if isinstance(data, dict) and data.get('_from_cache'):
+            # For 304 responses, we need to make a fresh request without conditional headers
+            # This is a workaround - ideally we'd cache the actual response data
+            # For now, retry without cache to get the actual data
+            client = GhClient.instance()
+            response = await client.request(
+                method="GET",
+                path=f"/{endpoint}",
+                token=params.token,
+                params=params_dict,
+                headers={"Cache-Control": "no-cache"}  # Force fresh request
+            )
+            response.raise_for_status()
+            data = response.json()
+        
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result, len(data) if isinstance(data, list) else 1)
@@ -1760,20 +2301,27 @@ async def github_list_repo_contents(params: ListRepoContentsInput) -> str:
         # Markdown format
         if isinstance(data, dict):
             # Single file returned
+            # Validate structure before accessing keys
+            if 'name' not in data:
+                return f"Error: Unexpected response format from GitHub API. Expected file data, got: {type(data).__name__}"
+            
             return f"""# Single File
 
 This path points to a file, not a directory.
 
-**Name:** {data['name']}
-**Path:** {data['path']}
-**Size:** {data['size']:,} bytes
-**Type:** {data['type']}
-**URL:** {data['html_url']}
+**Name:** {data.get('name', 'unknown')}
+**Path:** {data.get('path', 'unknown')}
+**Size:** {data.get('size', 0):,} bytes
+**Type:** {data.get('type', 'unknown')}
+**URL:** {data.get('html_url', 'unknown')}
 
 Use `github_get_file_content` to retrieve the file content.
 """
         
-        # Directory listing
+        # Directory listing - validate it's a list
+        if not isinstance(data, list):
+            return f"Error: Unexpected response format from GitHub API. Expected list of items, got: {type(data).__name__}"
+        
         display_path = path or "(root)"
         markdown = f"# Contents of /{display_path}\n\n"
         markdown += f"**Repository:** {params.owner}/{params.repo}\n"
@@ -1782,21 +2330,24 @@ Use `github_get_file_content` to retrieve the file content.
         markdown += f"**Items:** {len(data)}\n\n"
         
         # Separate directories and files
-        directories = [item for item in data if item['type'] == 'dir']
-        files = [item for item in data if item['type'] == 'file']
+        directories = [item for item in data if isinstance(item, dict) and item.get('type') == 'dir']
+        files = [item for item in data if isinstance(item, dict) and item.get('type') == 'file']
         
         if directories:
             markdown += "## 📁 Directories\n"
             for item in directories:
-                markdown += f"- `{item['name']}/`\n"
+                name = item.get('name', 'unknown')
+                markdown += f"- `{name}/`\n"
             markdown += "\n"
         
         if files:
             markdown += "## 📄 Files\n"
             for item in files:
-                size_kb = item['size'] / 1024
-                size_str = f"{size_kb:.1f} KB" if size_kb >= 1 else f"{item['size']} bytes"
-                markdown += f"- `{item['name']}` ({size_str})\n"
+                name = item.get('name', 'unknown')
+                size = item.get('size', 0)
+                size_kb = size / 1024
+                size_str = f"{size_kb:.1f} KB" if size_kb >= 1 else f"{size} bytes"
+                markdown += f"- `{name}` ({size_str})\n"
         
         return _truncate_response(markdown, len(data))
         
