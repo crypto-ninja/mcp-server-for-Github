@@ -1,4 +1,130 @@
 # Changelog
+## [1.5.0] - 2025-11-06
+
+### 🚀 Phase 0-1: Infrastructure & Performance Upgrade
+
+**Meta Achievement:** This release was merged AND released BY the tools themselves! 🤯
+
+Major infrastructure improvements with 2 new tools, connection pooling, GraphQL support, and CI/CD pipeline.
+
+### ✨ New Tools (+2)
+
+**Tool #33: `github_get_pr_overview_graphql`**
+- GraphQL-based PR overview fetching
+- Single query vs multiple REST calls  
+- More efficient than REST equivalent
+- **Meta Note:** This tool reviewed itself during PR #14!
+
+**Tool #34: `repo_read_file_chunk`**
+- Read local repository files in line-based chunks
+- Parameters: path, start_line, num_lines (max 500)
+- Security: repo-root constrained
+- **Note:** Foundation for Phase 2.5 workspace architecture (Issue #15)
+
+### 💨 Infrastructure Improvements
+
+#### HTTP Connection Pooling
+- New `github_client.py` module with connection pooling
+- Reuses HTTP connections for better performance
+- ETag caching for conditional requests
+- Reduced latency and network overhead
+
+#### GitHub App Authentication
+- Optional App-based authentication (new `auth/github_app.py`)
+- Better rate limits for enterprise users
+- PAT authentication still the default
+- Zero config changes required for existing users
+
+#### GraphQL Client
+- New `graphql_client.py` module
+- Foundation for more efficient batch operations
+- Enables complex queries in single request
+
+#### CI/CD Pipeline
+- GitHub Actions workflow added (`.github/workflows/ci.yml`)
+- Automated testing on pull requests
+- Quality assurance automation
+- Professional development workflow
+
+#### Modern Packaging
+- `pyproject.toml` (PEP 621 compliant)
+- Better dependency management
+- Industry standard packaging
+
+### 📊 Statistics
+- **New Tools:** 2 (32 → 34)
+- **Code Changes:** +571 lines, -50 lines
+- **Files Modified:** 9 files
+- **Breaking Changes:** NONE
+- **Backward Compatibility:** 100%
+
+### 🐕🍖 The Meta Journey
+1. ✅ Tools created Issue #12 (license)
+2. ✅ Tools created PR #13 (license)
+3. ✅ Tools reviewed PR #13
+4. ✅ Tools merged PR #13
+5. ✅ Tools created PR #14 (this upgrade!)
+6. ✅ Tools created Issues #15 & #16 (vision)
+7. ✅ Tools reviewed PR #14  
+8. ✅ **Tools merged PR #14**
+9. ✅ **Tools released v1.5.0**
+
+**Meta Score:** 21/10 🐕🍖♾️🤯
+
+### 🔗 Related
+- PR #14: Phase 0-1 implementation
+- Issue #15: Phase 2.5 Workspace Architecture
+- Issue #16: Roadmap documentation update
+- Merge Commit: f4e9fcd6374ef42d4fd0a7c2f2b8ac08cd5e17e2
+
+[1.5.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.5.0
+
+## [1.4.0] - 2025-11-06
+
+### 🔒 License Verification Integration
+
+**Meta Achievement:** Created BY the tools themselves! 🐕🍖
+
+Added license verification system with tool to check license status.
+
+### ✨ New Tool (+1)
+
+**Tool #32: `github_license_info`**
+- Display current license tier and status
+- Show license expiration date
+- Check feature availability
+- No parameters required
+
+### 🏗️ License Management
+- New `license_manager.py` module
+- AGPL-3.0 for free tier
+- Commercial licensing support
+- License key validation
+- Graceful fallback on errors
+
+### 📊 Statistics
+- **New Tools:** 1 (31 → 32)
+- **Licensing:** Dual license (AGPL + Commercial)
+- **Breaking Changes:** NONE
+
+### 🐕🍖 Dogfooding Story #13
+
+The tools created their own license verification:
+1. ✅ Created Issue #12 about themselves
+2. ✅ Created PR #13 for themselves  
+3. ✅ Reviewed their own PR
+4. ✅ Merged their own PR
+5. ✅ Verified their own license!
+
+**Meta Level:** INFINITE ♾️
+
+### 🔗 Related
+- Issue #12: License integration proposal
+- PR #13: License implementation
+- Merge Commit: 9323b91c5e5b2cc120ec6b221f5e7205101b3c0f
+
+[1.4.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.4.0
+
 ## [1.3.0] - 2025-11-04
 
 ### 🚀 Phase 2.2 & 2.3 Combined Release
@@ -75,7 +201,9 @@ Major expansion adding 9 new tools for complete repository lifecycle and PR work
 ## [Unreleased]
 
 ### Planned
-- Stay tuned for Phase 3.0 features!
+- Phase 2.5: Workspace Architecture (Issue #15) - Token efficiency!
+- Phase 3.0: Branch Management - Essential Git workflows
+- Stay tuned for more features!
 
 ## [1.2.1] - 2025-10-31
 
