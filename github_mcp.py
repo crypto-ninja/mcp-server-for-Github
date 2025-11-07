@@ -72,7 +72,7 @@ mcp = FastMCP("github_mcp")
 API_BASE_URL = "https://api.github.com"
 CHARACTER_LIMIT = 25000  # Maximum response size in characters
 DEFAULT_LIMIT = 20
-REPO_ROOT = Path(os.path.abspath(os.getcwd()))  # Repository root directory
+REPO_ROOT = Path(__file__).parent  # Repository root directory
 
 # Enums
 class ResponseFormat(str, Enum):
