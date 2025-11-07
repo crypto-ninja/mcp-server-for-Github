@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-31-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-34-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -11,35 +11,33 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v1.3.0 - Repository Management & PR Workflow (Nov 4, 2025)
+### 🚀 Latest: v1.5.0 - Infrastructure Upgrade (Nov 6, 2025)
 
-**The Big Leap:** 9 new tools in one massive release! Complete repository lifecycle and advanced PR workflow automation.
+**The Foundation:** Phase 0-1 infrastructure overhaul! Repository-rooted operations, chunk reading, and GraphQL optimization.
 
-**New in v1.3.0:**
+**New in v1.5.0:**
 
-**📦 Repository Management (Phase 2.2) - 6 tools**
-- Create & delete repositories (personal & org)
-- Update repository settings
-- Transfer ownership
-- Archive/unarchive functionality
-- PR merge control
+**🏗️ Infrastructure (Phase 0-1) - 2 tools**
+- **Repository File Chunk Reader** - Read file ranges from local repo (security-constrained)
+- **GraphQL PR Overview** - Batch-fetch PR data in single query (80% faster)
 
-**🔀 PR Workflow (Phase 2.3) - 3 tools**  
-- PR reviews with line-specific comments
-- Batch file operations (multi-file atomic commits)
-- Commit history tracking with filtering
+**📊 Licensing (v1.4.0) - 1 tool**
+- **License Info Display** - Show current license tier and status
 
-**Total Tools:** 31 (vs GitHub's ~20) 🏆  
-**Competitive Advantage:** 55% more features!
+**Total Tools:** 34 (vs GitHub's ~20) 🏆  
+**Competitive Advantage:** 70% more features!
 
 ---
 
 ### 📦 Recently Shipped
 
+**v1.3.0 (Nov 4, 2025)** - Repository Management & PR Workflow
+- 9 new tools: Repository lifecycle + PR reviews
+- Complete repo management + batch operations
+
 **v1.2.1 (Oct 31, 2025)** - Workflow Advisor
 - Smart recommendations (API vs local vs hybrid)
 - Token cost estimates
-- Self-aware optimization
 
 **v1.2.0 (Oct 30, 2025)** - File & Release Management  
 - Create, update, delete files
@@ -57,21 +55,22 @@ Complete repository lifecycle from creation to archival.
 - **Repository Info** - Comprehensive metadata, statistics, and configuration
 - **Browse Contents** - Navigate directory structures and file trees
 - **File Access** - Retrieve file contents from any branch or commit
-- **Create Repository** - Create repos (personal & organization) 🆕
-- **Delete Repository** - Safe deletion with checks 🆕
-- **Update Repository** - Modify settings and configuration 🆕
-- **Transfer Repository** - Change ownership 🆕
-- **Archive Repository** - Archive/unarchive repositories 🆕
+- **Create Repository** - Create repos (personal & organization)
+- **Delete Repository** - Safe deletion with checks
+- **Update Repository** - Modify settings and configuration
+- **Transfer Repository** - Change ownership
+- **Archive Repository** - Archive/unarchive repositories
 
-### 📝 File Management (4 tools) 
-Complete CRUD operations with batch capabilities.
+### 📝 File Management (5 tools) 
+Complete CRUD operations with batch capabilities and chunk reading.
 
 - **✅ Create Files** - Add new files with content to any repository
 - **✅ Update Files** - Modify existing files with SHA-based conflict prevention
 - **✅ Delete Files** - Remove files safely with validation
-- **Batch Operations** - Multi-file operations in single atomic commits 🆕
+- **Batch Operations** - Multi-file operations in single atomic commits
+- **Read File Chunks** - Read specific line ranges from local repo files 🆕
 
-### 📜 Repository History (1 tool) 🆕
+### 📜 Repository History (1 tool)
 Track and analyze repository commit history.
 
 - **List Commits** - View commit history with filtering by author, path, date range, and more
@@ -83,14 +82,15 @@ Full issue lifecycle from creation to advanced search.
 - **Create Issues** - Open issues with labels and assignees
 - **Search Issues** - Advanced search across repositories with filters
 
-### 🔀 Pull Request Operations (5 tools)
-Complete PR workflow from creation to merge with reviews.
+### 🔀 Pull Request Operations (6 tools)
+Complete PR workflow from creation to merge with reviews and optimized data fetching.
 
 - **List PRs** - View all pull requests with state filtering
 - **Create PRs** - Open pull requests with draft support
 - **PR Details** - Comprehensive analysis with reviews, commits, and files
-- **Merge PR** - Merge with method control (merge/squash/rebase) 🆕
-- **Review PR** - Add reviews with line-specific comments 🆕
+- **PR Overview (GraphQL)** - Fast batch-fetch PR data in single query 🆕
+- **Merge PR** - Merge with method control (merge/squash/rebase)
+- **Review PR** - Add reviews with line-specific comments
 
 ### ⚡ GitHub Actions (2 tools)
 Monitor and manage your CI/CD pipelines.
@@ -112,10 +112,15 @@ Powerful search across GitHub's entire ecosystem.
 - **Search Repositories** - Find repos with advanced filters
 - **Search Code** - Locate code snippets across GitHub
 
-### 🧠 Workflow Optimization (1 tool) 🆕
+### 🧠 Workflow Optimization (1 tool)
 The self-aware advisor that recommends the best approach.
 
 - **Smart Advisor** - API vs Local vs Hybrid, token estimates, dogfooding detection
+
+### 📋 Licensing & Meta (1 tool) 🆕
+Transparency and license management.
+
+- **License Info** - Display current license tier, expiration, and status
 
 ### 👤 User Information (1 tool)
 Profile and organization data retrieval.
@@ -141,8 +146,8 @@ Profile and organization data retrieval.
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v1.3.0 with 31 tools (Phase 2 complete)  
-**Next:** Phase 3.0 - Enterprise features (webhooks, teams, branch protection)  
+**Current:** v1.5.0 with 34 tools (Phase 0-2 complete)  
+**Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
 📋 **[View Detailed Roadmap →](FEATURE_ROADMAP.md)**
@@ -184,7 +189,7 @@ Every feature in this MCP server comes from **actually using it**:
 | Who | What They Built | Score |
 |-----|----------------|-------|
 | **GitHub** | The entire platform + API | ∞ |
-| **Us** | 31 tools using their API | 31 |
+| **Us** | 34 tools using their API | 34 |
 | **Math** | We're winning! (at using their stuff) | 📊 |
 
 **Translation:** GitHub built the Lego set. We just used all the pieces! 🧱
@@ -200,7 +205,7 @@ Every feature in this MCP server comes from **actually using it**:
 **Us:**
 - ✅ Gets to build on world-class infrastructure  
 - ✅ Benefits from amazing API documentation
-- ✅ Has 31 tools to brag about
+- ✅ Has 34 tools to brag about
 - ✅ Can say we out-featured their server *(thanks for the API!)* 😉
 
 **You:**
@@ -213,9 +218,9 @@ Every feature in this MCP server comes from **actually using it**:
 
 ### 🎤 Message to GitHub:
 
-*"Thanks for building such a powerful API that we could do this! Your official MCP server showed us what was possible - we just couldn't resist seeing how far we could take it. The fact that we can build something with 55% more features shows how comprehensive your API is. That's actually a compliment! 💪*
+*"Thanks for building such a powerful API that we could do this! Your official MCP server showed us what was possible - we just couldn't resist seeing how far we could take it. The fact that we can build something with 70% more features shows how comprehensive your API is. That's actually a compliment! 💪*
 
-*Now... about catching up to our 31 tools... we'll wait here.* 😉🍿"
+*Now... about catching up to our 34 tools... we'll wait here.* 😉🍿"
 
 ---
 
