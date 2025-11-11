@@ -72,7 +72,29 @@ mcp = FastMCP("github_mcp")
 API_BASE_URL = "https://api.github.com"
 CHARACTER_LIMIT = 25000  # Maximum response size in characters
 DEFAULT_LIMIT = 20
-REPO_ROOT = Path(__file__).parent  # Repository root directory
+
+# Workspace Configuration - supports user projects!
+# Set MCP_WORKSPACE_ROOT env var to your project root, or defaults to current directory
+WORKSPACE_ROOT = Path(os.getenv("MCP_WORKSPACE_ROOT", Path.cwd()))
+REPO_ROOT = Path(__file__).parent  # Keep for backward compatibility
+
+def validate_workspace_path(path: Path) -> bool:
+    """
+    Ensure path is within workspace for security.
+    
+    Args:
+        path: Path to validate
+    
+    Returns:
+        True if path is within WORKSPACE_ROOT, False otherwise
+    """
+    try:
+        resolved = path.resolve()
+        workspace = WORKSPACE_ROOT.resolve()
+        resolved.relative_to(workspace)  # Raises ValueError if outside workspace
+        return True
+    except (ValueError, OSError):
+        return False
 
 # Enums
 class ResponseFormat(str, Enum):
@@ -920,7 +942,10 @@ class StrReplaceInput(BaseModel):
 )
 async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
     """
-    Read a specific range of lines from a local file under the server's repo root.
+    Read a specific range of lines from a local file under the workspace root.
+
+    **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable
+    to your project directory. Defaults to current working directory.
 
     Security:
     - Normalizes path
@@ -929,15 +954,15 @@ async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
     - Caps lines read
     """
     try:
-        base_dir = os.path.abspath(os.getcwd())
+        base_dir = WORKSPACE_ROOT.resolve()  # Use configurable workspace
         norm_path = os.path.normpath(params.path)
 
         if norm_path.startswith("..") or os.path.isabs(norm_path):
             return "Error: Path traversal is not allowed."
 
-        abs_path = os.path.abspath(os.path.join(base_dir, norm_path))
-        if not abs_path.startswith(base_dir + os.sep) and abs_path != base_dir:
-            return "Error: Access outside repository root is not allowed."
+        abs_path = os.path.abspath(os.path.join(str(base_dir), norm_path))
+        if not abs_path.startswith(str(base_dir) + os.sep) and abs_path != str(base_dir):
+            return "Error: Access outside workspace root is not allowed."
 
         if not os.path.exists(abs_path):
             return "Error: File does not exist."
@@ -963,8 +988,8 @@ async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
         return _handle_api_error(e)
 
 def _validate_search_path(repo_path: str) -> Path:
-    """Validate and normalize search path, ensuring it's within repo root."""
-    base_dir = REPO_ROOT
+    """Validate and normalize search path, ensuring it's within workspace."""
+    base_dir = WORKSPACE_ROOT  # Use configurable workspace, not hardcoded REPO_ROOT
     norm_path = Path(repo_path).as_posix() if repo_path else ""
     
     # Normalize path
@@ -982,7 +1007,7 @@ def _validate_search_path(repo_path: str) -> Path:
     try:
         search_path.relative_to(base_dir)
     except ValueError:
-        raise ValueError(f"Path outside repository root: {repo_path}")
+        raise ValueError(f"Path outside workspace root: {repo_path}")
     
     if not search_path.exists():
         raise ValueError(f"Search path does not exist: {repo_path}")
@@ -1133,7 +1158,10 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
 )
 async def workspace_grep(params: WorkspaceGrepInput) -> str:
     """
-    Search for patterns in workspace repository files using grep.
+    Search for patterns in workspace files using grep.
+    
+    **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable 
+    to your project directory. Defaults to current working directory.
     
     This tool efficiently searches through files in the repository,
     returning only matching lines with context instead of full files.
@@ -1174,7 +1202,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
         # Validate and get search path
         try:
             search_path = _validate_search_path(params.repo_path)
-            base_dir = REPO_ROOT
+            base_dir = WORKSPACE_ROOT  # Use configurable workspace
         except ValueError as e:
             return f"Error: {str(e)}"
         
@@ -1344,6 +1372,9 @@ async def str_replace(params: StrReplaceInput) -> str:
     """
     Replace an exact string match in a file with a new string.
     
+    **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable
+    to your project directory. Defaults to current working directory.
+    
     This tool finds an exact match of old_str in the file and replaces it with new_str.
     The match must be unique (exactly one occurrence) to prevent accidental replacements.
     
@@ -1373,7 +1404,7 @@ async def str_replace(params: StrReplaceInput) -> str:
     """
     try:
         # Validate and normalize path
-        base_dir = REPO_ROOT
+        base_dir = WORKSPACE_ROOT  # Use configurable workspace
         norm_path = Path(params.path).as_posix()
         
         # Check for path traversal
@@ -1386,7 +1417,7 @@ async def str_replace(params: StrReplaceInput) -> str:
         try:
             abs_path.relative_to(base_dir)
         except ValueError:
-            return "Error: Access outside repository root is not allowed."
+            return f"Error: Access outside workspace root ({WORKSPACE_ROOT}) is not allowed."
         
         if not abs_path.exists():
             return f"Error: File does not exist: {params.path}"

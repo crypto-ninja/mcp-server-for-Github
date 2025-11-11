@@ -47,6 +47,86 @@
 
 ---
 
+### Workspace Configuration
+
+The workspace tools (`workspace_grep`, `str_replace`, `repo_read_file_chunk`) enable powerful local file operations on YOUR projects.
+
+#### What are Workspace Tools?
+
+These tools allow Claude to:
+
+- 🔍 **Search** your codebase efficiently (`workspace_grep`)
+- ✏️ **Edit** files with surgical precision (`str_replace`)
+- 📖 **Read** file chunks without loading entire files (`repo_read_file_chunk`)
+
+#### Setting Your Workspace Root
+
+**Method 1: Claude Desktop Configuration**
+
+Edit your Claude Desktop config file:
+
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "your_github_token",
+        "MCP_WORKSPACE_ROOT": "/Users/dave/projects/my-app"
+      }
+    }
+  }
+}
+```
+
+**Method 2: Environment Variable**
+
+```bash
+export MCP_WORKSPACE_ROOT="/path/to/your/project"
+python -m github_mcp
+```
+
+**Method 3: Default Behavior**
+
+If `MCP_WORKSPACE_ROOT` is not set, tools will use your current working directory as the workspace root.
+
+#### Security
+
+- ✅ Tools can ONLY access files within the workspace root
+- ✅ Path traversal attempts are blocked
+- ✅ No access outside your project directory
+- ✅ Safe for production use
+
+#### Example Usage
+
+```python
+# After setting MCP_WORKSPACE_ROOT="/Users/dave/my-app"
+
+# Search for TODOs in your project
+workspace_grep("TODO", file_pattern="*.py")
+
+# Read a specific file chunk
+repo_read_file_chunk("src/main.py", start_line=1, num_lines=50)
+
+# Make surgical edits
+str_replace(
+    path="config/settings.py",
+    old_str="DEBUG = True",
+    new_str="DEBUG = False",
+    description="Disable debug mode for production"
+)
+```
+
+#### Use Cases
+
+- 🔧 **Local Development:** Work on files before committing
+- 🔍 **Code Search:** Find patterns across your entire project
+- ✏️ **Refactoring:** Make precise changes without touching GitHub
+- 📊 **Analysis:** Read and analyze code structure
+
+---
+
 ## 🚀 Features Overview
 
 ### 📦 Repository Management (7 tools)
