@@ -313,6 +313,25 @@ class CreateIssueInput(BaseModel):
     assignees: Optional[List[str]] = Field(default=None, description="List of usernames to assign", max_length=10)
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
+class UpdateIssueInput(BaseModel):
+    """Input model for updating GitHub issues."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., min_length=1, max_length=100, description="Repository owner username or organization")
+    repo: str = Field(..., min_length=1, max_length=100, description="Repository name")
+    issue_number: int = Field(..., ge=1, description="Issue number to update")
+    state: Optional[str] = Field(None, description="Issue state: 'open' or 'closed'")
+    title: Optional[str] = Field(None, min_length=1, max_length=256, description="New issue title")
+    body: Optional[str] = Field(None, description="New issue body/description in Markdown format")
+    labels: Optional[List[str]] = Field(None, max_length=20, description="List of label names to apply (replaces existing)")
+    assignees: Optional[List[str]] = Field(None, max_length=10, description="List of usernames to assign (replaces existing)")
+    milestone: Optional[int] = Field(None, description="Milestone number (use null to remove milestone)")
+    token: Optional[str] = Field(None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
 class SearchRepositoriesInput(BaseModel):
     """Input model for searching GitHub repositories."""
     model_config = ConfigDict(
@@ -725,6 +744,21 @@ class MergePullRequestInput(BaseModel):
     commit_title: Optional[str] = Field(default=None, description="Custom commit title for merge commit")
     commit_message: Optional[str] = Field(default=None, description="Custom commit message for merge commit")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+class ClosePullRequestInput(BaseModel):
+    """Input model for closing pull requests."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., min_length=1, max_length=100, description="Repository owner")
+    repo: str = Field(..., min_length=1, max_length=100, description="Repository name")
+    pull_number: int = Field(..., ge=1, description="Pull request number to close")
+    comment: Optional[str] = Field(None, description="Optional comment to add when closing")
+    token: Optional[str] = Field(None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
 # Phase 2.1: File Management Models
 
 
@@ -1719,6 +1753,122 @@ async def github_create_issue(params: CreateIssueInput) -> str:
         if data.get('assignees'):
             assignees = ', '.join([f"@{a['login']}" for a in data['assignees']])
             result += f"**Assignees:** {assignees}\n"
+        
+        return result
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_update_issue",
+    annotations={
+        "title": "Update GitHub Issue",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_issue(params: UpdateIssueInput) -> str:
+    """
+    Update an existing GitHub issue.
+    
+    This tool modifies issue properties including state (open/closed),
+    title, body, labels, assignees, and milestone. Only provided fields
+    will be updated - others remain unchanged.
+    
+    Args:
+        params (UpdateIssueInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - issue_number (int): Issue number to update
+            - state (Optional[str]): 'open' or 'closed'
+            - title (Optional[str]): New title
+            - body (Optional[str]): New description
+            - labels (Optional[List[str]]): Label names
+            - assignees (Optional[List[str]]): Usernames to assign
+            - milestone (Optional[int]): Milestone number
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Updated issue details with confirmation message
+    
+    Examples:
+        - Use when: "Close issue #28"
+        - Use when: "Update issue #29 labels"
+        - Use when: "Reassign issue #30 to user"
+    
+    Error Handling:
+        - Returns error if issue not found (404)
+        - Returns error if authentication fails (401/403)
+        - Returns error if invalid parameters (422)
+    """
+    import os
+    
+    # Get token
+    token = params.token or os.getenv("GITHUB_TOKEN")
+    if not token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating issues. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "success": False
+        }, indent=2)
+    
+    # Validate state if provided
+    if params.state and params.state not in ["open", "closed"]:
+        return f"Error: Invalid state '{params.state}'. Must be 'open' or 'closed'."
+    
+    try:
+        # Build update payload
+        update_data = {}
+        if params.state is not None:
+            update_data["state"] = params.state
+        if params.title is not None:
+            update_data["title"] = params.title
+        if params.body is not None:
+            update_data["body"] = params.body
+        if params.labels is not None:
+            update_data["labels"] = params.labels
+        if params.assignees is not None:
+            update_data["assignees"] = params.assignees
+        if params.milestone is not None:
+            update_data["milestone"] = params.milestone
+        
+        # Make request
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/issues/{params.issue_number}",
+            method="PATCH",
+            token=token,
+            json=update_data
+        )
+        
+        # Format response
+        changes = []
+        if params.state:
+            changes.append(f"State: {params.state}")
+        if params.title:
+            changes.append("Title updated")
+        if params.body:
+            changes.append("Description updated")
+        if params.labels:
+            changes.append(f"Labels: {', '.join(params.labels)}")
+        if params.assignees:
+            changes.append(f"Assignees: {', '.join(params.assignees)}")
+        if params.milestone:
+            changes.append(f"Milestone: #{params.milestone}")
+        
+        result = f"""✅ Issue Updated Successfully!
+
+**Issue:** #{data['number']} - {data['title']}
+**Repository:** {params.owner}/{params.repo}
+**URL:** {data['html_url']}
+
+**Changes Applied:**
+{chr(10).join(f'- {change}' for change in changes)}
+
+**Current State:** {data['state']}
+**Updated:** {_format_timestamp(data['updated_at'])}
+"""
         
         return result
         
@@ -4225,6 +4375,93 @@ The pull request has been successfully merged! 🎉
 """
         
         return response
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@mcp.tool(
+    name="github_close_pull_request",
+    annotations={
+        "title": "Close Pull Request",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_close_pull_request(params: ClosePullRequestInput) -> str:
+    """
+    Close a pull request without merging.
+    
+    This tool closes a PR and optionally adds a closing comment explaining why.
+    Useful for stale PRs, superseded PRs, or PRs that won't be merged.
+    
+    Args:
+        params (ClosePullRequestInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - pull_number (int): Pull request number
+            - comment (Optional[str]): Closing comment/explanation
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation with PR details
+    
+    Examples:
+        - Use when: "Close PR #11"
+        - Use when: "Close stale pull request"
+        - Use when: "Close superseded PR with comment"
+    
+    Error Handling:
+        - Returns error if PR not found (404)
+        - Returns error if authentication fails (401/403)
+        - Returns error if PR already closed (422)
+    """
+    import os
+    
+    # Get token
+    token = params.token or os.getenv("GITHUB_TOKEN")
+    if not token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for closing pull requests. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        # Add comment if provided
+        if params.comment:
+            await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/issues/{params.pull_number}/comments",
+                method="POST",
+                token=token,
+                json={"body": params.comment}
+            )
+        
+        # Close the PR
+        pr = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}",
+            method="PATCH",
+            token=token,
+            json={"state": "closed"}
+        )
+        
+        result = f"""✅ Pull Request Closed Successfully!
+
+**PR:** #{pr['number']} - {pr['title']}
+**Repository:** {params.owner}/{params.repo}
+**URL:** {pr['html_url']}
+**Status:** {pr['state']}
+**Closed:** {_format_timestamp(pr['closed_at']) if pr.get('closed_at') else 'Just now'}
+
+"""
+        
+        if params.comment:
+            result += f"**Comment Added:** {params.comment[:100]}{'...' if len(params.comment) > 100 else ''}\n\n"
+        
+        result += "Note: PR was closed without merging. The branch can still be merged later if needed.\n"
+        
+        return result
         
     except Exception as e:
         return _handle_api_error(e)

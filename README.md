@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-36-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-38-brightgreen.svg)](#-available-tools)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -77,21 +77,23 @@ Track and analyze repository commit history.
 
 - **List Commits** - View commit history with filtering by author, path, date range, and more
 
-### 🐛 Issue Management (3 tools)
-Full issue lifecycle from creation to advanced search.
+### 🐛 Issue Management (4 tools)
+Complete issue lifecycle from creation to closure.
 
 - **List Issues** - Browse with state filtering and pagination
 - **Create Issues** - Open issues with labels and assignees
+- **Update Issues** - Modify state, labels, assignees, and properties
 - **Search Issues** - Advanced search across repositories with filters
 
-### 🔀 Pull Request Operations (6 tools)
-Complete PR workflow from creation to merge with reviews and optimized data fetching.
+### 🔀 Pull Request Operations (7 tools)
+Complete PR lifecycle from creation to merge or closure.
 
 - **List PRs** - View all pull requests with state filtering
 - **Create PRs** - Open pull requests with draft support
 - **PR Details** - Comprehensive analysis with reviews, commits, and files
 - **PR Overview (GraphQL)** - Fast batch-fetch PR data in single query 🆕
 - **Merge PR** - Merge with method control (merge/squash/rebase)
+- **Close PR** - Close pull requests without merging (for stale/superseded PRs) 🆕
 - **Review PR** - Add reviews with line-specific comments
 
 ### ⚡ GitHub Actions (2 tools)
@@ -148,7 +150,7 @@ Profile and organization data retrieval.
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v1.5.0 with 36 tools (Phase 0-2 complete + grep/replace)  
+**Current:** v1.6.0 with 38 tools (Complete issue/PR lifecycle!)  
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
@@ -191,7 +193,7 @@ Every feature in this MCP server comes from **actually using it**:
 | Who | What They Built | Score |
 |-----|----------------|-------|
 | **GitHub** | The entire platform + API | ∞ |
-| **Us** | 36 tools using their API | 36 |
+| **Us** | 38 tools using their API | 38 |
 | **Math** | We're winning! (at using their stuff) | 📊 |
 
 **Translation:** GitHub built the Lego set. We just used all the pieces! 🧱
@@ -207,7 +209,7 @@ Every feature in this MCP server comes from **actually using it**:
 **Us:**
 - ✅ Gets to build on world-class infrastructure  
 - ✅ Benefits from amazing API documentation
-- ✅ Has 36 tools to brag about
+- ✅ Has 38 tools to brag about
 - ✅ Can say we out-featured their server *(thanks for the API!)* 😉
 
 **You:**
@@ -222,7 +224,7 @@ Every feature in this MCP server comes from **actually using it**:
 
 *"Thanks for building such a powerful API that we could do this! Your official MCP server showed us what was possible - we just couldn't resist seeing how far we could take it. The fact that we can build something with 70% more features shows how comprehensive your API is. That's actually a compliment! 💪*
 
-*Now... about catching up to our 36 tools... we'll wait here.* 😉🍿"
+*Now... about catching up to our 38 tools... we'll wait here.* 😉🍿"
 
 ---
 

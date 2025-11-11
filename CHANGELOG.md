@@ -254,6 +254,86 @@ Major expansion adding 9 new tools for complete repository lifecycle and PR work
 - Phase 3.0: Branch Management - Essential Git workflows
 - Stay tuned for more features!
 
+---
+
+## [1.6.0] - 2025-11-11
+
+### 🎉 Complete Issue/PR Lifecycle Management
+
+**The Dogfooding Story:** During cleanup, tools discovered they could CREATE but not CLOSE issues! 🙈
+
+### ✨ New Tools (34 → 36 tools)
+
+1. **`github_update_issue`** - Complete issue management
+   - Update issue state (open/closed)
+   - Modify title, body, and labels
+   - Manage assignees and milestones
+   - Full lifecycle control
+
+2. **`github_close_pull_request`** - PR closure without merging
+   - Close stale/superseded PRs  
+   - Add explanatory comments
+   - Maintain repository hygiene
+
+### 🎭 Dogfooding Story #14
+
+**"The Tools That Closed Themselves"**
+
+During a repo cleanup session:
+1. 🔍 Tools attempted to close completed issues
+2. 🐞 Discovered they couldn't close issues!
+3. 📝 Created Issue #29 requesting the feature
+4. 🔧 Cursor implemented both tools in 30 minutes
+5. ✅ Tools closed 13 completed items
+6. 🔄 **Tools closed Issue #29 itself!** (Peak recursion!)
+
+**Meta Achievement:** Tools completed their own lifecycle! ♾️
+
+### 🧹 Repository Cleanup
+
+Automated cleanup using the new tools:
+- Closed 11 completed issues (#18-28)
+- Closed 2 tracking issues (#21, #25)  
+- Closed stale PR #11 with explanation
+- Closed Issue #29 (tools closed themselves!)
+
+**Result:** 14 open items → 2 open items (both future work)
+
+### 📊 Impact
+
+**Before v1.6.0:**
+- 34 tools
+- Could create issues but not close them
+- Manual cleanup required
+- Incomplete lifecycle management
+
+**After v1.6.0:**
+- 36 tools (+2)
+- Complete issue/PR lifecycle
+- Automated cleanup capabilities  
+- Tools fully self-managing! ✨
+
+### 🎯 Use Cases
+
+**Issue Management:**
+- Automated issue closure
+- Bulk label updates
+- Workflow automation
+- Issue state tracking
+
+**PR Management:**
+- Close superseded PRs
+- Cleanup stale branches
+- Maintain PR hygiene
+- Automated workflows
+
+### 🔗 Links
+
+- [Issue #29](https://github.com/crypto-ninja/github-mcp-server/issues/29) - Feature request (closed by itself!)
+- [Dogfooding Story #14](docs/dogfooding/story_14.md) - Full narrative
+
+[1.6.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.6.0
+
 ## [1.2.1] - 2025-10-31
 
 ### 🧠 The Self-Aware Update

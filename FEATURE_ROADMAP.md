@@ -1,14 +1,14 @@
 # 🗺️ GitHub MCP Server - Feature Roadmap
 
-**Last Updated:** November 7, 2025  
-**Current Version:** Phase 2.3 Complete + Phase 0-1 Infrastructure (36 tools)  
+**Last Updated:** November 11, 2025  
+**Current Version:** v1.6.0 - Complete Issue/PR Lifecycle (38 tools)  
 **Status:** Production Ready 🚀
 
 ---
 
 ## 📊 Current Feature Status
 
-### ✅ What We Have (34 Tools)
+### ✅ What We Have (38 Tools)
 
 #### Phase 0-1: Infrastructure (2 tools) 🆕
 - ✅ **repo_read_file_chunk** (v1.5.0) - Repository-rooted file chunk reading
@@ -39,17 +39,19 @@
 #### Commit History (1 tool)
 - ✅ github_list_commits
 
-#### Issues (3 tools)
+#### Issues (4 tools)
 - ✅ github_list_issues
 - ✅ github_create_issue
+- ✅ github_update_issue (v1.6.0) 🆕
 - ✅ github_search_issues
 
-#### Pull Requests (6 tools)
+#### Pull Requests (7 tools)
 - ✅ github_list_pull_requests
 - ✅ github_create_pull_request
 - ✅ github_get_pr_details
 - ✅ github_get_pr_overview_graphql (v1.5.0)
 - ✅ github_merge_pull_request
+- ✅ github_close_pull_request (v1.6.0) 🆕
 - ✅ github_create_pr_review
 
 #### Releases (4 tools)
@@ -181,7 +183,7 @@
 
 ### Our Unique Advantages:
 
-1. ✅ **Most Comprehensive** - 36 tools (vs ~20 from GitHub)
+1. ✅ **Most Comprehensive** - 38 tools (vs ~20 from GitHub)
 2. ✅ **Complete Lifecycle** - Create to archive
 3. ✅ **Batch Operations** - Maximum efficiency
 4. ✅ **Infrastructure Foundation** - Workspace architecture ready
