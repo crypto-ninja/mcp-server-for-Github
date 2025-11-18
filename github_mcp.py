@@ -5177,75 +5177,58 @@ async def execute_code(code: str) -> str:
     """
     Execute TypeScript code with access to all GitHub MCP tools.
     
-    🚀 REVOLUTIONARY: This is the ONLY tool loaded into Claude's context,
-    reducing token usage by 98% compared to traditional MCP servers!
+    🚀 REVOLUTIONARY: 98% token reduction through code-first execution!
     
-    Traditional MCP: 41 tools × 1,700 tokens = 69,700 tokens
-    Code-First MCP: 1 tool × 800 tokens = 800 tokens
+    💡 TOOL DISCOVERY:
+    To see all available tools with complete schemas, use this in your code:
+    ```typescript
+    const tools = listAvailableTools();
+    return tools;
+    ```
     
-    This enables code-first workflows where Claude writes TypeScript code
-    that calls GitHub tools on-demand, rather than loading all tools upfront.
+    This returns a structured catalog of all 41 GitHub tools including:
+    - Tool names and descriptions
+    - Required/optional parameters with types
+    - Return value descriptions
+    - Usage examples for each tool
+    - Organized by category
     
-    This revolutionary approach reduces token usage by 98%+ by:
-    - Loading only 1 tool (execute_code) instead of 41 tools
-    - Executing code locally in Deno runtime
-    - Calling tools programmatically via callMCPTool()
+    📚 Quick Start Example:
+    ```typescript
+    // 1. Discover what's available (optional - only if you need to know)
+    const tools = listAvailableTools();
     
-    Args:
-        code: TypeScript code to execute. The code has access to:
-            - callMCPTool(toolName, args): Call any GitHub MCP tool
-            - All GitHub tool types and interfaces
-            - Standard TypeScript/Deno APIs
-            - Async/await for sequential operations
+    // 2. Use any tool directly
+    const info = await callMCPTool("github_get_repo_info", {
+        owner: "facebook",
+        repo: "react"
+    });
     
-    Returns:
-        Execution result or error message in formatted markdown
+    return { availableTools: tools.totalTools, repoInfo: info };
+    ```
     
-    Examples:
-        ```typescript
-        // Get repository info
-        const info = await callMCPTool("github_get_repo_info", {
-            owner: "facebook",
-            repo: "react"
-        });
-        return { repo: "react", info };
-        ```
-        
-        ```typescript
-        // Create multiple issues
-        const issues = [];
-        for (let i = 1; i <= 3; i++) {
-            const issue = await callMCPTool("github_create_issue", {
-                owner: "myorg",
-                repo: "myrepo",
-                title: `Issue ${i}`,
-                body: `This is issue number ${i}`
-            });
-            issues.push(issue);
-        }
-        return { created: issues.length };
-        ```
-        
-        ```typescript
-        // Complex workflow with conditional logic
-        const repo = await callMCPTool("github_get_repo_info", {
-            owner: "facebook",
-            repo: "react"
-        });
-        
-        const issues = await callMCPTool("github_list_issues", {
-            owner: "facebook",
-            repo: "react",
-            state: "open",
-            limit: 10
-        });
-        
-        return {
-            repo: "facebook/react",
-            hasOpenIssues: issues.includes("Found"),
-            analysis: "Repository analyzed successfully"
-        };
-        ```
+    🔍 Search for Specific Tools:
+    ```typescript
+    // Find tools related to a topic
+    const issueTools = searchTools("issue");
+    
+    // Get detailed info about a specific tool
+    const toolInfo = getToolInfo("github_create_issue");
+    ```
+    
+    🎯 Common Tool Categories:
+    - Repository Management (7 tools): github_get_repo_info, github_create_repository, etc.
+    - Issues (4 tools): github_list_issues, github_create_issue, etc.
+    - Pull Requests (7 tools): github_list_pull_requests, github_merge_pull_request, etc.
+    - Files (5 tools): github_get_file_content, github_create_file, etc.
+    - Search (3 tools): github_search_code, github_search_repositories, etc.
+    - Releases (4 tools): github_list_releases, github_create_release, etc.
+    - Workflows (2 tools): github_list_workflows, github_get_workflow_runs
+    - And 9 more categories...
+    
+    📖 Full documentation: https://github.com/crypto-ninja/github-mcp-server#tools
+    
+    All tools are called via: await callMCPTool(toolName, parameters)
     
     Benefits:
         - 98%+ token reduction vs traditional MCP
