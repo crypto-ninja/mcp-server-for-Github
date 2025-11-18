@@ -1,0 +1,13 @@
+export * as advisor from './advisor/index.js';
+export * as commits from './commits/index.js';
+export * as files from './files/index.js';
+export * as issues from './issues/index.js';
+export * as license from './license/index.js';
+export * as pulls from './pulls/index.js';
+export * as releases from './releases/index.js';
+export * as remote from './remote/index.js';
+export * as repos from './repos/index.js';
+export * as search from './search/index.js';
+export * as users from './users/index.js';
+export * as workflows from './workflows/index.js';
+export * as workspace from './workspace/index.js';

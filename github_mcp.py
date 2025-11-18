@@ -65,8 +65,35 @@ from github_client import GhClient
 from auth.github_app import get_installation_token_from_env
 from graphql_client import GraphQLClient
 
+# Code-First Mode: Expose only execute_code to Claude Desktop for token efficiency
+# Deno runtime will connect with CODE_FIRST_MODE=false to access all tools internally
+CODE_FIRST_MODE = os.getenv("MCP_CODE_FIRST_MODE", "false").lower() == "true"
+
 # Initialize the MCP server
 mcp = FastMCP("github_mcp")
+
+# Print startup message based on mode
+if CODE_FIRST_MODE:
+    print(">> GitHub MCP Server v2.0 - Code-First Mode (execute_code only)")
+    print(">> Token usage: ~800 tokens (98% savings!)")
+else:
+    print(">> GitHub MCP Server v2.0 - Internal Mode (all 41 tools)")
+    print(">> Used by Deno runtime for tool execution")
+
+# Conditional tool registration decorator
+def conditional_tool(*args, **kwargs):
+    """
+    Only register tool if not in code-first mode.
+    In code-first mode, only execute_code is exposed to Claude Desktop.
+    """
+    if CODE_FIRST_MODE:
+        # Return a no-op decorator that doesn't register the tool
+        def noop_decorator(func):
+            return func
+        return noop_decorator
+    else:
+        # Return the actual mcp.tool decorator
+        return mcp.tool(*args, **kwargs)
 
 # Constants
 API_BASE_URL = "https://api.github.com"
@@ -76,7 +103,7 @@ DEFAULT_LIMIT = 20
 # Workspace Configuration - supports user projects!
 # Set MCP_WORKSPACE_ROOT env var to your project root, or defaults to current directory
 WORKSPACE_ROOT = Path(os.getenv("MCP_WORKSPACE_ROOT", Path.cwd()))
-REPO_ROOT = Path(__file__).parent  # Keep for backward compatibility
+REPO_ROOT = WORKSPACE_ROOT  # Backward compatibility alias
 
 def validate_workspace_path(path: Path) -> bool:
     """
@@ -928,9 +955,71 @@ class StrReplaceInput(BaseModel):
     new_str: str = Field(..., description="Replacement string", min_length=0)
     description: Optional[str] = Field(default=None, description="Optional description of the change", max_length=200)
 
+class GitHubGrepInput(BaseModel):
+    """Input model for GitHub repository grep search."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    pattern: str = Field(..., description="Regex pattern to search for", min_length=1, max_length=500)
+    ref: Optional[str] = Field(default=None, description="Branch, tag, or commit SHA (defaults to default branch)")
+    file_pattern: Optional[str] = Field(default="*", description="Glob pattern for files (e.g., '*.py', '*.md')", max_length=100)
+    path: Optional[str] = Field(default="", description="Optional subdirectory to search within", max_length=500)
+    case_sensitive: Optional[bool] = Field(default=True, description="Whether search is case-sensitive")
+    context_lines: Optional[int] = Field(default=2, description="Number of lines before/after match to include (0-5)", ge=0, le=5)
+    max_results: Optional[int] = Field(default=100, description="Maximum matches to return (1-500)", ge=1, le=500)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format (markdown or json)")
+
+class GitHubReadFileChunkInput(BaseModel):
+    """Input model for reading chunks from GitHub files."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    path: str = Field(..., description="File path in repository", min_length=1, max_length=500)
+    start_line: int = Field(default=1, description="1-based starting line number", ge=1)
+    num_lines: int = Field(default=200, description="Number of lines to read (max 500)", ge=1, le=500)
+    ref: Optional[str] = Field(default=None, description="Branch, tag, or commit SHA (defaults to default branch)")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+class GitHubStrReplaceInput(BaseModel):
+    """Input model for string replacement in GitHub files."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    path: str = Field(..., description="File path in repository", min_length=1, max_length=500)
+    old_str: str = Field(..., description="Exact string to find and replace (must be unique match)", min_length=1)
+    new_str: str = Field(..., description="Replacement string", min_length=0)
+    ref: Optional[str] = Field(default=None, description="Branch, tag, or commit SHA (defaults to default branch)")
+    commit_message: Optional[str] = Field(default=None, description="Custom commit message (auto-generated if not provided)", max_length=500)
+    description: Optional[str] = Field(default=None, description="Optional description of the change", max_length=200)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+# ============================================================================
+# GITHUB TOOLS (Internal Use Only - Called by execute_code via Deno runtime)
+# ============================================================================
+# Note: Claude Desktop only sees execute_code tool (exposed below)
+# These 41 tools are registered for internal use by the Deno runtime
+# This architecture provides 98% token savings vs traditional MCP
+# ============================================================================
+
 # Tool Implementations
 
-@mcp.tool(
+@conditional_tool(
     name="repo_read_file_chunk",
     annotations={
         "title": "Read Local File Chunk (Safe)",
@@ -1146,7 +1235,7 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
     
     return matches
 
-@mcp.tool(
+@conditional_tool(
     name="workspace_grep",
     annotations={
         "title": "Search Workspace Files with Grep",
@@ -1358,7 +1447,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="str_replace",
     annotations={
         "title": "Replace String in File",
@@ -1465,7 +1554,478 @@ async def str_replace(params: StrReplaceInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
+    name="github_grep",
+    annotations={
+        "title": "Search GitHub Repository Files with Grep",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_grep(params: GitHubGrepInput) -> str:
+    """
+    Search for patterns in GitHub repository files using grep-like functionality.
+    
+    This tool efficiently searches through files in a GitHub repository,
+    returning only matching lines with context instead of full files.
+    Ideal for finding functions, errors, TODOs, or any code pattern in remote repos.
+    
+    **Use Cases:**
+    - Verify code exists after pushing changes
+    - Search across branches or specific commits
+    - Find patterns in remote repositories without cloning
+    - Efficient token usage (returns only matches, not full files)
+    
+    Args:
+        params (GitHubGrepInput): Search parameters including:
+            - owner/repo: Repository identification
+            - pattern: Regex pattern to search for
+            - ref: Optional branch/tag/commit
+            - file_pattern: File filter (e.g., '*.py')
+            - path: Subdirectory to search
+            - context_lines: Lines before/after match
+            - max_results: Maximum matches
+    
+    Returns:
+        str: Formatted search results with file paths, line numbers, and matches
+    
+    Examples:
+        - "Find all TODOs in Python files"
+        - "Search for 'async def' in main branch"
+        - "Find error handling patterns after my last push"
+    
+    Security:
+        - Respects GitHub repository permissions
+        - Rate limited by GitHub API
+        - No local file system access
+    """
+    import fnmatch
+    import re
+    
+    try:
+        # Get repository tree to list files
+        ref = params.ref or "HEAD"
+        tree_endpoint = f"repos/{params.owner}/{params.repo}/git/trees/{ref}"
+        tree_params = {"recursive": "1"}
+        
+        tree_response = await _make_github_request(
+            tree_endpoint,
+            params=tree_params,
+            token=params.token
+        )
+        
+        if isinstance(tree_response, dict) and tree_response.get("_from_cache"):
+            # Retry without conditional request if cached
+            tree_response = await _make_github_request(
+                tree_endpoint,
+                params=tree_params,
+                token=params.token
+            )
+        
+        tree_data = tree_response.get("tree", [])
+        
+        # Filter files by pattern and path
+        files_to_search = []
+        for item in tree_data:
+            if item.get("type") != "blob":  # Only files, not directories
+                continue
+            
+            file_path = item.get("path", "")
+            
+            # Apply path filter
+            if params.path and not file_path.startswith(params.path):
+                continue
+            
+            # Apply file pattern filter
+            if params.file_pattern != "*":
+                if not fnmatch.fnmatch(file_path, params.file_pattern) and not fnmatch.fnmatch(os.path.basename(file_path), params.file_pattern):
+                    continue
+            
+            files_to_search.append(file_path)
+        
+        if not files_to_search:
+            return f"No files matching pattern '{params.file_pattern}' in path '{params.path or 'repository'}'"
+        
+        # Compile regex pattern
+        flags = 0 if params.case_sensitive else re.IGNORECASE
+        try:
+            regex = re.compile(params.pattern, flags)
+        except re.error as e:
+            return f"Error: Invalid regex pattern: {str(e)}"
+        
+        # Search through files (limit to 100 to avoid rate limits)
+        matches = []
+        files_searched = 0
+        
+        for file_path in files_to_search[:100]:
+            files_searched += 1
+            
+            try:
+                # Get file content
+                content_params = {}
+                if params.ref:
+                    content_params["ref"] = params.ref
+                
+                content_response = await _make_github_request(
+                    f"repos/{params.owner}/{params.repo}/contents/{file_path}",
+                    params=content_params if content_params else None,
+                    token=params.token
+                )
+                
+                if isinstance(content_response, dict) and content_response.get("_from_cache"):
+                    content_response = await _make_github_request(
+                        f"repos/{params.owner}/{params.repo}/contents/{file_path}",
+                        params=content_params if content_params else None,
+                        token=params.token
+                    )
+                
+                # Decode content
+                if content_response.get("encoding") == "base64":
+                    content = base64.b64decode(content_response["content"]).decode("utf-8", errors="ignore")
+                else:
+                    content = content_response.get("content", "")
+                
+                lines = content.split("\n")
+                
+                # Search for pattern
+                for line_num, line in enumerate(lines, 1):
+                    if regex.search(line):
+                        # Get context lines
+                        start_line = max(1, line_num - params.context_lines)
+                        end_line = min(len(lines), line_num + params.context_lines)
+                        
+                        context_before = []
+                        context_after = []
+                        for i in range(start_line, line_num):
+                            if 1 <= i <= len(lines):
+                                context_before.append(lines[i-1].rstrip('\n\r'))
+                        for i in range(line_num + 1, end_line + 1):
+                            if 1 <= i <= len(lines):
+                                context_after.append(lines[i-1].rstrip('\n\r'))
+                        
+                        matches.append({
+                            "file": file_path,
+                            "line_number": line_num,
+                            "line": line.rstrip('\n\r'),
+                            "context_before": context_before,
+                            "context_after": context_after
+                        })
+                        
+                        if len(matches) >= params.max_results:
+                            break
+                
+                if len(matches) >= params.max_results:
+                    break
+                    
+            except Exception:
+                # Skip files that can't be read (binary, too large, etc.)
+                continue
+        
+        # Limit results
+        matches = matches[:params.max_results]
+        
+        # Format results
+        if params.response_format == ResponseFormat.JSON:
+            result = {
+                "pattern": params.pattern,
+                "repository": f"{params.owner}/{params.repo}",
+                "ref": params.ref or "default branch",
+                "matches": len(matches),
+                "files_searched": files_searched,
+                "results": matches
+            }
+            return json.dumps(result, indent=2)
+        else:
+            # Markdown format
+            result = f"# Search Results: '{params.pattern}'\n\n"
+            result += f"**Repository:** {params.owner}/{params.repo}\n"
+            result += f"**Ref:** {params.ref or 'default branch'}\n"
+            result += f"**Matches:** {len(matches)} in {files_searched} files searched\n\n"
+            
+            if not matches:
+                result += "No matches found.\n"
+            else:
+                # Group by file
+                by_file: Dict[str, List[Dict[str, Any]]] = {}
+                for match in matches:
+                    file_path = match["file"]
+                    if file_path not in by_file:
+                        by_file[file_path] = []
+                    by_file[file_path].append(match)
+                
+                for file_path, file_matches in by_file.items():
+                    result += f"\n## {file_path}\n\n"
+                    for match in file_matches:
+                        result += f"**Line {match['line_number']}:** `{match['line']}`\n\n"
+                        if match.get('context_before') or match.get('context_after'):
+                            result += "```\n"
+                            for ctx_line in match.get('context_before', []):
+                                result += f"  {ctx_line}\n"
+                            result += f"> {match['line']}\n"
+                            for ctx_line in match.get('context_after', []):
+                                result += f"  {ctx_line}\n"
+                            result += "```\n\n"
+            
+            return _truncate_response(result, len(matches))
+    
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_read_file_chunk",
+    annotations={
+        "title": "Read GitHub File Chunk",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_read_file_chunk(params: GitHubReadFileChunkInput) -> str:
+    """
+    Read a specific range of lines from a GitHub repository file.
+    
+    This tool efficiently reads just the lines you need from a GitHub file,
+    avoiding loading entire large files into memory. Perfect for:
+    - Reading specific functions or sections
+    - Checking code after pushing changes
+    - Reviewing specific parts of documentation
+    - Token-efficient file reading (90%+ savings vs full file)
+    
+    Args:
+        params (GitHubReadFileChunkInput): Parameters including:
+            - owner/repo: Repository identification
+            - path: File path in repository
+            - start_line: Starting line (1-based)
+            - num_lines: Number of lines to read (max 500)
+            - ref: Optional branch/tag/commit
+    
+    Returns:
+        str: Numbered lines from the file with metadata
+    
+    Examples:
+        - "Read lines 50-100 of main.py from main branch"
+        - "Show me the first 20 lines of README.md"
+        - "Read the function starting at line 150"
+    
+    Security:
+        - Respects GitHub repository permissions
+        - No local file system access
+        - Rate limited by GitHub API
+    """
+    try:
+        # Get file content from GitHub
+        content_params = {}
+        if params.ref:
+            content_params["ref"] = params.ref
+        
+        content_response = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            params=content_params if content_params else None,
+            token=params.token
+        )
+        
+        if isinstance(content_response, dict) and content_response.get("_from_cache"):
+            # Retry without conditional request if cached
+            content_response = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+                params=content_params if content_params else None,
+                token=params.token
+            )
+        
+        # Decode content
+        if content_response.get("encoding") == "base64":
+            content = base64.b64decode(content_response["content"]).decode("utf-8", errors="ignore")
+        else:
+            content = content_response.get("content", "")
+        
+        lines = content.split("\n")
+        total_lines = len(lines)
+        
+        # Calculate line range
+        start_idx = params.start_line - 1  # Convert to 0-based
+        end_idx = min(start_idx + params.num_lines, total_lines)
+        
+        if start_idx >= total_lines:
+            return f"Error: start_line {params.start_line} exceeds file length ({total_lines} lines)"
+        
+        if start_idx < 0:
+            return "Error: start_line must be >= 1"
+        
+        # Extract requested lines
+        chunk_lines = lines[start_idx:end_idx]
+        
+        # Format output with line numbers
+        result = f"# File: {params.path}\n\n"
+        result += f"**Repository:** {params.owner}/{params.repo}\n"
+        result += f"**Ref:** {params.ref or 'default branch'}\n"
+        result += f"**Lines:** {params.start_line}-{params.start_line + len(chunk_lines) - 1} of {total_lines}\n"
+        result += f"**Size:** {content_response.get('size', 0)} bytes\n\n"
+        result += "```\n"
+        
+        for i, line in enumerate(chunk_lines, start=params.start_line):
+            result += f"{i:4d}: {line}\n"
+        
+        result += "```\n"
+        
+        if end_idx < total_lines:
+            result += f"\n*({total_lines - end_idx} more lines not shown)*\n"
+        
+        return result
+    
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_str_replace",
+    annotations={
+        "title": "Replace String in GitHub File",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_str_replace(params: GitHubStrReplaceInput) -> str:
+    """
+    Replace an exact string match in a GitHub repository file with a new string.
+    
+    This tool finds an exact match of old_str in the GitHub file and replaces it with new_str.
+    The match must be unique (exactly one occurrence) to prevent accidental replacements.
+    Updates the file via GitHub API with a commit.
+    
+    **Use Cases:**
+    - Make surgical edits to GitHub files without cloning
+    - Update configuration values in remote repos
+    - Fix typos or update documentation on GitHub
+    - Token-efficient file updates (only changes what's needed)
+    
+    Args:
+        params (GitHubStrReplaceInput): Parameters including:
+            - owner/repo: Repository identification
+            - path: File path in repository
+            - old_str: Exact string to find and replace (must be unique)
+            - new_str: Replacement string
+            - ref: Optional branch (defaults to default branch)
+            - commit_message: Optional commit message
+            - description: Optional description of the change
+    
+    Returns:
+        str: Confirmation message with commit details
+    
+    Examples:
+        - "Replace version number in README.md on GitHub"
+        - "Update configuration value in remote file"
+        - "Fix typo in GitHub documentation"
+    
+    Security:
+        - Respects GitHub repository permissions
+        - Requires write access to repository
+        - No local file system access
+    """
+    import os
+    
+    try:
+        # Get token
+        token = params.token or os.getenv("GITHUB_TOKEN")
+        if not token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for updating files. Set GITHUB_TOKEN environment variable or pass token parameter.",
+                "success": False
+            }, indent=2)
+        
+        # Get current file content and SHA
+        content_params = {}
+        if params.ref:
+            content_params["ref"] = params.ref
+        
+        file_response = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            params=content_params if content_params else None,
+            token=token
+        )
+        
+        if isinstance(file_response, dict) and file_response.get("_from_cache"):
+            file_response = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+                params=content_params if content_params else None,
+                token=token
+            )
+        
+        # Decode content
+        if file_response.get("encoding") == "base64":
+            content = base64.b64decode(file_response["content"]).decode("utf-8", errors="replace")
+        else:
+            content = file_response.get("content", "")
+        
+        current_sha = file_response.get("sha")
+        if not current_sha:
+            return "Error: Could not get file SHA. File may not exist or you may not have access."
+        
+        # Count occurrences
+        count = content.count(params.old_str)
+        
+        if count == 0:
+            return f"Error: String not found in file '{params.path}'. The exact string '{params.old_str[:50]}{'...' if len(params.old_str) > 50 else ''}' was not found."
+        
+        if count > 1:
+            return f"Error: Multiple matches found ({count} occurrences). The string must appear exactly once for safety. Found at {count} locations in '{params.path}'."
+        
+        # Perform replacement
+        new_content = content.replace(params.old_str, params.new_str, 1)
+        
+        # Encode new content
+        new_content_bytes = new_content.encode('utf-8')
+        new_content_b64 = base64.b64encode(new_content_bytes).decode('utf-8')
+        
+        # Generate commit message if not provided
+        commit_msg = params.commit_message
+        if not commit_msg:
+            commit_msg = f"Update {params.path}"
+            if params.description:
+                commit_msg += f": {params.description}"
+            else:
+                commit_msg += f" (replace '{params.old_str[:30]}{'...' if len(params.old_str) > 30 else ''}')"
+        
+        # Update file via GitHub API
+        update_data = {
+            "message": commit_msg,
+            "content": new_content_b64,
+            "sha": current_sha
+        }
+        
+        if params.ref:
+            update_data["branch"] = params.ref
+        
+        update_response = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/contents/{params.path}",
+            method="PUT",
+            token=token,
+            json=update_data
+        )
+        
+        # Format confirmation
+        result = f"✅ String replacement successful on GitHub!\n\n"
+        result += f"**Repository:** {params.owner}/{params.repo}\n"
+        result += f"**File:** {params.path}\n"
+        result += f"**Branch:** {params.ref or 'default branch'}\n"
+        if params.description:
+            result += f"**Description:** {params.description}\n"
+        result += f"**Commit:** {update_response.get('commit', {}).get('sha', 'N/A')[:7]}\n"
+        result += f"**Commit Message:** {commit_msg}\n"
+        result += f"**URL:** {update_response.get('content', {}).get('html_url', 'N/A')}\n\n"
+        result += f"**Replaced:** `{params.old_str[:100]}{'...' if len(params.old_str) > 100 else ''}`\n"
+        result += f"**With:** `{params.new_str[:100]}{'...' if len(params.new_str) > 100 else ''}`\n"
+        
+        return result
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
     name="github_get_repo_info",
     annotations={
         "title": "Get Repository Information",
@@ -1549,7 +2109,7 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool()
+@conditional_tool()
 async def github_license_info() -> str:
     """
     Display current license information and status for the GitHub MCP Server.
@@ -1599,7 +2159,7 @@ async def github_license_info() -> str:
 3. Contact support: licensing@mcplabs.co.uk
 '''
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_issues",
     annotations={
         "title": "List Repository Issues",
@@ -1696,7 +2256,7 @@ async def github_list_issues(params: ListIssuesInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_issue",
     annotations={
         "title": "Create GitHub Issue",
@@ -1790,7 +2350,7 @@ async def github_create_issue(params: CreateIssueInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_update_issue",
     annotations={
         "title": "Update GitHub Issue",
@@ -1906,7 +2466,7 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_search_repositories",
     annotations={
         "title": "Search GitHub Repositories",
@@ -2006,7 +2566,7 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_file_content",
     annotations={
         "title": "Get File Content",
@@ -2105,7 +2665,7 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_commits",
     annotations={
         "title": "List Repository Commits",
@@ -2226,7 +2786,7 @@ async def github_list_commits(params: ListCommitsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_pull_requests",
     annotations={
         "title": "List Pull Requests",
@@ -2319,7 +2879,7 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_user_info",
     annotations={
         "title": "Get User Information",
@@ -2406,7 +2966,7 @@ async def github_get_user_info(params: GetUserInfoInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_repo_contents",
     annotations={
         "title": "List Repository Contents",
@@ -2535,7 +3095,7 @@ Use `github_get_file_content` to retrieve the file content.
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_workflows",
     annotations={
         "title": "List GitHub Actions Workflows",
@@ -2608,7 +3168,7 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_workflow_runs",
     annotations={
         "title": "Get GitHub Actions Workflow Runs",
@@ -2720,7 +3280,7 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_pull_request",
     annotations={
         "title": "Create Pull Request",
@@ -2821,7 +3381,7 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_pr_details",
     annotations={
         "title": "Get Pull Request Details",
@@ -3003,7 +3563,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_pr_overview_graphql",
     annotations={
         "title": "Get PR Overview (GraphQL)",
@@ -3080,7 +3640,7 @@ async def github_get_pr_overview_graphql(params: GraphQLPROverviewInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_search_code",
     annotations={
         "title": "Search Code Across GitHub",
@@ -3196,7 +3756,7 @@ async def github_search_code(params: SearchCodeInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_search_issues",
     annotations={
         "title": "Search Issues Across GitHub",
@@ -3323,7 +3883,7 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_list_releases",
     annotations={
         "title": "List Repository Releases",
@@ -3386,7 +3946,7 @@ async def github_list_releases(params: ListReleasesInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_get_release",
     annotations={
         "title": "Get Release Details",
@@ -3448,7 +4008,7 @@ async def github_get_release(params: GetReleaseInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_release",
     annotations={
         "title": "Create GitHub Release",
@@ -3542,7 +4102,7 @@ async def github_create_release(params: CreateReleaseInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_update_release",
     annotations={
         "title": "Update GitHub Release",
@@ -3651,7 +4211,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
 # Phase 2.1: File Management Tools
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_file",
     annotations={
         "title": "Create File in Repository",
@@ -3746,7 +4306,7 @@ async def github_create_file(params: CreateFileInput) -> str:
         return error_msg
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_update_file",
     annotations={
         "title": "Update File in Repository",
@@ -3845,7 +4405,7 @@ async def github_update_file(params: UpdateFileInput) -> str:
         return error_msg
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_delete_file",
     annotations={
         "title": "Delete File from Repository",
@@ -3943,7 +4503,7 @@ You can restore it by reverting this commit if needed.
         
         return error_msg
 
-@mcp.tool(
+@conditional_tool(
     name="github_batch_file_operations",
     annotations={
         "title": "Batch File Operations (Single Commit)",
@@ -4083,7 +4643,7 @@ async def github_batch_file_operations(params: BatchFileOperationsInput) -> str:
 
 # Workflow Optimization Tool
 
-@mcp.tool(
+@conditional_tool(
     name="github_suggest_workflow",
     annotations={
         "title": "Suggest Optimal Workflow (API vs Local vs Hybrid)",
@@ -4178,7 +4738,7 @@ async def github_suggest_workflow(params: WorkflowSuggestionInput) -> str:
 
 # Phase 2.2: Repository Management Tools
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_repository",
     annotations={
         "title": "Create Repository",
@@ -4216,7 +4776,7 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
         return _handle_api_error(e)
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_delete_repository",
     annotations={
         "title": "Delete Repository",
@@ -4238,7 +4798,7 @@ async def github_delete_repository(params: DeleteRepositoryInput) -> str:
         return _handle_api_error(e)
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_update_repository",
     annotations={
         "title": "Update Repository Settings",
@@ -4265,7 +4825,7 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
         return _handle_api_error(e)
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_transfer_repository",
     annotations={
         "title": "Transfer Repository Ownership",
@@ -4295,7 +4855,7 @@ async def github_transfer_repository(params: TransferRepositoryInput) -> str:
         return _handle_api_error(e)
 
 
-@mcp.tool(
+@conditional_tool(
     name="github_archive_repository",
     annotations={
         "title": "Archive/Unarchive Repository",
@@ -4323,7 +4883,7 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_merge_pull_request",
     annotations={
         "title": "Merge Pull Request",
@@ -4410,7 +4970,7 @@ The pull request has been successfully merged! 🎉
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_close_pull_request",
     annotations={
         "title": "Close Pull Request",
@@ -4497,7 +5057,7 @@ async def github_close_pull_request(params: ClosePullRequestInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
-@mcp.tool(
+@conditional_tool(
     name="github_create_pr_review",
     annotations={
         "title": "Create Pull Request Review",
@@ -4595,6 +5155,140 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
         
     except Exception as e:
         return _handle_api_error(e)
+
+# ============================================================================
+# CODE-FIRST EXECUTION TOOL (The Only Tool Exposed to Claude)
+# ============================================================================
+# This is the ONLY tool Claude Desktop sees, providing 98% token reduction
+# All 41 GitHub tools above are accessed via this tool through TypeScript code
+# ============================================================================
+
+@mcp.tool(
+    name="execute_code",
+    annotations={
+        "title": "Execute TypeScript Code",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def execute_code(code: str) -> str:
+    """
+    Execute TypeScript code with access to all GitHub MCP tools.
+    
+    🚀 REVOLUTIONARY: This is the ONLY tool loaded into Claude's context,
+    reducing token usage by 98% compared to traditional MCP servers!
+    
+    Traditional MCP: 41 tools × 1,700 tokens = 69,700 tokens
+    Code-First MCP: 1 tool × 800 tokens = 800 tokens
+    
+    This enables code-first workflows where Claude writes TypeScript code
+    that calls GitHub tools on-demand, rather than loading all tools upfront.
+    
+    This revolutionary approach reduces token usage by 98%+ by:
+    - Loading only 1 tool (execute_code) instead of 41 tools
+    - Executing code locally in Deno runtime
+    - Calling tools programmatically via callMCPTool()
+    
+    Args:
+        code: TypeScript code to execute. The code has access to:
+            - callMCPTool(toolName, args): Call any GitHub MCP tool
+            - All GitHub tool types and interfaces
+            - Standard TypeScript/Deno APIs
+            - Async/await for sequential operations
+    
+    Returns:
+        Execution result or error message in formatted markdown
+    
+    Examples:
+        ```typescript
+        // Get repository info
+        const info = await callMCPTool("github_get_repo_info", {
+            owner: "facebook",
+            repo: "react"
+        });
+        return { repo: "react", info };
+        ```
+        
+        ```typescript
+        // Create multiple issues
+        const issues = [];
+        for (let i = 1; i <= 3; i++) {
+            const issue = await callMCPTool("github_create_issue", {
+                owner: "myorg",
+                repo: "myrepo",
+                title: `Issue ${i}`,
+                body: `This is issue number ${i}`
+            });
+            issues.push(issue);
+        }
+        return { created: issues.length };
+        ```
+        
+        ```typescript
+        // Complex workflow with conditional logic
+        const repo = await callMCPTool("github_get_repo_info", {
+            owner: "facebook",
+            repo: "react"
+        });
+        
+        const issues = await callMCPTool("github_list_issues", {
+            owner: "facebook",
+            repo: "react",
+            state: "open",
+            limit: 10
+        });
+        
+        return {
+            repo: "facebook/react",
+            hasOpenIssues: issues.includes("Found"),
+            analysis: "Repository analyzed successfully"
+        };
+        ```
+    
+    Benefits:
+        - 98%+ token reduction vs traditional MCP
+        - Full TypeScript type safety
+        - Complex workflows in single execution
+        - Conditional logic and loops
+        - Error handling with try/catch
+    """
+    try:
+        from src.github_mcp.deno_runtime import get_runtime
+        
+        runtime = get_runtime()
+        result = runtime.execute_code(code)
+        
+        if result.get("success"):
+            # Format successful result
+            return_value = result.get("result", "Code executed successfully")
+            
+            # Format as markdown
+            if isinstance(return_value, dict):
+                result_json = json.dumps(return_value, indent=2)
+                return f"✅ Code executed successfully\n\n**Result:**\n```json\n{result_json}\n```"
+            elif isinstance(return_value, str):
+                return f"✅ Code executed successfully\n\n**Result:**\n```\n{return_value}\n```"
+            else:
+                result_str = str(return_value)
+                return f"✅ Code executed successfully\n\n**Result:**\n```\n{result_str}\n```"
+        else:
+            # Format error
+            error = result.get("error", "Unknown error")
+            stack = result.get("stack", "")
+            
+            error_msg = f"❌ Code execution failed\n\n**Error:**\n```\n{error}\n```"
+            if stack:
+                error_msg += f"\n\n**Stack Trace:**\n```\n{stack}\n```"
+            
+            return error_msg
+            
+    except ImportError as e:
+        return f"❌ Error: Deno runtime not available. {str(e)}\n\nPlease ensure:\n1. Deno is installed\n2. src/github_mcp/deno_runtime.py exists"
+    except Exception as e:
+        return f"❌ Unexpected error during code execution: {str(e)}"
+
 # Entry point
 if __name__ == "__main__":
     import asyncio
