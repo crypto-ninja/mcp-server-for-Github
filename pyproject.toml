@@ -28,9 +28,3 @@ dependencies = [
 [project.scripts]
 github-mcp = "github_mcp:main"
 
-[tool.mypy]
-exclude = [
-    "^github_mcp\\.py$"
-]
-ignore_missing_imports = true
-

@@ -22,7 +22,7 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
       - name: Type check (mypy)
-        run: mypy --ignore-missing-imports .
+        run: mypy --config-file mypy.ini src
       - name: Security audit (pip-audit)
         run: pip-audit -r requirements.txt || true
       - name: Tests
