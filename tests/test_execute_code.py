@@ -24,16 +24,23 @@ execute_code = github_mcp.execute_code
 
 def _fix_windows_encoding():
     """Fix Windows console encoding for Unicode output (only when printing)."""
+    import os
+    
     # Skip if running under pytest (pytest handles encoding)
-    if 'pytest' in sys.modules or hasattr(sys.stdout, '_pytest'):
+    if 'pytest' in sys.modules or hasattr(sys.stdout, '_pytest') or os.environ.get('PYTEST_CURRENT_TEST'):
         return
     
     if sys.platform == 'win32':
         # Only reconfigure if not already UTF-8 and not in pytest capture
         try:
-            if not hasattr(sys.stdout, 'encoding') or sys.stdout.encoding != 'utf-8':
+            # Check if stdout has buffer and encoding attributes before accessing
+            if (hasattr(sys.stdout, 'buffer') and 
+                hasattr(sys.stdout, 'encoding') and 
+                getattr(sys.stdout, 'encoding', None) != 'utf-8'):
                 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            if not hasattr(sys.stderr, 'encoding') or sys.stderr.encoding != 'utf-8':
+            if (hasattr(sys.stderr, 'buffer') and 
+                hasattr(sys.stderr, 'encoding') and 
+                getattr(sys.stderr, 'encoding', None) != 'utf-8'):
                 sys.stderr.reconfigure(encoding='utf-8', errors='replace')
         except (AttributeError, ValueError, OSError):
             # Python < 3.7, already wrapped, or pytest capture - skip silently

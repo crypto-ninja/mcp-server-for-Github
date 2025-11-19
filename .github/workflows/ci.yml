@@ -26,5 +26,5 @@ jobs:
       - name: Security audit (pip-audit)
         run: pip-audit -r requirements.txt || true
       - name: Tests
-        run: pytest -q
+        run: pytest -q --capture=tee-sys
 
