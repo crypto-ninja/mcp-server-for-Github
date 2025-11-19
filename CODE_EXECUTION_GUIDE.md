@@ -37,6 +37,27 @@ GitHub API
 **The magic:** Claude only loads `execute_code` into context (800 tokens), but your
 TypeScript code can call all 41 GitHub tools internally via `callMCPTool()`.
 
+## Tool Discovery (v2.1.0)
+
+Don't know what tools are available? Discover them dynamically:
+
+```typescript
+// List all available tools
+const tools = listAvailableTools();
+console.log(`Total tools: ${tools.totalTools}`);
+console.log(`Categories: ${tools.categories.join(", ")}`);
+
+// Search for specific tools
+const issueTools = searchTools("issue");
+console.log(`Found ${issueTools.length} tools related to issues`);
+
+// Get detailed info about a tool
+const toolInfo = getToolInfo("github_create_issue");
+console.log(toolInfo.example);
+```
+
+This discovery happens **inside your TypeScript code** - no extra tools loaded into Claude's context!
+
 ## Configuration
 
 Edit your Claude Desktop config:

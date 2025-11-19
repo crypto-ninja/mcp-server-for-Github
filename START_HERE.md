@@ -33,40 +33,50 @@ Need help? Start here:
 
 ## ✨ What Can This Do?
 
-The GitHub MCP Server provides **22 powerful tools** across 8 categories:
+The GitHub MCP Server provides **42 powerful tools** across 14 categories (41 GitHub + 1 code execution):
 
-### 📦 Repository Tools (3 tools)
-- **Get Repository Info** - Detailed metadata about any repo
-- **List Contents** - Browse files and directories
-- **Get File Content** - Retrieve file contents from any branch
+### 🚀 Code Execution (1 tool)
+- **Execute TypeScript Code** - Revolutionary code-first architecture with 98% token reduction
 
-### 🐛 Issue Management (3 tools)
-- **List Issues** - Browse with filters and pagination
-- **Create Issues** - New issues with labels and assignees
-- **Search Issues** - Advanced search across repositories with filters
+### 🔍 Tool Discovery (Built-in functions)
+- **listAvailableTools()** - Discover all tools dynamically
+- **searchTools(query)** - Find relevant tools
+- **getToolInfo(name)** - Get complete schemas
 
-### 🔀 Pull Request Operations (3 tools)
-- **List Pull Requests** - View open, closed, or all PRs
-- **Create Pull Requests** - Open PRs with draft support and reviews
-- **PR Details** - Comprehensive analysis with reviews, commits, and files
+### 📦 Repository Management (7 tools)
+- Get repo info, browse contents, create/delete/update/transfer/archive repos
+
+### 📝 File Management (10 tools)
+- Create/update/delete files, batch operations, workspace grep, chunk reading
+
+### 🐛 Issue Management (4 tools)
+- List, create, update, search issues
+
+### 🔀 Pull Request Operations (7 tools)
+- List, create, merge, close, review PRs
 
 ### ⚡ GitHub Actions (2 tools)
-- **List Workflows** - View all GitHub Actions workflows
-- **Workflow Runs** - Track execution status and CI/CD results
+- List workflows, view workflow runs
 
-### 📦 Release Management (2 tools)
-- **List Releases** - View all releases with stats
-- **Get Release** - Detailed release information (including latest)
+### 📦 Release Management (4 tools)
+- List, create, update releases
 
 ### 🔍 Search & Discovery (2 tools)
-- **Search Repositories** - Advanced filters (language, stars, topics)
-- **Search Code** - Locate code snippets across GitHub with powerful filters
+- Search repositories and code
 
 ### 🧠 Workflow Optimization (1 tool)
-- **Suggest Workflow** - API vs Local vs Hybrid with token estimates
+- Smart workflow advisor
+
+### 📋 Licensing (1 tool)
+- Display license information
 
 ### 👤 User Information (1 tool)
-- **Get User Info** - Profile information for any user/org
+- Get user/org profiles
+
+### 📜 Repository History (1 tool)
+- List commits with filters
+
+**Want details?** → See [README.md](README.md) for complete tool documentation
 
 ---
 

@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-42-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.0.0)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.1.0)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,37 +12,46 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v1.5.0 - Infrastructure Upgrade (Nov 6, 2025)
+### 🚀 Latest: v2.1.0 - Enhanced Tool Discovery (November 19, 2025)
 
-**The Foundation:** Phase 0-1 infrastructure overhaul! Repository-rooted operations, chunk reading, and GraphQL optimization.
+**Zero Failed Tool Calls:** Intelligent tool discovery eliminates discovery issues while maintaining 98% token efficiency!
 
-**New in v1.5.0:**
+**New in v2.1.0:**
 
-**🏗️ Infrastructure (Phase 0-1) - 2 tools**
-- **Repository File Chunk Reader** - Read file ranges from local repo (security-constrained)
-- **GraphQL PR Overview** - Batch-fetch PR data in single query (80% faster)
+🔍 **Tool Discovery Functions**
+- **listAvailableTools()** - Discover all 42 tools on-demand
+- **searchTools(query)** - Find relevant tools by keyword
+- **getToolInfo(name)** - Get complete schemas with examples
+- **Discovery in code** - No extra tokens loaded into Claude's context!
 
-**📊 Licensing (v1.4.0) - 1 tool**
-- **License Info Display** - Show current license tier and status
+**Benefits:**
+- ✅ Zero failed tool calls from discovery issues
+- ✅ Professional first-time user experience
+- ✅ Maintains 98% token reduction
+- ✅ Complete type information for all tools
 
-**Total Tools:** 34 (vs GitHub's ~20) 🏆  
-**Competitive Advantage:** 70% more features!
+---
+
+### 🎉 v2.0.0 - Revolutionary Code-First Architecture (November 18, 2025)
+
+**The Game Changer:** 98% token reduction (70,000 → 800 tokens)!
+
+**New Architecture:**
+- Single `execute_code` tool exposed to Claude
+- Write TypeScript code calling 41 tools on-demand
+- 95% faster initialization (45s → 2s)
+- 98% cost reduction ($1.05 → $0.01 per workflow)
+
+**Total Tools:** 42 (41 GitHub + 1 execute_code) 🚀  
+**Token Efficiency:** 98% reduction vs traditional MCP
 
 ---
 
 ### 📦 Recently Shipped
 
-**v1.3.0 (Nov 4, 2025)** - Repository Management & PR Workflow
-- 9 new tools: Repository lifecycle + PR reviews
-- Complete repo management + batch operations
-
-**v1.2.1 (Oct 31, 2025)** - Workflow Advisor
-- Smart recommendations (API vs local vs hybrid)
-- Token cost estimates
-
-**v1.2.0 (Oct 30, 2025)** - File & Release Management  
-- Create, update, delete files
-- Release creation & updates
+**v1.5.0 (Nov 6, 2025)** - Infrastructure Upgrade
+- Repository-rooted operations & chunk reading
+- GraphQL optimization (80% faster PR queries)
 
 [View Full Changelog](CHANGELOG.md)
 
@@ -256,6 +265,22 @@ That's it! No configuration needed - you get 98% savings by default. 🚀
 - 💡 [Examples](EXAMPLES.md) - Real-world usage examples  
 - 🚀 [Quick Start](QUICK_START_CODE_EXECUTION.md) - 5-minute setup
 
+---
+
+## 🙏 Built on Anthropic's Research
+
+This server implements the **code-first MCP pattern** described in Anthropic's research:
+
+📄 **Blog:** ["Code execution with MCP"](https://www.anthropic.com/engineering/code-execution-with-mcp)  
+👥 **Authors:** Adam Jones & Conor Kelly
+
+**Their prediction:** 98.7% token reduction (150,000 → 2,000 tokens)  
+**Our validation:** 98% token reduction (70,000 → 800 tokens)
+
+Thank you to the Anthropic team for pioneering this approach! 🎉
+
+[Learn more about our implementation →](ANTHROPIC_ATTRIBUTION.md)
+
 ### Requirements
 
 - [Deno](https://deno.land/) runtime installed
@@ -406,53 +431,6 @@ Every feature in this MCP server comes from **actually using it**:
 
 ---
 
-## 💙 Standing on GitHub's Shoulders
-
-**Real talk: We're only this good because GitHub is THAT good!** 🙏
-
-### The Actual Scoreboard:
-
-| Who | What They Built | Score |
-|-----|----------------|-------|
-| **GitHub** | The entire platform + API | ∞ |
-| **Us** | 41 tools using their API | 41 |
-| **Math** | We're winning! (at using their stuff) | 📊 |
-
-**Translation:** GitHub built the Lego set. We just used all the pieces! 🧱
-
-### Why This Is A Win-Win:
-
-**GitHub:** 
-- ✅ Gets developers building cool tools on their platform
-- ✅ Proves their API is powerful enough for this
-- ✅ Watches us do the work 😄
-- ✅ Ecosystem grows
-
-**Us:**
-- ✅ Gets to build on world-class infrastructure  
-- ✅ Benefits from amazing API documentation
-- ✅ Has 41 tools to brag about
-- ✅ Can say we out-featured their server *(thanks for the API!)* 😉
-
-**You:**
-- ✅ Get better automation tools
-- ✅ Benefit from healthy competition
-- ✅ Enjoy GitHub's platform + our features
-- ✅ Win no matter what!
-
----
-
-### 🎤 Message to GitHub:
-
-*"Thanks for building such a powerful API that we could do this! Your official MCP server showed us what was possible - we just couldn't resist seeing how far we could take it. The fact that we can build something with 70% more features shows how comprehensive your API is. That's actually a compliment! 💪*
-
-*Now... about catching up to our 41 tools... we'll wait here.* 😉🍿"
-
----
-
-**Bottom Line:** Friendly competition makes everyone better. They built the playground, we're playing really hard in it, and developers win either way! 🎉
-
----
 
 ## ⭐ Star History
 
