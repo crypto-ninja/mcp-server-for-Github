@@ -44,6 +44,7 @@ async def test_simple_code():
 
 async def test_tool_call():
     """Test calling GitHub tools from code"""
+    _fix_windows_encoding()
     code = """
     const info = await callMCPTool("github_get_repo_info", {
         owner: "modelcontextprotocol",
@@ -65,6 +66,7 @@ async def test_tool_call():
 
 async def test_multiple_tools():
     """Test calling multiple tools"""
+    _fix_windows_encoding()
     code = """
     // Get repo info
     const repoInfo = await callMCPTool("github_get_repo_info", {
@@ -95,6 +97,7 @@ async def test_multiple_tools():
 
 async def test_error_handling():
     """Test error handling"""
+    _fix_windows_encoding()
     code = """
     throw new Error("Test error from user code");
     """
@@ -107,6 +110,7 @@ async def test_error_handling():
 
 async def test_complex_workflow():
     """Test complex workflow with logic"""
+    _fix_windows_encoding()
     code = """
     // Get repo information
     const repoInfo = await callMCPTool("github_get_repo_info", {

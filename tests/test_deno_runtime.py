@@ -47,6 +47,7 @@ def test_simple_execution():
 
 def test_mcp_tool_call():
     """Test calling MCP tool from Deno"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
@@ -82,6 +83,7 @@ def test_mcp_tool_call():
 
 def test_error_handling():
     """Test error handling in Deno runtime"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
@@ -97,6 +99,7 @@ def test_error_handling():
 
 def test_multiple_tool_calls():
     """Test multiple sequential tool calls"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """

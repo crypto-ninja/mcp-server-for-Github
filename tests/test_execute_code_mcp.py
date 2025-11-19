@@ -58,6 +58,7 @@ async def test_tool_registration():
 
 async def test_tool_call():
     """Test calling execute_code via MCP"""
+    _fix_windows_encoding()
     print("Testing execute_code tool call...\n")
     
     # Simple test code

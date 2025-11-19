@@ -54,6 +54,7 @@ def test_list_available_tools():
 
 def test_search_tools():
     """Test searching for tools"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
@@ -79,6 +80,7 @@ def test_search_tools():
 
 def test_get_tool_info():
     """Test getting specific tool info"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
@@ -107,6 +109,7 @@ def test_get_tool_info():
 
 def test_discovery_then_use():
     """Test discovering a tool then using it"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
