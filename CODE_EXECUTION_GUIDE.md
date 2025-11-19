@@ -77,7 +77,8 @@ Edit your Claude Desktop config:
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }
@@ -93,14 +94,15 @@ Edit your Claude Desktop config:
       "command": "python3",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }
 }
 ```
 
-That's it! No mode switching needed - you get 98% token savings by default. 🚀
+**Important:** `MCP_CODE_FIRST_MODE=true` enables code-first mode for 98% token savings. Without it, all 41 tools are exposed (traditional mode). 🚀
 
 ## Usage Examples
 

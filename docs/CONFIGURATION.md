@@ -20,16 +20,17 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "github": {
       "command": "python",
-      "args": [
-        "/path/to/github_mcp.py"
-      ],
+      "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }
 }
 ```
+
+**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode for 98% token savings. Omit it for traditional mode (all 41 tools visible).
 
 ## Using UV (Recommended)
 
@@ -49,10 +50,12 @@ If you're using UV for dependency management:
         "--with",
         "pydantic",
         "python",
-        "/path/to/github_mcp.py"
+        "-m",
+        "github_mcp"
       ],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }

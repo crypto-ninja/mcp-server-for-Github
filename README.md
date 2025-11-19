@@ -84,6 +84,7 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
+        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "/Users/yourname/projects/my-app"
       }
     }
@@ -100,6 +101,7 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
+        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "C:\\Users\\yourname\\projects\\my-app"
       }
     }
@@ -116,6 +118,7 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
+        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "/home/yourname/projects/my-app"
       }
     }
@@ -297,7 +300,8 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
       "command": "python3",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }
@@ -312,12 +316,15 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }
 }
 ```
+
+**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode (98% token savings). Omit it for traditional mode (all 41 tools visible).
 
 That's it! No configuration needed - you get 98% savings by default. 🚀
 

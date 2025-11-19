@@ -117,7 +117,7 @@ export async function initializeMCPClient(): Promise<void> {
         // Create MCP client
         mcpClient = new Client({
             name: 'github-mcp-code-executor',
-            version: '2.0.0'
+            version: '2.1.0'
         }, {
             capabilities: {}
         });
