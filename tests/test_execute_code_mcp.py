@@ -6,11 +6,20 @@ import sys
 import io
 from pathlib import Path
 
-# Add project root to path
+# Add project root to path (before src to prioritize root github_mcp.py)
 project_root = Path(__file__).parent.parent
+# Remove src from path if it's there, then add project root first
+if str(project_root / "src") in sys.path:
+    sys.path.remove(str(project_root / "src"))
 sys.path.insert(0, str(project_root))
 
-from github_mcp import mcp  # noqa: E402
+# Import using importlib (like test_smoke.py)
+import importlib
+# Force reload to get the root module, not the package
+if "github_mcp" in sys.modules:
+    del sys.modules["github_mcp"]
+github_mcp = importlib.import_module("github_mcp")
+mcp = github_mcp.mcp
 
 
 def _fix_windows_encoding():
@@ -38,7 +47,8 @@ async def test_tool_registration():
     
     # Get tools list
     tools_response = await mcp.list_tools()
-    tools = tools_response.tools
+    # FastMCP returns a list directly, not an object with .tools
+    tools = tools_response if isinstance(tools_response, list) else tools_response.tools
     
     print(f"Total tools registered: {len(tools)}")
     
