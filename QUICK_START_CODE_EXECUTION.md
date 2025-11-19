@@ -17,14 +17,18 @@ deno --version
 
 ### 2. Configure Claude Desktop
 
-Add to `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Add to your Claude Desktop config file:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`  
+**Linux:** `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "github": {
-      "command": "cmd",
-      "args": ["/c", "python", "C:\\path\\to\\github_mcp.py"],
+      "command": "python",
+      "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token_here"
       }
@@ -32,6 +36,8 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
   }
 }
 ```
+
+**Note:** On macOS/Linux, you may need to use `python3` instead of `python`.
 
 **That's it!** Code-first architecture is enabled by default. 🚀
 

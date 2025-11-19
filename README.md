@@ -73,8 +73,25 @@ These tools allow Claude to:
 
 **Method 1: Claude Desktop Configuration**
 
-Edit your Claude Desktop config file:
+Edit your Claude Desktop config file (location varies by OS):
 
+**macOS:**
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_...",
+        "MCP_WORKSPACE_ROOT": "/Users/yourname/projects/my-app"
+      }
+    }
+  }
+}
+```
+
+**Windows:**
 ```json
 {
   "mcpServers": {
@@ -82,8 +99,24 @@ Edit your Claude Desktop config file:
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "your_github_token",
-        "MCP_WORKSPACE_ROOT": "/Users/dave/projects/my-app"
+        "GITHUB_TOKEN": "ghp_...",
+        "MCP_WORKSPACE_ROOT": "C:\\Users\\yourname\\projects\\my-app"
+      }
+    }
+  }
+}
+```
+
+**Linux:**
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_...",
+        "MCP_WORKSPACE_ROOT": "/home/yourname/projects/my-app"
       }
     }
   }
@@ -92,8 +125,21 @@ Edit your Claude Desktop config file:
 
 **Method 2: Environment Variable**
 
+**macOS/Linux:**
 ```bash
 export MCP_WORKSPACE_ROOT="/path/to/your/project"
+python3 -m github_mcp
+```
+
+**Windows (Command Prompt):**
+```cmd
+set MCP_WORKSPACE_ROOT=C:\path\to\your\project
+python -m github_mcp
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:MCP_WORKSPACE_ROOT="C:\path\to\your\project"
 python -m github_mcp
 ```
 
@@ -243,12 +289,28 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
 
 ### Simple Setup
 
+**macOS/Linux:**
 ```json
 {
   "mcpServers": {
     "github": {
-      "command": "cmd",
-      "args": ["/c", "python", "C:\\path\\to\\github_mcp.py"],
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+**Windows:**
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token_here"
       }

@@ -60,14 +60,38 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
 
 ## Configuration
 
+### Claude Desktop Config Location
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`  
+**Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+### Basic Setup (Works on all platforms)
+
 Edit your Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
     "github": {
-      "command": "cmd",
-      "args": ["/c", "python", "C:\\path\\to\\github_mcp.py"],
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+**Note for macOS/Linux users:** You may need to use `python3` instead of `python`:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token_here"
       }
