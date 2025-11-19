@@ -2,7 +2,6 @@
 Test the Deno runtime integration
 """
 import sys
-import io
 from pathlib import Path
 
 # Add src to path

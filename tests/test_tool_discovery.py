@@ -2,7 +2,6 @@
 Test tool discovery functionality
 """
 import sys
-import io
 from pathlib import Path
 
 # Add project root to path

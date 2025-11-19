@@ -3,7 +3,6 @@ Test the execute_code tool through MCP
 """
 import asyncio
 import sys
-import io
 from pathlib import Path
 
 # Add project root to path (before src to prioritize root github_mcp.py)
@@ -14,7 +13,7 @@ if str(project_root / "src") in sys.path:
 sys.path.insert(0, str(project_root))
 
 # Import the tool directly using importlib (like test_smoke.py)
-import importlib
+import importlib  # noqa: E402
 # Force reload to get the root module, not the package
 if "github_mcp" in sys.modules:
     del sys.modules["github_mcp"]
