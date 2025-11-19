@@ -155,7 +155,7 @@ class LicenseManager:
                             "error": error_data.get("error", "License inactive"),
                             "message": error_data.get("message", "License is not active")
                         }
-                    except:
+                    except Exception:
                         return {
                             "valid": False,
                             "error": "License inactive",

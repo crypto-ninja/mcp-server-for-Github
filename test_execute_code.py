@@ -16,7 +16,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # Import the tool directly
-from github_mcp import execute_code
+from github_mcp import execute_code  # noqa: E402
 
 
 async def test_simple_code():

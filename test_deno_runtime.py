@@ -14,7 +14,7 @@ if sys.platform == 'win32':
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root / "src"))
 
-from github_mcp.deno_runtime import get_runtime
+from github_mcp.deno_runtime import get_runtime  # noqa: E402
 
 
 def test_simple_execution():

@@ -15,8 +15,6 @@ into github_mcp.py. For manual integration, follow these steps:
 For full instructions, see LICENSE_INTEGRATION.md
 """
 
-import sys
-import os
 
 def show_integration_instructions():
     """Display integration instructions."""

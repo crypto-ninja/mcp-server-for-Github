@@ -2,7 +2,6 @@
 Test execute_code tool via MCP protocol
 """
 import asyncio
-import json
 import sys
 import io
 from pathlib import Path
@@ -16,7 +15,7 @@ if sys.platform == 'win32':
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import mcp
+from github_mcp import mcp  # noqa: E402
 
 
 async def test_tool_registration():
@@ -34,7 +33,7 @@ async def test_tool_registration():
     
     if execute_tool:
         tool = execute_tool[0]
-        print(f"✅ execute_code tool found!")
+        print("✅ execute_code tool found!")
         print(f"   Name: {tool.name}")
         print(f"   Description: {tool.description[:100]}...")
         print()

@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root / "src"))
 # Fix Windows console encoding
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from src.github_mcp.deno_runtime import get_runtime
+from src.github_mcp.deno_runtime import get_runtime  # noqa: E402
 
 
 def test_list_available_tools():

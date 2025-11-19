@@ -284,7 +284,7 @@ def _format_timestamp(timestamp: str) -> str:
     try:
         dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
         return dt.strftime('%Y-%m-%d %H:%M:%S UTC')
-    except:
+    except Exception:
         return timestamp
 
 def _truncate_response(response: str, data_count: Optional[int] = None) -> str:
@@ -307,7 +307,7 @@ def _truncate_response(response: str, data_count: Optional[int] = None) -> str:
     )
     
     if data_count:
-        truncation_notice += f" - showing partial results. Use pagination or filters to see more."
+        truncation_notice += " - showing partial results. Use pagination or filters to see more."
     else:
         truncation_notice += ". Use filters or pagination to reduce result size."
     
@@ -1218,8 +1218,8 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
                                 # Get context
                                 start_line = max(1, line_num - context_lines)
                                 end_line = min(len(lines), line_num + context_lines)
-                                context_before = [l.rstrip('\n\r') for l in lines[start_line-1:line_num-1]]
-                                context_after = [l.rstrip('\n\r') for l in lines[line_num:end_line]]
+                                context_before = [line.rstrip('\n\r') for line in lines[start_line-1:line_num-1]]
+                                context_after = [line.rstrip('\n\r') for line in lines[line_num:end_line]]
                                 
                                 matches.append({
                                     'file': str(file_path.relative_to(base_dir)),
@@ -1348,8 +1348,8 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
                                             if line_num <= len(all_lines):
                                                 start_idx = max(0, line_num - 1 - params.context_lines)
                                                 end_idx = min(len(all_lines), line_num + params.context_lines)
-                                                context_before = [l.rstrip('\n\r') for l in all_lines[start_idx:line_num-1]]
-                                                context_after = [l.rstrip('\n\r') for l in all_lines[line_num:end_idx]]
+                                                context_before = [line.rstrip('\n\r') for line in all_lines[start_idx:line_num-1]]
+                                                context_after = [line.rstrip('\n\r') for line in all_lines[line_num:end_idx]]
                                 except Exception:
                                     pass
                             
@@ -1388,7 +1388,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
             return json.dumps(result, indent=2)
         
         # Markdown format
-        markdown = f"# Grep Results\n\n"
+        markdown = "# Grep Results\n\n"
         markdown += f"**Pattern:** `{params.pattern}`\n"
         markdown += f"**Files Searched:** {files_searched or len(set(m['file'] for m in matches))}\n"
         markdown += f"**Total Matches:** {len(matches)}\n"
@@ -1433,12 +1433,12 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
                 
                 markdown += "---\n\n"
         
-        markdown += f"\n**Summary:**\n"
+        markdown += "\n**Summary:**\n"
         if matches:
             by_file = {match['file'] for match in matches}
             markdown += f"- {len(by_file)} files with matches\n"
         else:
-            markdown += f"- 0 files with matches\n"
+            markdown += "- 0 files with matches\n"
         markdown += f"- {len(matches)} total occurrences\n"
         markdown += f"- Pattern: `{params.pattern}`\n"
         
@@ -1541,11 +1541,11 @@ async def str_replace(params: StrReplaceInput) -> str:
             return f"Error: Could not write to file: {str(e)}"
         
         # Build confirmation message
-        result = f"✅ String replacement successful!\n\n"
+        result = "✅ String replacement successful!\n\n"
         result += f"**File:** `{params.path}`\n"
         if params.description:
             result += f"**Description:** {params.description}\n"
-        result += f"**Occurrences:** 1 (unique match)\n"
+        result += "**Occurrences:** 1 (unique match)\n"
         result += f"**Replaced:** `{params.old_str[:100]}{'...' if len(params.old_str) > 100 else ''}`\n"
         result += f"**With:** `{params.new_str[:100]}{'...' if len(params.new_str) > 100 else ''}`\n"
         
@@ -2008,7 +2008,7 @@ async def github_str_replace(params: GitHubStrReplaceInput) -> str:
         )
         
         # Format confirmation
-        result = f"✅ String replacement successful on GitHub!\n\n"
+        result = "✅ String replacement successful on GitHub!\n\n"
         result += f"**Repository:** {params.owner}/{params.repo}\n"
         result += f"**File:** {params.path}\n"
         result += f"**Branch:** {params.ref or 'default branch'}\n"
@@ -2235,7 +2235,7 @@ async def github_list_issues(params: ListIssuesInput) -> str:
                 markdown += f"- **Updated:** {_format_timestamp(issue['updated_at'])}\n"
                 
                 if issue.get('labels'):
-                    labels = ', '.join([f"`{l['name']}`" for l in issue['labels']])
+                    labels = ', '.join([f"`{label['name']}`" for label in issue['labels']])
                     markdown += f"- **Labels:** {labels}\n"
                 
                 if issue.get('assignees'):
@@ -2338,7 +2338,7 @@ async def github_create_issue(params: CreateIssueInput) -> str:
 """
         
         if data.get('labels'):
-            labels = ', '.join([f"`{l['name']}`" for l in data['labels']])
+            labels = ', '.join([f"`{label['name']}`" for label in data['labels']])
             result += f"**Labels:** {labels}\n"
         
         if data.get('assignees'):
@@ -2538,7 +2538,7 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
             return _truncate_response(result, data['total_count'])
         
         # Markdown format
-        markdown = f"# Repository Search Results\n\n"
+        markdown = "# Repository Search Results\n\n"
         markdown += f"**Query:** {params.query}\n"
         markdown += f"**Total Results:** {data['total_count']:,}\n"
         markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} repositories\n\n"
@@ -2859,10 +2859,10 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
                 markdown += f"- **Base:** `{pr['base']['ref']}` ← **Head:** `{pr['head']['ref']}`\n"
                 
                 if pr.get('draft'):
-                    markdown += f"- **Draft:** Yes\n"
+                    markdown += "- **Draft:** Yes\n"
                 
                 if pr.get('merged'):
-                    markdown += f"- **Merged:** Yes\n"
+                    markdown += "- **Merged:** Yes\n"
                     if pr.get('merged_at'):
                         markdown += f"- **Merged At:** {_format_timestamp(pr['merged_at'])}\n"
                 
@@ -2949,7 +2949,7 @@ async def github_get_user_info(params: GetUserInfoInput) -> str:
         if data.get('twitter_username'):
             markdown += f"**Twitter:** @{data['twitter_username']}\n"
         
-        markdown += f"\n## Statistics\n"
+        markdown += "\n## Statistics\n"
         markdown += f"- 📦 **Public Repos:** {data['public_repos']:,}\n"
         markdown += f"- 👥 **Followers:** {data['followers']:,}\n"
         markdown += f"- 👤 **Following:** {data['following']:,}\n"
@@ -3441,7 +3441,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                         token=params.token
                     )
                     result["reviews"] = reviews
-                except:
+                except Exception:
                     result["reviews"] = "Error fetching reviews"
             
             if params.include_commits:
@@ -3451,7 +3451,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                         token=params.token
                     )
                     result["commits"] = commits
-                except:
+                except Exception:
                     result["commits"] = "Error fetching commits"
             
             if params.include_files:
@@ -3461,7 +3461,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                         token=params.token
                     )
                     result["files"] = files
-                except:
+                except Exception:
                     result["files"] = "Error fetching files"
             
             return json.dumps(result, indent=2)
@@ -3487,7 +3487,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
             markdown += f"## Description\n\n{body_preview}\n\n"
         
         # Additions/Deletions
-        markdown += f"## Changes\n"
+        markdown += "## Changes\n"
         markdown += f"- **Additions:** +{pr_data['additions']:,} lines\n"
         markdown += f"- **Deletions:** -{pr_data['deletions']:,} lines\n"
         markdown += f"- **Changed Files:** {pr_data['changed_files']:,}\n\n"
@@ -3512,7 +3512,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                             body_preview = review['body'][:100] + "..." if len(review['body']) > 100 else review['body']
                             markdown += f"  _{body_preview}_\n"
                         markdown += f"  _{_format_timestamp(review['submitted_at'])}_\n\n"
-            except:
+            except Exception:
                 markdown += "## Reviews\n\nError fetching reviews.\n\n"
         
         # Commits section
@@ -3534,7 +3534,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                     markdown += f"\n... and {len(commits) - 10} more commits\n"
                 
                 markdown += "\n"
-            except:
+            except Exception:
                 markdown += "## Commits\n\nError fetching commits.\n\n"
         
         # Files section (optional, can be large)
@@ -3555,7 +3555,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
                     markdown += f"\n... and {len(files) - 20} more files\n"
                 
                 markdown += "\n"
-            except:
+            except Exception:
                 markdown += "## Changed Files\n\nError fetching files.\n\n"
         
         return _truncate_response(markdown)
@@ -3716,7 +3716,7 @@ async def github_search_code(params: SearchCodeInput) -> str:
             return _truncate_response(result, data['total_count'])
         
         # Markdown format
-        markdown = f"# Code Search Results\n\n"
+        markdown = "# Code Search Results\n\n"
         markdown += f"**Query:** `{params.query}`\n"
         markdown += f"**Total Results:** {data['total_count']:,}\n"
         markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} files\n\n"
@@ -3839,7 +3839,7 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
             return _truncate_response(result, data['total_count'])
         
         # Markdown format
-        markdown = f"# Issue Search Results\n\n"
+        markdown = "# Issue Search Results\n\n"
         markdown += f"**Query:** `{params.query}`\n"
         markdown += f"**Total Results:** {data['total_count']:,}\n"
         markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} issues\n\n"
@@ -3862,7 +3862,7 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
                     markdown += f"**Closed:** {_format_timestamp(issue['closed_at'])}\n"
                 
                 if issue.get('labels'):
-                    labels = ', '.join([f"`{l['name']}`" for l in issue['labels'][:5]])
+                    labels = ', '.join([f"`{label['name']}`" for label in issue['labels'][:5]])
                     markdown += f"**Labels:** {labels}\n"
                 
                 if issue.get('assignees'):
@@ -4625,7 +4625,7 @@ async def github_batch_file_operations(params: BatchFileOperationsInput) -> str:
             }
         )
         
-        response = f"# Batch File Operations Complete! ✅\n\n"
+        response = "# Batch File Operations Complete! ✅\n\n"
         response += f"**Repository:** {params.owner}/{params.repo}  \n"
         response += f"**Branch:** {branch_name}  \n"
         response += f"**Commit Message:** {params.message}  \n"
@@ -4713,7 +4713,7 @@ async def github_suggest_workflow(params: WorkflowSuggestionInput) -> str:
 
     # Markdown output
     lines = [
-        f"# Workflow Suggestion",
+        "# Workflow Suggestion",
         f"**Recommendation:** {recommendation.upper()}",
         f"**Rationale:** {rationale}",
         "",
@@ -5133,7 +5133,7 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
             json=review_data
         )
         
-        response = f"# Pull Request Review Created! ✅\n\n"
+        response = "# Pull Request Review Created! ✅\n\n"
         response += f"**Repository:** {params.owner}/{params.repo}  \n"
         response += f"**Pull Request:** #{params.pull_number}  \n"
         response += f"**Review ID:** {review['id']}  \n"

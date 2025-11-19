@@ -14,12 +14,10 @@ Usage:
 """
 
 import ast
-import json
 import argparse
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from dataclasses import dataclass
-import re
 
 
 @dataclass
@@ -533,20 +531,20 @@ def main():
             return 1
         
         # List all tools found
-        print(f"\nTools found:")
+        print("\nTools found:")
         for i, tool in enumerate(tools, 1):
             print(f"  {i}. {tool.name} ({tool.category})")
         
         # Generate TypeScript wrappers
-        print(f"\n[INFO] Generating TypeScript wrappers...")
+        print("\n[INFO] Generating TypeScript wrappers...")
         generator = TypeScriptGenerator(tools)
         generator.generate_all(output_dir)
         
         print(f"\n[SUCCESS] Done! Wrappers generated in {output_dir}/github/")
-        print(f"\nNext steps:")
+        print("\nNext steps:")
         print(f"1. cd {output_dir}")
-        print(f"2. npm install")
-        print(f"3. npm run build")
+        print("2. npm install")
+        print("3. npm run build")
         
         return 0
     except Exception as e:
