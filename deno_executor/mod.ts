@@ -102,7 +102,12 @@ async function executeUserCode(code: string): Promise<any> {
       getToolsInCategory
     );
 
-    // Close connection
+    // Wait a brief moment to ensure all responses are fully processed
+    // This prevents connection from closing while responses are still being flushed
+    // This is especially important for HTTP requests that may still be processing
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Close connection gracefully
     await closeMCPClient();
 
     return {

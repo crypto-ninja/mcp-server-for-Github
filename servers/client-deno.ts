@@ -272,15 +272,17 @@ export async function closeMCPClient(): Promise<void> {
         console.error('[MCP Bridge] Closing connection...');
         
         try {
+            // Give any pending operations a moment to complete
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             await mcpClient.close();
         } catch (error) {
             console.error('[MCP Bridge] Error during close:', error);
+        } finally {
+            mcpClient = null;
+            mcpTransport = null;
+            console.error('[MCP Bridge] ✓ Connection closed');
         }
-        
-        mcpClient = null;
-        mcpTransport = null;
-        
-        console.error('[MCP Bridge] ✓ Connection closed');
     }
 }
 
