@@ -14,15 +14,20 @@ from src.github_mcp.deno_runtime import get_runtime  # noqa: E402
 
 def _fix_windows_encoding():
     """Fix Windows console encoding for Unicode output (only when printing)."""
+    # Skip if running under pytest (pytest handles encoding)
+    if 'pytest' in sys.modules or hasattr(sys.stdout, '_pytest'):
+        return
+    
     if sys.platform == 'win32':
-        # Only wrap if not already wrapped and not in pytest capture mode
-        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
-            try:
+        # Only reconfigure if not already UTF-8 and not in pytest capture
+        try:
+            if not hasattr(sys.stdout, 'encoding') or sys.stdout.encoding != 'utf-8':
                 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            if not hasattr(sys.stderr, 'encoding') or sys.stderr.encoding != 'utf-8':
                 sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-            except (AttributeError, ValueError):
-                # Python < 3.7 or already wrapped - skip
-                pass
+        except (AttributeError, ValueError, OSError):
+            # Python < 3.7, already wrapped, or pytest capture - skip silently
+            pass
 
 
 def test_list_available_tools():
