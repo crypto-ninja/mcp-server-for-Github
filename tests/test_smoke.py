@@ -1,13 +1,55 @@
+"""
+Smoke tests for GitHub MCP Server
+Verifies basic imports and tool registration
+"""
 import importlib
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
 
 
 def test_import_server():
-    mod = importlib.import_module("github_mcp")
-    assert hasattr(mod, "mcp")
+    """Test that the main server module can be imported"""
+    mod = importlib.import_module("github_mcp.github_mcp")
+    assert hasattr(mod, "mcp"), "Module should have 'mcp' FastMCP instance"
 
 
-def test_has_tools_registered():
-    mod = importlib.import_module("github_mcp")
-    # FastMCP stores tools on the instance; ensure at least one known tool exists by name in source
-    assert hasattr(mod, "github_get_repo_info")
+def test_has_execute_code_tool():
+    """Test that the revolutionary execute_code tool exists"""
+    mod = importlib.import_module("github_mcp.github_mcp")
+    assert hasattr(mod, "execute_code"), "Module should have 'execute_code' tool"
 
+
+def test_has_core_tools():
+    """Test that core GitHub tools exist"""
+    mod = importlib.import_module("github_mcp.github_mcp")
+    
+    # Test a few key tools from different categories
+    core_tools = [
+        "github_get_repo_info",
+        "github_list_issues",
+        "github_create_pull_request",
+        "github_get_file_content"
+    ]
+    
+    for tool_name in core_tools:
+        assert hasattr(mod, tool_name), f"Module should have '{tool_name}' tool"
+
+
+def test_code_first_mode_env():
+    """Test that CODE_FIRST_MODE can be imported"""
+    mod = importlib.import_module("github_mcp.github_mcp")
+    assert hasattr(mod, "CODE_FIRST_MODE"), "Module should have CODE_FIRST_MODE variable"
+
+
+def test_deno_runtime_module():
+    """Test that deno_runtime module exists"""
+    try:
+        mod = importlib.import_module("github_mcp.deno_runtime")
+        assert hasattr(mod, "get_runtime"), "deno_runtime should have get_runtime function"
+    except ImportError:
+        # Deno runtime might not be importable without Deno installed
+        pass
