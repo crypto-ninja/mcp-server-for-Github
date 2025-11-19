@@ -6,11 +6,6 @@ import sys
 import io
 from pathlib import Path
 
-# Fix Windows console encoding for Unicode
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -19,8 +14,22 @@ sys.path.insert(0, str(project_root))
 from github_mcp import execute_code  # noqa: E402
 
 
+def _fix_windows_encoding():
+    """Fix Windows console encoding for Unicode output (only when printing)."""
+    if sys.platform == 'win32':
+        # Only wrap if not already wrapped and not in pytest capture mode
+        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
+            try:
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            except (AttributeError, ValueError):
+                # Python < 3.7 or already wrapped - skip
+                pass
+
+
 async def test_simple_code():
     """Test executing simple code"""
+    _fix_windows_encoding()
     code = """
     const message = "Hello from code execution!";
     const timestamp = Date.now();

@@ -5,11 +5,6 @@ import sys
 import io
 from pathlib import Path
 
-# Fix Windows console encoding for Unicode
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-
 # Add src to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
@@ -17,8 +12,22 @@ sys.path.insert(0, str(project_root / "src"))
 from github_mcp.deno_runtime import get_runtime  # noqa: E402
 
 
+def _fix_windows_encoding():
+    """Fix Windows console encoding for Unicode output (only when printing)."""
+    if sys.platform == 'win32':
+        # Only wrap if not already wrapped and not in pytest capture mode
+        if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != 'utf-8':
+            try:
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            except (AttributeError, ValueError):
+                # Python < 3.7 or already wrapped - skip
+                pass
+
+
 def test_simple_execution():
     """Test executing simple TypeScript code"""
+    _fix_windows_encoding()
     runtime = get_runtime()
     
     code = """
