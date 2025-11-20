@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-42-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.1.0)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.2.0)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,7 +12,21 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.1.0 - Enhanced Tool Discovery (November 19, 2025)
+### 🚀 Latest: v2.2.0 - Enterprise Ready (November 20, 2025)
+
+**GitHub App Authentication:** 3x rate limits (15,000 vs 5,000 requests/hour) with fine-grained permissions!
+
+**New in v2.2.0:**
+- 🔐 **GitHub App Authentication** - Enterprise-grade auth with installation-based access
+- ⚡ **3x Rate Limits** - 15,000 requests/hour vs 5,000 with PAT
+- 🔄 **Dual Authentication** - Automatic App → PAT fallback
+- 📝 **python-dotenv Support** - Easy `.env` file configuration
+- 🐛 **19 Auth Fixes** - Consistent authentication across all tools
+- ✅ **100% Backward Compatible** - Existing PAT users unaffected
+
+---
+
+### v2.1.0 - Enhanced Tool Discovery (November 19, 2025)
 
 **Zero Failed Tool Calls:** Intelligent tool discovery eliminates discovery issues while maintaining 98% token efficiency!
 
@@ -353,7 +367,136 @@ Thank you to the Anthropic team for pioneering this approach! 🎉
 ### Requirements
 
 - [Deno](https://deno.land/) runtime installed
-- GitHub personal access token
+- GitHub authentication (Personal Access Token or GitHub App)
+
+---
+
+## 🔐 Authentication
+
+GitHub MCP Server supports two authentication methods:
+
+### Method 1: Personal Access Token (Quick Start)
+
+Perfect for individual developers:
+
+1. Create a token at https://github.com/settings/tokens
+   - Scopes needed: `repo`, `read:org` (for organization repos)
+
+2. Create a `.env` file:
+
+   ```bash
+   GITHUB_TOKEN=ghp_your_token_here
+   ```
+
+**For Claude Desktop:**
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+### Method 2: GitHub App (Recommended for Teams)
+
+**Better rate limits (15,000/hour vs 5,000/hour) and fine-grained permissions:**
+
+1. **Create a GitHub App:**
+   - Go to https://github.com/settings/apps/new
+   - Name: `My GitHub MCP Server` (or any name)
+   - Homepage URL: `https://github.com/crypto-ninja/github-mcp-server`
+   - Webhook: Uncheck "Active"
+
+2. **Set Permissions:**
+   - Repository permissions:
+     - Contents: Read and write
+     - Issues: Read and write
+     - Pull requests: Read and write
+     - Metadata: Read-only (automatic)
+     - Actions: Read and write
+     - Administration: Read and write
+     - Commit statuses: Read-only
+
+3. **Install the App:**
+   - Click "Install App" in the left sidebar
+   - Choose your account
+   - Select repositories (or all repositories)
+   - Note the Installation ID from the URL
+
+4. **Generate Private Key:**
+   - In app settings, click "Generate a private key"
+   - Download the `.pem` file
+   - Save it securely (e.g., `~/github-mcp-key.pem`)
+
+5. **Configure credentials:**
+
+   ```bash
+   # .env file
+   GITHUB_APP_ID=123456
+   GITHUB_APP_INSTALLATION_ID=789012
+   GITHUB_APP_PRIVATE_KEY_PATH=/path/to/private-key.pem
+   ```
+
+**For Claude Desktop:**
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_APP_ID": "123456",
+        "GITHUB_APP_INSTALLATION_ID": "789012",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem"
+      }
+    }
+  }
+}
+```
+
+### Feature Comparison
+
+| Feature | Personal Access Token | GitHub App |
+|---------|----------------------|------------|
+| Setup Time | 30 seconds | 15 minutes |
+| Rate Limit | 5,000/hour | 15,000/hour ⚡ |
+| Permissions | Coarse (all or nothing) | Fine-grained ✅ |
+| Enterprise Ready | ⚠️ Limited | ✅ Yes 🏢 |
+| Team Management | ❌ | ✅ Yes 👥 |
+
+### Dual Authentication
+
+You can configure BOTH methods - the server will automatically use GitHub App if configured, with PAT as fallback:
+
+```bash
+# .env file - both configured
+GITHUB_APP_ID=123456
+GITHUB_APP_INSTALLATION_ID=789012
+GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
+GITHUB_TOKEN=ghp_fallback_token  # Used if App auth fails
+```
+
+### Troubleshooting
+
+**Enable debug logging:**
+
+```bash
+GITHUB_MCP_DEBUG_AUTH=true
+```
+
+This will print authentication diagnostics to help troubleshoot issues.
+
+**See `env.example` for all configuration options.**
+
+**📖 Need detailed setup instructions?** See [GitHub App Setup Guide](GITHUB_APP_SETUP.md)
 
 ---
 

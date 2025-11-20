@@ -1,5 +1,76 @@
 # Changelog
 
+## [v2.2.0] - 2025-11-20 - Enterprise Ready 🏢
+
+### 🎉 Major Features
+
+- **GitHub App Authentication** - Enterprise-grade auth with 3x rate limits
+  - 15,000 requests/hour (vs 5,000 with PAT)
+  - Fine-grained permissions and organizational control
+  - Installation-based access control
+  - 1-hour token caching with automatic refresh
+
+- **Dual Authentication System** - Supports both GitHub App and PAT
+  - Automatic failover (App → PAT fallback)
+  - 100% backward compatible
+  - Consistent auth across all 42 tools
+
+- **Easy Configuration** - Multiple setup options
+  - python-dotenv support for `.env` files
+  - Claude Desktop config.json support
+  - Comprehensive `env.example` documentation
+  - Optional debug logging
+
+### 🔧 Technical Improvements
+
+- Fixed 19 functions to use centralized auth flow
+- Proper auth priority (GitHub App first, PAT fallback)
+- Installation token caching with automatic refresh
+- Windows path handling for private key files
+- Eliminated authentication bypasses
+- Added `GitHubAppAuth` class with token management
+
+### 📚 Documentation
+
+- Added `env.example` with configuration examples
+- Documented GitHub App setup process
+- Documented authentication priority
+- Added troubleshooting guide
+- Explained user-level vs organization installations
+- Created `GITHUB_APP_SETUP.md` guide
+
+### 🐛 Bug Fixes
+
+- Fixed authentication bypass in 19 write operations
+- Improved error handling for auth failures
+- Better token expiration handling
+- Windows path compatibility improvements
+
+### 📦 Dependencies
+
+- Added: `python-dotenv>=1.0.0`
+- Existing: `PyJWT>=2.8.0` (already included)
+
+### ⬆️ Upgrade Notes
+
+**Existing Users:** No changes required! Your PAT continues to work.
+
+**New Users:** Choose GitHub App for 3x performance or PAT for quick setup.
+
+**Teams/Enterprises:** GitHub App provides better security and rate limits.
+
+### 🔒 Security
+
+**User-Level Installations:** When installed on a personal account, GitHub Apps can access all your repositories (standard GitHub behavior).
+
+**Organization Installations:** Organizations can enforce strict repository access control.
+
+**Breaking Changes:** None  
+**Migration Required:** No  
+**Backward Compatible:** Yes ✅
+
+---
+
 ## v2.1.0 - Enhanced Tool Discovery (November 18, 2025)
 
 ### 🔍 What's New
