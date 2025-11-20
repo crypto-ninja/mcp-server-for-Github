@@ -128,11 +128,18 @@ async function executeUserCode(code: string): Promise<any> {
       // Ignore close errors
     }
 
-    return {
+    // CRITICAL: Always output JSON to stdout, even on error
+    // This ensures Python subprocess can always parse the result
+    const errorResult = {
       success: false,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     };
+    
+    // Ensure this is logged to stdout (not stderr) so Python can parse it
+    console.log(JSON.stringify(errorResult));
+    
+    return errorResult;
   }
 }
 
