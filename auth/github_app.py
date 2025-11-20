@@ -182,7 +182,6 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
     Returns:
         Tuple of (has_access, message)
     """
-    import sys
     try:
         async with httpx.AsyncClient(
             timeout=30.0,
@@ -195,7 +194,6 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
             response = await client.get("https://api.github.com/app/installation")
             if response.status_code == 200:
                 installation = response.json()
-                account = installation.get("account", {})
                 account_type = installation.get("account", {}).get("type", "unknown")
                 
                 # Check repository access
@@ -259,5 +257,5 @@ async def get_auth_token() -> Optional[str]:
         if pat_token:
             print(f"  ⚠️ Using PAT token (prefix: {pat_token[:10]}...)", file=sys.stderr)
         else:
-            print(f"  ❌ No authentication token available", file=sys.stderr)
+            print("  ❌ No authentication token available", file=sys.stderr)
     return pat_token

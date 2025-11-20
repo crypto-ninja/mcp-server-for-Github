@@ -63,7 +63,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from license_manager import check_license_on_startup, get_license_manager
 from github_client import GhClient
-from auth.github_app import get_auth_token, get_installation_token_from_env
+from auth.github_app import get_auth_token
 from graphql_client import GraphQLClient
 
 # Load .env file if it exists
@@ -1947,7 +1947,6 @@ async def github_str_replace(params: GitHubStrReplaceInput) -> str:
         - Requires write access to repository
         - No local file system access
     """
-    import os
     
     try:
         # Get token (try param, then GitHub App, then PAT)
@@ -2414,7 +2413,6 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
-    import os
     
     # Get token (try param, then GitHub App, then PAT)
     token = await _get_auth_token_fallback(params.token)
@@ -3343,7 +3341,6 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
         - Returns error if insufficient permissions
         - Validates branch names and repository access
     """
-    import os
     
     # Get token (try param, then GitHub App, then PAT)
     auth_token = await _get_auth_token_fallback(params.token)
@@ -5024,7 +5021,6 @@ async def github_close_pull_request(params: ClosePullRequestInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if PR already closed (422)
     """
-    import os
     
     # Get token (try param, then GitHub App, then PAT)
     token = await _get_auth_token_fallback(params.token)
