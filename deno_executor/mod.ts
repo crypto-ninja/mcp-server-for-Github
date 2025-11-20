@@ -116,6 +116,11 @@ async function executeUserCode(code: string): Promise<any> {
     };
 
   } catch (error) {
+    // Log the actual error before closing
+    // This helps diagnose connection closing issues
+    console.error('[Execute Code] Error during execution:', error);
+    console.error('[Execute Code] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
     // Close connection on error
     try {
       await closeMCPClient();
