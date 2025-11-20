@@ -59,11 +59,15 @@ import subprocess
 import re
 from pathlib import Path
 from pydantic import BaseModel, Field, field_validator, ConfigDict
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from license_manager import check_license_on_startup, get_license_manager
 from github_client import GhClient
-from auth.github_app import get_installation_token_from_env
+from auth.github_app import get_auth_token, get_installation_token_from_env
 from graphql_client import GraphQLClient
+
+# Load .env file if it exists
+load_dotenv()
 
 # Code-First Mode: Expose only execute_code to Claude Desktop for token efficiency
 # Deno runtime will connect with CODE_FIRST_MODE=false to access all tools internally
@@ -180,6 +184,26 @@ class PRReviewState(str, Enum):
     PENDING = "PENDING"
 
 # Shared Utilities
+async def _get_auth_token_fallback(param_token: Optional[str] = None) -> Optional[str]:
+    """
+    Get authentication token with fallback logic.
+    
+    Priority:
+    1. Parameter token (if provided)
+    2. GitHub App token (if configured)
+    3. Personal Access Token (if configured)
+    
+    Args:
+        param_token: Token from function parameter
+        
+    Returns:
+        Token string or None
+    """
+    if param_token:
+        return param_token
+    return await get_auth_token()
+
+
 async def _make_github_request(
     endpoint: str,
     method: str = "GET",
@@ -196,11 +220,9 @@ async def _make_github_request(
     json_body = kwargs.pop("json", None)
     data_body = kwargs.pop("data", None)
 
-    # If no token provided, optionally use GitHub App installation token when configured
-    if token is None and os.getenv("GITHUB_AUTH_MODE", "pat").lower() == "app":
-        app_token = await get_installation_token_from_env()
-        if app_token:
-            token = app_token
+    # If no token provided, try GitHub App first, then fall back to PAT
+    if token is None:
+        token = await get_auth_token()
 
     client = GhClient.instance()
     response = await client.request(
@@ -1928,8 +1950,8 @@ async def github_str_replace(params: GitHubStrReplaceInput) -> str:
     import os
     
     try:
-        # Get token
-        token = params.token or os.getenv("GITHUB_TOKEN")
+        # Get token (try param, then GitHub App, then PAT)
+        token = await _get_auth_token_fallback(params.token)
         if not token:
             return json.dumps({
                 "error": "Authentication required",
@@ -2296,15 +2318,13 @@ async def github_create_issue(params: CreateIssueInput) -> str:
         - Returns error if insufficient permissions (403)
         - Returns error if labels/assignees don't exist (422)
     """
-    import os
-    
-    # Get token from parameter or environment
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    # Get token (try param, then GitHub App, then PAT)
+    auth_token = await _get_auth_token_fallback(params.token)
     
     if not auth_token:
         return json.dumps({
             "error": "Authentication required",
-            "message": "GitHub token required for creating issues. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "message": "GitHub token required for creating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
             "success": False
         }, indent=2)
     
@@ -2396,12 +2416,12 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
     """
     import os
     
-    # Get token
-    token = params.token or os.getenv("GITHUB_TOKEN")
+    # Get token (try param, then GitHub App, then PAT)
+    token = await _get_auth_token_fallback(params.token)
     if not token:
         return json.dumps({
             "error": "Authentication required",
-            "message": "GitHub token required for updating issues. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "message": "GitHub token required for updating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
             "success": False
         }, indent=2)
     
@@ -2710,7 +2730,7 @@ async def github_list_commits(params: ListCommitsInput) -> str:
         - Handles pagination for large histories
     """
     try:
-        token = params.token or os.getenv("GITHUB_TOKEN")
+        token = await _get_auth_token_fallback(params.token)
         query_params = {
             "per_page": params.limit,
             "page": params.page
@@ -3325,13 +3345,13 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
     """
     import os
     
-    # Get token from parameter or environment
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    # Get token (try param, then GitHub App, then PAT)
+    auth_token = await _get_auth_token_fallback(params.token)
     
     if not auth_token:
         return json.dumps({
             "error": "Authentication required",
-            "message": "GitHub token required for creating pull requests. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "message": "GitHub token required for creating pull requests. Set GITHUB_TOKEN or configure GitHub App authentication.",
             "success": False
         }, indent=2)
     
@@ -3578,13 +3598,9 @@ async def github_get_pr_overview_graphql(params: GraphQLPROverviewInput) -> str:
     Fetch PR title, author, review states, commits count, and files changed in one GraphQL query.
     """
     try:
-        token = params.token or os.getenv("GITHUB_TOKEN")
-        if token is None and os.getenv("GITHUB_AUTH_MODE", "pat").lower() == "app":
-            app_token = await get_installation_token_from_env()
-            if app_token:
-                token = app_token
+        token = await _get_auth_token_fallback(params.token)
         if not token:
-            return "Error: Authentication required for GraphQL. Set GITHUB_TOKEN or GitHub App env vars."
+            return "Error: Authentication required for GraphQL. Set GITHUB_TOKEN or configure GitHub App authentication."
 
         gql = GraphQLClient()
         query = """
@@ -4050,7 +4066,7 @@ async def github_create_release(params: CreateReleaseInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
-    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    auth_token = await _get_auth_token_fallback(params.token)
 
     try:
         endpoint = f"repos/{params.owner}/{params.repo}/releases"
@@ -4144,7 +4160,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
-    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    auth_token = await _get_auth_token_fallback(params.token)
     
     try:
         # First, get the release to find its ID if tag name was provided
@@ -4251,7 +4267,7 @@ async def github_create_file(params: CreateFileInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if branch doesn't exist (404)
     """
-    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    auth_token = await _get_auth_token_fallback(params.token)
 
     try:
         # Encode content to base64
@@ -4347,7 +4363,7 @@ async def github_update_file(params: UpdateFileInput) -> str:
         - Returns error if SHA doesn't match (409 conflict)
         - Returns error if authentication fails (401/403)
     """
-    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    auth_token = await _get_auth_token_fallback(params.token)
 
     try:
         # Encode content to base64
@@ -4450,7 +4466,7 @@ async def github_delete_file(params: DeleteFileInput) -> str:
         - Creates a commit that can be reverted if needed
         - File history is preserved in Git
     """
-    auth_token = params.token or os.getenv('GITHUB_TOKEN')
+    auth_token = await _get_auth_token_fallback(params.token)
 
     try:
         # Prepare request body
@@ -4543,9 +4559,9 @@ async def github_batch_file_operations(params: BatchFileOperationsInput) -> str:
         - Validates all operations before making changes
     """
     try:
-        token = params.token or os.getenv("GITHUB_TOKEN")
+        token = await _get_auth_token_fallback(params.token)
         if not token:
-            return "Error: GitHub token required for batch file operations. Set GITHUB_TOKEN environment variable or provide token parameter."
+            return "Error: GitHub token required for batch file operations. Set GITHUB_TOKEN or configure GitHub App authentication."
         
         branch_name = params.branch or "main"
         if not params.branch:
@@ -4752,7 +4768,7 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
     """
     Create a new repository for the authenticated user or in an organization.
     """
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    auth_token = await _get_auth_token_fallback(params.token)
     try:
         body = {
             "name": params.name,
@@ -4790,7 +4806,7 @@ async def github_delete_repository(params: DeleteRepositoryInput) -> str:
     """
     Delete a repository. Destructive; requires appropriate permissions.
     """
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    auth_token = await _get_auth_token_fallback(params.token)
     try:
         await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
         return f"✅ Repository deleted: {params.owner}/{params.repo}"
@@ -4812,7 +4828,7 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
     """
     Update repository settings such as description, visibility, and features.
     """
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    auth_token = await _get_auth_token_fallback(params.token)
     try:
         body: Dict[str, Any] = {}
         for field in ["name", "description", "homepage", "private", "has_issues", "has_projects", "has_wiki", "default_branch", "archived"]:
@@ -4839,7 +4855,7 @@ async def github_transfer_repository(params: TransferRepositoryInput) -> str:
     """
     Transfer a repository to a new owner (user or organization).
     """
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    auth_token = await _get_auth_token_fallback(params.token)
     try:
         body: Dict[str, Any] = {"new_owner": params.new_owner}
         if params.team_ids:
@@ -4869,7 +4885,7 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
     """
     Archive or unarchive a repository by toggling the archived flag.
     """
-    auth_token = params.token or os.getenv("GITHUB_TOKEN")
+    auth_token = await _get_auth_token_fallback(params.token)
     try:
         body = {"archived": params.archived}
         data = await _make_github_request(
@@ -4926,7 +4942,7 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
     """
     try:
         # Get token from env if not provided
-        token = params.token or os.environ.get("GITHUB_TOKEN")
+        token = await _get_auth_token_fallback(params.token)
         
         # Build merge data
         merge_data = {
@@ -5010,12 +5026,12 @@ async def github_close_pull_request(params: ClosePullRequestInput) -> str:
     """
     import os
     
-    # Get token
-    token = params.token or os.getenv("GITHUB_TOKEN")
+    # Get token (try param, then GitHub App, then PAT)
+    token = await _get_auth_token_fallback(params.token)
     if not token:
         return json.dumps({
             "error": "Authentication required",
-            "message": "GitHub token required for closing pull requests. Set GITHUB_TOKEN environment variable or pass token parameter.",
+            "message": "GitHub token required for closing pull requests. Set GITHUB_TOKEN or configure GitHub App authentication.",
             "success": False
         }, indent=2)
     
@@ -5101,9 +5117,9 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
         - Returns error if insufficient permissions (403)
     """
     try:
-        token = params.token or os.getenv("GITHUB_TOKEN")
+        token = await _get_auth_token_fallback(params.token)
         if not token:
-            return "Error: GitHub token required for creating PR reviews. Set GITHUB_TOKEN environment variable or provide token parameter."
+            return "Error: GitHub token required for creating PR reviews. Set GITHUB_TOKEN or configure GitHub App authentication."
         
         review_data: Dict[str, Any] = {
             "event": params.event

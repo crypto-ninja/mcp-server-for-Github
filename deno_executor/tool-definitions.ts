@@ -442,6 +442,74 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   sha: "abc123..."
 });`
   },
+  {
+    name: "github_grep",
+    category: "File Operations",
+    description: "Search for patterns in GitHub repository files using grep-like functionality. Returns only matching lines with context instead of full files (90%+ token efficient)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner", example: "facebook" },
+      repo: { type: "string", required: true, description: "Repository name", example: "react" },
+      pattern: { type: "string", required: true, description: "Regex pattern to search for", example: "TODO|FIXME" },
+      ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" },
+      file_pattern: { type: "string", required: false, description: "Glob pattern for files", example: "*.py" },
+      path: { type: "string", required: false, description: "Optional subdirectory to search within" },
+      case_sensitive: { type: "boolean", required: false, description: "Whether search is case-sensitive", example: "true" },
+      context_lines: { type: "number", required: false, description: "Number of lines before/after match to include (0-5)", example: "2" },
+      max_results: { type: "number", required: false, description: "Maximum matches to return (1-500)", example: "100" }
+    },
+    returns: "Formatted search results with file paths, line numbers, and matches",
+    example: `const results = await callMCPTool("github_grep", {
+  owner: "facebook",
+  repo: "react",
+  pattern: "async def",
+  file_pattern: "*.py",
+  max_results: 50
+});`
+  },
+  {
+    name: "github_read_file_chunk",
+    category: "File Operations",
+    description: "Read a specific range of lines from a GitHub repository file. Token-efficient file reading (90%+ savings vs full file)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner", example: "facebook" },
+      repo: { type: "string", required: true, description: "Repository name", example: "react" },
+      path: { type: "string", required: true, description: "File path in repository", example: "src/index.js" },
+      start_line: { type: "number", required: false, description: "1-based starting line number", example: "50" },
+      num_lines: { type: "number", required: false, description: "Number of lines to read (max 500)", example: "100" },
+      ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" }
+    },
+    returns: "Numbered lines from the file with metadata",
+    example: `const chunk = await callMCPTool("github_read_file_chunk", {
+  owner: "facebook",
+  repo: "react",
+  path: "src/index.js",
+  start_line: 50,
+  num_lines: 100
+});`
+  },
+  {
+    name: "github_str_replace",
+    category: "File Operations",
+    description: "Replace an exact string match in a GitHub repository file with a new string. The match must be unique to prevent accidental replacements. Updates file via GitHub API",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner", example: "facebook" },
+      repo: { type: "string", required: true, description: "Repository name", example: "react" },
+      path: { type: "string", required: true, description: "File path in repository", example: "README.md" },
+      old_str: { type: "string", required: true, description: "Exact string to find and replace (must be unique)" },
+      new_str: { type: "string", required: true, description: "Replacement string" },
+      ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" },
+      commit_message: { type: "string", required: false, description: "Custom commit message (auto-generated if not provided)" },
+      description: { type: "string", required: false, description: "Optional description of the change" }
+    },
+    returns: "Confirmation message with commit details",
+    example: `const result = await callMCPTool("github_str_replace", {
+  owner: "myuser",
+  repo: "myrepo",
+  path: "README.md",
+  old_str: "v1.0.0",
+  new_str: "v2.0.0"
+});`
+  },
 
   // BATCH OPERATIONS (1 tool)
   {
@@ -697,6 +765,30 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {},
     returns: "License tier and status information",
     example: `const license = await callMCPTool("github_license_info", {});`
+  },
+
+  // CODE EXECUTION (1 tool)
+  {
+    name: "execute_code",
+    category: "Code Execution",
+    description: "Execute TypeScript code with access to all GitHub MCP tools. Revolutionary 98% token reduction through code-first execution. Supports tool discovery, complex workflows, conditional logic, and error handling",
+    parameters: {
+      code: {
+        type: "string",
+        required: true,
+        description: "TypeScript code to execute. Can call any GitHub tool via callMCPTool(), use listAvailableTools() for discovery, searchTools() to find tools, and getToolInfo() for details",
+        example: `const info = await callMCPTool("github_get_repo_info", { owner: "facebook", repo: "react" });\nreturn info;`
+      }
+    },
+    returns: "Execution result with success status, result data, or error information",
+    example: `const result = await callMCPTool("execute_code", {
+  code: \`const tools = listAvailableTools();
+const info = await callMCPTool("github_get_repo_info", {
+  owner: "facebook",
+  repo: "react"
+});
+return { totalTools: tools.totalTools, repoInfo: info };\`
+});`
   },
 ];
 

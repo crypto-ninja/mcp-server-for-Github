@@ -16,6 +16,7 @@ dependencies = [
   "httpx>=0.25.0",
   "pydantic>=2.0.0",
   "PyJWT>=2.8.0",
+  "python-dotenv>=1.0.0",
 ]
 
 [project.urls]
