@@ -1727,7 +1727,7 @@ class TestGraphQLOperations:
         params = GraphQLPROverviewInput(
             owner="test",
             repo="test-repo",
-            limit=10
+            pull_number=1
         )
         result = await github_mcp.github_get_pr_overview_graphql(params)
 
@@ -1754,8 +1754,7 @@ class TestWorkflowSuggestions:
         # Call the tool
         from github_mcp import WorkflowSuggestionInput
         params = WorkflowSuggestionInput(
-            operation="read_files",
-            repository_size=1000
+            operation="read_files"
         )
         result = await github_mcp.github_suggest_workflow(params)
 
