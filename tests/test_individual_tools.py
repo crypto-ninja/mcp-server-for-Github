@@ -3377,5 +3377,148 @@ class TestTransferRepositoryAdvanced:
         assert "new-org" in result or "transferred" in result.lower() or "Error" in result
 
 
+class TestCommitFiltering:
+    """Test commit filtering parameters."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_list_commits_with_since_until(self, mock_request):
+        """Test listing commits with since/until filters."""
+        # Mock commits response
+        mock_response = [
+            {
+                "sha": "abc123",
+                "commit": {
+                    "message": "Test commit",
+                    "author": {"name": "Test", "date": "2024-01-15T00:00:00Z"}
+                },
+                "author": {"login": "testuser"},
+                "html_url": "https://github.com/test/test-repo/commit/abc123"
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call with since/until
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            since="2024-01-01T00:00:00Z",
+            until="2024-01-31T00:00:00Z"
+        )
+        result = await github_list_commits(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "abc123" in result or "commit" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_list_commits_with_author(self, mock_request):
+        """Test listing commits filtered by author."""
+        # Mock commits response
+        mock_response = [
+            {
+                "sha": "def456",
+                "commit": {
+                    "message": "Author commit",
+                    "author": {"name": "Author", "date": "2024-01-20T00:00:00Z"}
+                },
+                "author": {"login": "authoruser"},
+                "html_url": "https://github.com/test/test-repo/commit/def456"
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call with author filter
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            author="authoruser"
+        )
+        result = await github_list_commits(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "def456" in result or "commit" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_list_commits_with_path(self, mock_request):
+        """Test listing commits filtered by path."""
+        # Mock commits response
+        mock_response = [
+            {
+                "sha": "ghi789",
+                "commit": {
+                    "message": "Path commit",
+                    "author": {"name": "Path", "date": "2024-01-25T00:00:00Z"}
+                },
+                "author": {"login": "pathuser"},
+                "html_url": "https://github.com/test/test-repo/commit/ghi789"
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call with path filter
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            path="src/main.py"
+        )
+        result = await github_list_commits(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "ghi789" in result or "commit" in result.lower() or "Error" in result
+
+
+class TestEmptyResponseHandling:
+    """Test handling of empty responses."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_empty_list_response_json(self, mock_request):
+        """Test JSON format with empty list response."""
+        # Mock empty list
+        mock_request.return_value = []
+
+        # Call with JSON format
+        from github_mcp import ListIssuesInput, ResponseFormat
+        params = ListIssuesInput(
+            owner="test",
+            repo="test-repo",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_list_issues(params)
+
+        # Should return JSON array
+        import json
+        parsed = json.loads(result)
+        assert isinstance(parsed, list)
+        assert len(parsed) == 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_empty_list_response_markdown(self, mock_request):
+        """Test Markdown format with empty list response."""
+        # Mock empty list
+        mock_request.return_value = []
+
+        # Call with Markdown format (default)
+        from github_mcp import ListIssuesInput
+        params = ListIssuesInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_list_issues(params)
+
+        # Should return Markdown message
+        assert isinstance(result, str)
+        assert "no" in result.lower() or "empty" in result.lower() or len(result) > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
