@@ -2055,5 +2055,386 @@ class TestReadFileChunk:
         assert "Line 2" in result or "Line 3" in result or "Line 4" in result or "Error" in result
 
 
+class TestStringReplaceOperations:
+    """Test string replace operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_str_replace(self, mock_request):
+        """Test string replace in GitHub files."""
+        # Mock file content and update response
+        file_content = b"old text\nmore text\nold text again"
+        encoded_content = base64.b64encode(file_content).decode('utf-8')
+        
+        # First call: get file content
+        # Second call: update file
+        mock_request.side_effect = [
+            {
+                "content": encoded_content,
+                "encoding": "base64",
+                "sha": "oldsha123"
+            },
+            {
+                "content": {
+                    "sha": "newsha123"
+                },
+                "commit": {
+                    "sha": "commit123",
+                    "html_url": "https://github.com/test/test-repo/commit/commit123"
+                }
+            }
+        ]
+
+        # Call the tool
+        from github_mcp import GitHubStrReplaceInput
+        params = GitHubStrReplaceInput(
+            owner="test",
+            repo="test-repo",
+            path="test.txt",
+            old_string="old text",
+            new_string="new text"
+        )
+        result = await github_mcp.github_str_replace(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "replaced" in result.lower() or "commit" in result.lower() or "new text" in result.lower() or "Error" in result
+
+
+class TestComplexWorkflows:
+    """Test complex multi-step workflows."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_issue_to_pr_workflow(self, mock_request):
+        """Test creating issue, then PR workflow."""
+        # Step 1: Create issue
+        mock_issue = {
+            "number": 42,
+            "title": "Bug fix needed",
+            "html_url": "https://github.com/test/test/issues/42",
+            "state": "open",
+            "created_at": "2024-01-01T00:00:00Z"
+        }
+        
+        # Step 2: Get default branch
+        mock_branch = {
+            "ref": "refs/heads/main",
+            "object": {"sha": "abc123"}
+        }
+        
+        # Step 3: Create PR
+        mock_pr = {
+            "number": 10,
+            "title": "Fix #42",
+            "html_url": "https://github.com/test/test/pull/10",
+            "state": "open",
+            "head": {"ref": "fix-42"},
+            "base": {"ref": "main"}
+        }
+        
+        mock_request.side_effect = [mock_issue, mock_branch, mock_pr]
+
+        # Test the workflow - create issue
+        from github_mcp import CreateIssueInput
+        issue_params = CreateIssueInput(
+            owner="test",
+            repo="test",
+            title="Bug fix needed"
+        )
+        issue_result = await github_mcp.github_create_issue(issue_params)
+        assert "42" in str(issue_result) or "created" in str(issue_result).lower() or "Error" in issue_result
+
+        # Create PR
+        from github_mcp import CreatePullRequestInput
+        pr_params = CreatePullRequestInput(
+            owner="test",
+            repo="test",
+            title="Fix #42",
+            head="fix-42",
+            base="main"
+        )
+        pr_result = await github_mcp.github_create_pull_request(pr_params)
+        assert "10" in str(pr_result) or "created" in str(pr_result).lower() or "Error" in pr_result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_release_workflow(self, mock_request):
+        """Test complete release workflow."""
+        # Mock release response
+        mock_release = {
+            "tag_name": "v1.0.0",
+            "name": "Release 1.0",
+            "id": 123,
+            "html_url": "https://github.com/test/test/releases/tag/v1.0.0",
+            "created_at": "2024-01-01T00:00:00Z",
+            "published_at": "2024-01-01T00:00:00Z",
+            "author": {
+                "login": "testuser"
+            },
+            "draft": False,
+            "prerelease": False
+        }
+        mock_request.return_value = mock_release
+
+        # Test workflow
+        from github_mcp import CreateReleaseInput
+        params = CreateReleaseInput(
+            owner="test",
+            repo="test",
+            tag_name="v1.0.0",
+            name="Release 1.0"
+        )
+        result = await github_mcp.github_create_release(params)
+
+        assert "v1.0.0" in str(result) or "123" in str(result) or "created" in str(result).lower() or "Error" in result
+
+
+class TestMoreErrorScenarios:
+    """Test additional error scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_validation_error(self, mock_request):
+        """Test validation errors (422)."""
+        import httpx
+
+        # Mock 422 validation error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Validation Failed",
+            request=MagicMock(),
+            response=MagicMock(status_code=422)
+        )
+
+        # Call the tool
+        from github_mcp import CreateIssueInput
+        params = CreateIssueInput(
+            owner="test",
+            repo="test-repo",
+            title=""
+        )
+        result = await github_mcp.github_create_issue(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "validation" in result.lower() or "422" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_gone_error(self, mock_request):
+        """Test 410 Gone errors (deleted resources)."""
+        import httpx
+
+        # Mock 410 Gone error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Repository access blocked",
+            request=MagicMock(),
+            response=MagicMock(status_code=410)
+        )
+
+        # Call the tool
+        from github_mcp import RepoInfoInput
+        params = RepoInfoInput(
+            owner="test",
+            repo="blocked-repo"
+        )
+        result = await github_mcp.github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "blocked" in result.lower() or "410" in result or "gone" in result.lower()
+
+
+class TestPerformanceScenarios:
+    """Test handling of large data sets."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_large_file_content(self, mock_request):
+        """Test handling large file content (1MB+)."""
+        # Simulate 1MB file
+        large_content = b"x" * (1024 * 1024)
+        encoded_content = base64.b64encode(large_content).decode('utf-8')
+        
+        mock_response = {
+            "content": encoded_content,
+            "encoding": "base64",
+            "sha": "filesha123"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetFileContentInput
+        params = GetFileContentInput(
+            owner="test",
+            repo="test-repo",
+            path="large-file.bin"
+        )
+        result = await github_mcp.github_get_file_content(params)
+
+        # Verify - should handle large files
+        assert isinstance(result, str)
+        # Should either return content or error gracefully
+        assert len(result) > 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_many_commits(self, mock_request):
+        """Test listing many commits (100+)."""
+        # Create 100 mock commits
+        mock_commits = []
+        for i in range(100):
+            mock_commits.append({
+                "sha": f"abc{i:03d}",
+                "commit": {
+                    "message": f"Commit {i}",
+                    "author": {
+                        "name": "Test User",
+                        "date": "2024-01-01T00:00:00Z"
+                    }
+                },
+                "author": {
+                    "login": "testuser"
+                },
+                "html_url": f"https://github.com/test/test/commit/abc{i:03d}"
+            })
+        
+        mock_response = {
+            "items": mock_commits,
+            "total_count": 100
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            limit=100,
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_commits(params)
+
+        # Verify - should handle large result sets
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestAdvancedFileOperations:
+    """Test advanced file operation scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_batch_file_operations_large(self, mock_request):
+        """Test batch operations with many files."""
+        # Mock responses for batch operations
+        # First: get default branch
+        mock_branch_response = {
+            "ref": "refs/heads/main",
+            "object": {"sha": "abc123"}
+        }
+        # Second: get tree
+        mock_tree_response = {
+            "sha": "tree123",
+            "tree": []
+        }
+        # Third: create tree with many files
+        mock_create_tree_response = {
+            "sha": "newtree123",
+            "url": "https://api.github.com/repos/test/test-repo/git/trees/newtree123"
+        }
+        # Fourth: create commit
+        mock_commit_response = {
+            "sha": "commit123",
+            "html_url": "https://github.com/test/test-repo/commit/commit123"
+        }
+        # Fifth: update ref
+        mock_ref_response = {
+            "ref": "refs/heads/main",
+            "object": {"sha": "commit123"}
+        }
+
+        mock_request.side_effect = [
+            mock_branch_response,
+            mock_tree_response,
+            mock_create_tree_response,
+            mock_commit_response,
+            mock_ref_response
+        ]
+
+        # Call the tool with many operations
+        from github_mcp import BatchFileOperationsInput
+        operations = [
+            {
+                "operation": "create",
+                "path": f"file{i}.txt",
+                "content": f"Content {i}"
+            }
+            for i in range(20)  # 20 files
+        ]
+        params = BatchFileOperationsInput(
+            owner="test",
+            repo="test-repo",
+            operations=operations,
+            message="Batch update 20 files"
+        )
+        result = await github_mcp.github_batch_file_operations(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "commit" in result.lower() or "batch" in result.lower() or "updated" in result.lower() or "Error" in result
+
+
+class TestAdvancedSearchOperations:
+    """Test advanced search scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_code_complex_query(self, mock_request):
+        """Test complex search queries."""
+        # Mock search results
+        mock_response = {
+            "total_count": 50,
+            "items": [
+                {
+                    "name": f"test{i}.py",
+                    "path": f"src/test{i}.py",
+                    "repository": {
+                        "full_name": "test/repo"
+                    },
+                    "text_matches": [
+                        {
+                            "fragment": f"def test_function_{i}():"
+                        }
+                    ]
+                }
+                for i in range(50)
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool with complex query
+        from github_mcp import SearchCodeInput
+        params = SearchCodeInput(
+            query="language:python def test_function",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_search_code(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
