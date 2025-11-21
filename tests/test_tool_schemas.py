@@ -112,7 +112,7 @@ class TestToolSchemas:
         assert 'health_check' in tool_names, "health_check tool not found"
         assert len(tool_names) >= 2, f"Expected at least 2 tools, found {len(tool_names)}"
         
-        print(f"✓ Found {len(tool_names)} registered tools")
+        # Found tools (verified by assertions above)
     
     def test_response_format_parameter_consistency(self):
         """Test that tools in READ_TOOLS_WITH_JSON_SUPPORT actually support response_format."""
@@ -144,7 +144,7 @@ class TestToolSchemas:
                 "\n".join(f"  - {m}" for m in mismatches)
             )
         
-        print(f"✓ All {len(read_tools)} tools in READ_TOOLS_WITH_JSON_SUPPORT support response_format")
+        # All tools support response_format (verified by assertion above)
     
     def test_write_tools_dont_have_response_format(self):
         """Test that write operations don't have response_format parameter."""
@@ -189,7 +189,7 @@ class TestToolSchemas:
                 "\n".join(f"  - {v}" for v in violations)
             )
         
-        print(f"✓ All {len(write_tools)} write tools correctly don't have response_format")
+        # All write tools correctly configured (verified by assertion above)
     
     def test_tools_reject_extra_parameters(self):
         """Test that tools reject undocumented parameters (Pydantic extra='forbid')."""
@@ -236,7 +236,7 @@ class TestToolSchemas:
                            str(field_info.annotation) == "ResponseFormat", \
                            f"{tool_name}: response_format should be ResponseFormat enum"
         
-        print("✓ response_format uses correct enum type")
+        # response_format uses correct enum type (verified by assertions above)
 
 
 class TestErrorHandling:
@@ -253,7 +253,7 @@ class TestErrorHandling:
         # (we just added it)
         assert 'github_search_code' in read_tools
         
-        print("✓ JSON error response pattern verified")
+        # JSON error response pattern verified (verified by assertion above)
 
 
 class TestParameterValidation:
@@ -291,7 +291,7 @@ class TestParameterValidation:
                             # but still be functionally required
                             pass
         
-        print("✓ Required parameters validation passed")
+        # Required parameters validation passed (verified by assertions above)
 
 
 if __name__ == "__main__":

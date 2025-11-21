@@ -87,7 +87,7 @@ class TestClientServerContract:
                 "\n".join(f"  - {tool}" for tool in sorted(missing_in_python))
             )
         
-        print(f"✓ All {len(typescript_tools)} TypeScript tools match Python schemas")
+        # All tools match (verified by assertion above)
     
     def test_python_tools_in_typescript_list(self):
         """Verify Python tools with response_format are in TypeScript list."""
@@ -98,7 +98,7 @@ class TestClientServerContract:
         missing_in_typescript = python_tools - typescript_tools
         
         if missing_in_typescript:
-            print(f"⚠ {len(missing_in_typescript)} Python tools support response_format but aren't in TypeScript list:")
+            # Note: Some tools may be intentionally excluded
             for tool in sorted(missing_in_typescript):
                 print(f"  - {tool}")
             print("  (This is a warning, not an error - tools may be intentionally excluded)")
@@ -115,7 +115,7 @@ class TestClientServerContract:
         assert ResponseFormat.JSON == "json", "ResponseFormat.JSON should be 'json'"
         assert ResponseFormat.MARKDOWN == "markdown", "ResponseFormat.MARKDOWN should be 'markdown'"
         
-        print("✓ ResponseFormat enum is consistent")
+        # ResponseFormat enum is consistent (verified by assertions above)
 
 
 class TestResponseFormatParsing:
@@ -131,7 +131,7 @@ class TestResponseFormatParsing:
         
         assert len(tools_with_json) > 0, "Should have tools that support JSON response format"
         
-        print(f"✓ {len(tools_with_json)} tools support JSON response format")
+        # Tools support JSON response format (verified by assertion above)
     
     def test_markdown_response_structure(self):
         """Verify Markdown responses have expected structure."""
@@ -139,7 +139,7 @@ class TestResponseFormatParsing:
         # This is verified by the fact that response_format is optional
         # and defaults to markdown for most tools
         
-        print("✓ Markdown response format is supported")
+        # Markdown response format is supported
 
 
 if __name__ == "__main__":
