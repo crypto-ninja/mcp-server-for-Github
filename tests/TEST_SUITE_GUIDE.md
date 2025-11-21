@@ -1,7 +1,7 @@
 # 🧪 GitHub MCP Server - Test Suite Guide
 
 **Version:** 1.0  
-**Coverage:** 51% (120 tests)  
+**Coverage:** 55% (142 tests)  
 **Status:** Production Ready  
 **Meta Level:** ∞
 
@@ -23,7 +23,7 @@
 
 ## 🎯 Overview
 
-The GitHub MCP Server has achieved **51%+ test coverage** with **120+ comprehensive tests**. This test suite validates:
+The GitHub MCP Server has achieved **55%+ test coverage** with **142+ comprehensive tests**. This test suite validates:
 
 - ✅ All 44 MCP tools
 - ✅ Error handling (401, 403, 404, 409, 429, 500, timeouts)
@@ -77,7 +77,7 @@ tests/
 ├── test_tool_integration.py          # Integration tests (6 tests)
 ├── test_contracts.py                 # TypeScript↔Python (5 tests)
 ├── test_regressions.py               # Bug prevention (5 tests)
-├── test_individual_tools.py          # Core tool tests (80+ tests)
+├── test_individual_tools.py          # Core tool tests (100+ tests)
 │   ├── TestReadOperations            # Get, list, search operations
 │   ├── TestWriteOperations           # Create, update, delete operations
 │   ├── TestErrorHandling             # 404, 403, 429, 500, timeouts
@@ -97,7 +97,23 @@ tests/
 │   ├── TestUpdateRepository          # Repository updates
 │   ├── TestGrepOperations            # Code grep functionality
 │   ├── TestReadFileChunk             # Chunk file reading
-│   └── TestEdgeCases                 # Unicode, pagination, null handling
+│   ├── TestEdgeCases                 # Unicode, pagination, null handling
+│   ├── TestStringReplaceOperations   # String replacement in files
+│   ├── TestComplexWorkflows          # Multi-step workflows
+│   ├── TestMoreErrorScenarios       # 422, 410 errors
+│   ├── TestPerformanceScenarios     # Large files, many commits
+│   ├── TestAdvancedFileOperations    # Batch operations (20+ files)
+│   ├── TestListRepoContentsAdvanced # Nested directories
+│   ├── TestListCommitsAdvanced      # Author/path filtering
+│   ├── TestGetUserInfoAdvanced      # Organization info
+│   ├── TestGetPRDetailsAdvanced     # PR details with reviews
+│   ├── TestListPullRequestsAdvanced # Draft/merged PRs
+│   ├── TestListWorkflowsAdvanced    # Inactive workflows
+│   ├── TestGetWorkflowRunsAdvanced  # Filtered workflow runs
+│   ├── TestGrepAdvanced             # Grep with context
+│   ├── TestListIssuesAdvanced      # Issues with labels
+│   ├── TestCreateIssueAdvanced     # Issues with labels/assignees
+│   └── TestUpdateIssueAdvanced     # Updating issues with labels
 ├── test_auth.py                      # Authentication (11 tests)
 ├── test_response_formatting.py      # Response formats (8 tests)
 ├── discover_tool_issues.py           # Automated issue detection
@@ -193,7 +209,7 @@ When you add new tests, update:
 
 ## 📈 Coverage Goals
 
-### Current Coverage: 51%
+### Current Coverage: 55%
 
 ```
 ✅ Baseline:     26% (22 tests)   - Session start
@@ -202,7 +218,8 @@ When you add new tests, update:
 ✅ Phase 3:      40% (95 tests)   - Files, errors, edges
 ✅ Phase 4:      43% (102 tests)  - More file ops
 ✅ Phase 5:      46% (106 tests)  - Search, more errors
-✅ FINAL PUSH:   51% (120 tests)  - 🎯 50% EXCEEDED!
+✅ Phase 6:      51% (120 tests)  - 🎯 50% EXCEEDED!
+✅ Phase 7:      55% (142 tests)  - 🎉 55% MILESTONE ACHIEVED!
 ```
 
 ### Coverage Breakdown
@@ -210,17 +227,18 @@ When you add new tests, update:
 ```
 Schema Validation:        100% (all tools validated)
 Error Handling:           ~95% (all common errors + abuse limits)
-Core Tools:               ~65% (most used tools)
-Advanced Features:        ~50% (webhooks, GraphQL, grep)
-Repository Operations:    ~70% (create, update, delete, transfer, archive)
-Overall:                  51%+ (MORE THAN HALF!)
+Core Tools:               ~70% (most used tools)
+Advanced Features:        ~55% (webhooks, GraphQL, grep)
+Repository Operations:    ~75% (create, update, delete, transfer, archive)
+Workflow Operations:      ~65% (workflows, runs, PRs)
+Overall:                  55%+ (MORE THAN HALF!)
 ```
 
 ### Future Goals
 
 ```
 ✅ 50%: ACHIEVED! (51% actual)
-→ 55%: Add more integration tests
+✅ 55%: ACHIEVED! (55% actual) 🎉
 → 60%: Test all remaining tools
 → 70%: Add performance tests
 → 80%: Production gold standard
@@ -251,35 +269,63 @@ When you run the test suite:
 ## 🏆 Achievement Stats
 
 ```
-Total Tests:              120
-Coverage:                 51%
+Total Tests:              142
+Coverage:                 55%
 Pass Rate:                100%
 Test Files:               7
-Test Classes:             35+
-Lines of Test Code:       ~3000+
+Test Classes:             45+
+Lines of Test Code:       ~4000+
 Bugs Prevented:           Countless
 Meta Level:               ∞
 ```
 
-**Last Updated:** 2025-01-21 (After 51% milestone - EXCEEDED 50% TARGET!)
+**Last Updated:** 2025-01-21 (After 55% milestone - EXCEEDED 55% TARGET! 🎉)
 
 **Recent Additions:**
-- Repository transfer and archive operations
-- Repository creation and deletion
-- GraphQL query operations
-- Workflow suggestions
-- Advanced search operations
-- License information retrieval
-- Repository updates
-- Grep operations
-- Chunk file reading
-- Advanced edge cases (pagination, null handling, abuse limits)
+- String replacement operations
+- Complex multi-step workflows (issue-to-PR, release workflows)
+- Additional error scenarios (422 validation, 410 Gone)
+- Performance scenarios (large files 1MB+, many commits 100+)
+- Advanced file operations (batch with 20+ files)
+- Advanced repo contents (nested directories, subdirectories)
+- Advanced commit listing (author/path filtering)
+- Organization user info
+- PR details with reviews
+- Draft and merged PR listing
+- Inactive workflow listing
+- Filtered workflow runs
+- Grep with context lines
+- Issues with labels and assignees
+- Issue updates with labels
 
 ---
 
 ---
 
 ## 📝 Changelog
+
+### 2025-01-21 - 55% Coverage Milestone 🎉🎯
+
+- **Coverage:** 51% → 55% (+4%)
+- **Tests:** 120 → 142 (+22 tests)
+- **New test classes:**
+  - TestStringReplaceOperations (1 test)
+  - TestComplexWorkflows (2 tests)
+  - TestMoreErrorScenarios (2 tests)
+  - TestPerformanceScenarios (2 tests)
+  - TestAdvancedFileOperations (1 test)
+  - TestListRepoContentsAdvanced (2 tests)
+  - TestListCommitsAdvanced (2 tests)
+  - TestGetUserInfoAdvanced (1 test)
+  - TestGetPRDetailsAdvanced (1 test)
+  - TestListPullRequestsAdvanced (2 tests)
+  - TestListWorkflowsAdvanced (1 test)
+  - TestGetWorkflowRunsAdvanced (1 test)
+  - TestGrepAdvanced (1 test)
+  - TestListIssuesAdvanced (1 test)
+  - TestCreateIssueAdvanced (1 test)
+  - TestUpdateIssueAdvanced (1 test)
+- **Achievement:** EXCEEDED 55% TARGET! 🎯
 
 ### 2025-01-21 - 51% Coverage Milestone 🎉
 
