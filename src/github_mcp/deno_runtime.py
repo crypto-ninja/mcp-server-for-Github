@@ -34,7 +34,8 @@ class DenoRuntime:
         """
         try:
             # Prepare execution command
-            # Pass code as argument to mod.ts
+            # Pass code via stdin to avoid Windows command-line character escaping issues
+            # This prevents "Bad control" errors with special characters (backticks, quotes, etc.)
             result = subprocess.run(
                 [
                     "deno",
@@ -43,9 +44,9 @@ class DenoRuntime:
                     "--allow-run",   # Spawn MCP server process
                     "--allow-env",   # Access environment variables
                     "--allow-net",   # Network access for GitHub API
-                    str(self.deno_executor_path),
-                    code
+                    str(self.deno_executor_path)
                 ],
+                input=code,  # Pass code via stdin instead of command-line args
                 capture_output=True,
                 text=True,
                 encoding='utf-8',

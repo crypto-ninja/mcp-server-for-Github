@@ -145,9 +145,21 @@ async function executeUserCode(code: string): Promise<any> {
 
 /**
  * Main entry point
+ * 
+ * Reads code from stdin (to avoid Windows command-line character escaping issues)
+ * Falls back to Deno.args[0] for backward compatibility
  */
 if (import.meta.main) {
-  const code = Deno.args[0];
+  let code: string;
+  
+  // Try reading from stdin first (preferred method to avoid shell escaping issues)
+  try {
+    const stdin = await Deno.stdin.readAll();
+    code = new TextDecoder().decode(stdin).trim();
+  } catch {
+    // Fallback to command-line argument for backward compatibility
+    code = Deno.args[0] || "";
+  }
   
   if (!code) {
     console.log(JSON.stringify({
