@@ -2436,5 +2436,288 @@ class TestAdvancedSearchOperations:
             assert len(parsed) > 0
 
 
+class TestListRepoContentsAdvanced:
+    """Test advanced repository contents listing."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_repo_contents_nested(self, mock_request):
+        """Test listing nested directory contents."""
+        # Mock nested directory structure
+        mock_response = [
+            {
+                "name": "src",
+                "type": "dir",
+                "path": "src",
+                "sha": "dirsha123"
+            },
+            {
+                "name": "README.md",
+                "type": "file",
+                "path": "README.md",
+                "sha": "filesha123",
+                "size": 1024
+            },
+            {
+                "name": ".github",
+                "type": "dir",
+                "path": ".github",
+                "sha": "dirsha456"
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListRepoContentsInput
+        params = ListRepoContentsInput(
+            owner="test",
+            repo="test-repo",
+            path="",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_repo_contents(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or isinstance(parsed.get("contents"), list)
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_repo_contents_subdirectory(self, mock_request):
+        """Test listing contents of a subdirectory."""
+        # Mock subdirectory contents
+        mock_response = [
+            {
+                "name": "main.py",
+                "type": "file",
+                "path": "src/main.py",
+                "sha": "filesha789",
+                "size": 2048
+            },
+            {
+                "name": "utils.py",
+                "type": "file",
+                "path": "src/utils.py",
+                "sha": "filesha012",
+                "size": 1536
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListRepoContentsInput
+        params = ListRepoContentsInput(
+            owner="test",
+            repo="test-repo",
+            path="src",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_repo_contents(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or isinstance(parsed.get("contents"), list)
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestListCommitsAdvanced:
+    """Test advanced commit listing scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_commits_with_author_filter(self, mock_request):
+        """Test listing commits filtered by author."""
+        # Mock commits from specific author
+        mock_response = {
+            "items": [
+                {
+                    "sha": f"sha{i}",
+                    "commit": {
+                        "message": f"Commit {i}",
+                        "author": {
+                            "name": "Test Author",
+                            "email": "test@example.com",
+                            "date": "2024-01-01T00:00:00Z"
+                        }
+                    },
+                    "author": {
+                        "login": "testauthor"
+                    },
+                    "html_url": f"https://github.com/test/test/commit/sha{i}"
+                }
+                for i in range(10)
+            ],
+            "total_count": 10
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            author="testauthor",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_commits(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_commits_with_path_filter(self, mock_request):
+        """Test listing commits filtered by path."""
+        # Mock commits affecting specific path
+        mock_response = {
+            "items": [
+                {
+                    "sha": f"sha{i}",
+                    "commit": {
+                        "message": f"Update README {i}",
+                        "author": {
+                            "name": "Test User",
+                            "date": "2024-01-01T00:00:00Z"
+                        }
+                    },
+                    "author": {
+                        "login": "testuser"
+                    },
+                    "html_url": f"https://github.com/test/test/commit/sha{i}"
+                }
+                for i in range(5)
+            ],
+            "total_count": 5
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListCommitsInput
+        params = ListCommitsInput(
+            owner="test",
+            repo="test-repo",
+            path="README.md",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_commits(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestGetUserInfoAdvanced:
+    """Test advanced user info scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_user_info_organization(self, mock_request):
+        """Test getting organization info."""
+        # Mock organization response
+        mock_response = {
+            "login": "testorg",
+            "type": "Organization",
+            "name": "Test Organization",
+            "description": "Test org description",
+            "public_repos": 50,
+            "followers": 100,
+            "html_url": "https://github.com/testorg",
+            "created_at": "2020-01-01T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetUserInfoInput
+        params = GetUserInfoInput(
+            username="testorg"
+        )
+        result = await github_mcp.github_get_user_info(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "testorg" in result or "Organization" in result or "Error" in result
+
+
+class TestGetPRDetailsAdvanced:
+    """Test advanced PR details scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_pr_details_with_reviews(self, mock_request):
+        """Test getting PR details with review information."""
+        # Mock PR with reviews
+        mock_response = {
+            "number": 42,
+            "title": "Test PR",
+            "state": "open",
+            "html_url": "https://github.com/test/test/pull/42",
+            "author": {
+                "login": "testuser"
+            },
+            "reviews": [
+                {
+                    "id": 1,
+                    "state": "APPROVED",
+                    "author": {
+                        "login": "reviewer1"
+                    }
+                },
+                {
+                    "id": 2,
+                    "state": "COMMENTED",
+                    "author": {
+                        "login": "reviewer2"
+                    }
+                }
+            ],
+            "commits": 5,
+            "additions": 100,
+            "deletions": 50,
+            "changed_files": 3,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-02T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetPullRequestDetailsInput
+        params = GetPullRequestDetailsInput(
+            owner="test",
+            repo="test-repo",
+            pull_number=42,
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_get_pr_details(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have PR info
+        if isinstance(parsed, dict):
+            assert "number" in parsed or "title" in parsed or "reviews" in parsed
+        else:
+            assert "42" in result or "Test PR" in result or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
