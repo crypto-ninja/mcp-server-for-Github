@@ -5,7 +5,19 @@
  * This is a Deno-compatible version that doesn't use Node.js built-ins.
  */
 
+// Declare Deno global for TypeScript
+declare const Deno: {
+    build: { os: string };
+    env: {
+        get(key: string): string | undefined;
+        toObject(): Record<string, string>;
+    };
+    cwd(): string;
+};
+
+// @ts-ignore - Deno npm: specifier (works at runtime)
 import { Client } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/index.js";
+// @ts-ignore - Deno npm: specifier (works at runtime)
 import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/stdio.js";
 
 // Global client instance (singleton)
@@ -35,7 +47,7 @@ function getMCPConfig(): MCPConfig {
     // Get environment variables (Deno-compatible)
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(Deno.env.toObject())) {
-        env[key] = value;
+        env[key] = value as string;
     }
     env['MCP_CODE_EXECUTION_MODE'] = 'true';
     
@@ -86,7 +98,7 @@ export async function initializeMCPClient(): Promise<void> {
     if (isInitializing) {
         // Wait for initialization to complete
         while (isInitializing) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
         }
         return;
     }
@@ -131,11 +143,12 @@ export async function initializeMCPClient(): Promise<void> {
         const tools = await mcpClient.listTools();
         console.error(`[MCP Bridge] ✓ Found ${tools.tools.length} available tools`);
         
-    } catch (error) {
+    } catch (error: unknown) {
         mcpClient = null;
         mcpTransport = null;
         console.error('[MCP Bridge] ✗ Connection failed:', error);
-        throw new Error(`Failed to connect to MCP server: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to connect to MCP server: ${errorMessage}`);
     } finally {
         isInitializing = false;
     }
@@ -154,7 +167,7 @@ export async function initializeMCPClient(): Promise<void> {
  */
 export async function callMCPTool<T = string>(
     toolName: string,
-    params: any
+    params: Record<string, unknown>
 ): Promise<T> {
     // Ensure connection is established
     if (!mcpClient) {
@@ -299,7 +312,7 @@ export async function listAvailableTools(): Promise<string[]> {
     }
     
     const tools = await mcpClient.listTools();
-    return tools.tools.map(t => t.name);
+    return tools.tools.map((t: { name: string }) => t.name);
 }
 
 /**
@@ -308,7 +321,7 @@ export async function listAvailableTools(): Promise<string[]> {
  * @param toolName - Name of the tool
  * @returns Tool information including schema
  */
-export async function getToolInfo(toolName: string): Promise<any> {
+export async function getToolInfo(toolName: string): Promise<{ name: string; [key: string]: unknown }> {
     if (!mcpClient) {
         await initializeMCPClient();
     }
@@ -318,13 +331,13 @@ export async function getToolInfo(toolName: string): Promise<any> {
     }
     
     const tools = await mcpClient.listTools();
-    const tool = tools.tools.find(t => t.name === toolName);
+    const tool = tools.tools.find((t: { name: string }) => t.name === toolName);
     
     if (!tool) {
         throw new Error(`Tool not found: ${toolName}`);
     }
     
-    return tool;
+    return tool as { name: string; [key: string]: unknown };
 }
 
 /**
@@ -338,10 +351,10 @@ export async function closeMCPClient(): Promise<void> {
         
         try {
             // Give any pending operations a moment to complete
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise<void>(resolve => setTimeout(() => resolve(), 50));
             
             await mcpClient.close();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[MCP Bridge] Error during close:', error);
         } finally {
             mcpClient = null;
