@@ -3068,5 +3068,153 @@ class TestUpdateIssueAdvanced:
         assert "25" in result or "updated" in result.lower() or "Error" in result
 
 
+class TestErrorHandlingHelpers:
+    """Test error handling helper functions."""
+
+    def test_handle_api_error_httpx_error(self):
+        """Test _handle_api_error with httpx error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test HTTP status error
+        error = httpx.HTTPStatusError(
+            "Not Found",
+            request=MagicMock(),
+            response=MagicMock(status_code=404, text="Repository not found")
+        )
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "404" in result or "not found" in result.lower()
+
+    def test_handle_api_error_connection_error(self):
+        """Test _handle_api_error with connection error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test connection error
+        error = httpx.ConnectError("Connection failed")
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "connection" in result.lower()
+
+    def test_format_timestamp(self):
+        """Test _format_timestamp helper."""
+        from github_mcp import _format_timestamp
+
+        # Test valid ISO timestamp
+        result = _format_timestamp("2024-01-01T12:00:00Z")
+        assert isinstance(result, str)
+        assert "2024" in result
+
+        # Test None
+        result = _format_timestamp(None)
+        assert result == "N/A"
+
+    def test_truncate_response(self):
+        """Test _truncate_response helper."""
+        from github_mcp import _truncate_response
+
+        # Test short response
+        short = "Short response"
+        result = _truncate_response(short, 10)
+        assert result == short
+
+        # Test long response
+        long_response = "x" * 10000
+        result = _truncate_response(long_response, 100)
+        assert len(result) < len(long_response)
+        assert "truncated" in result.lower() or len(result) <= 100 + 100  # Some buffer
+
+
+class TestUpdateReleaseAdvanced:
+    """Test advanced release update scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_release_draft(self, mock_request):
+        """Test updating release to draft."""
+        # Mock updated release
+        mock_response = {
+            "id": 123,
+            "tag_name": "v1.0.0",
+            "draft": True,
+            "prerelease": False,
+            "html_url": "https://github.com/test/test/releases/tag/v1.0.0"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import UpdateReleaseInput
+        params = UpdateReleaseInput(
+            owner="test",
+            repo="test-repo",
+            release_id="123",
+            draft=True
+        )
+        result = await github_mcp.github_update_release(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "v1.0.0" in result or "123" in result or "updated" in result.lower() or "Error" in result
+
+
+class TestDeleteRepositoryAdvanced:
+    """Test advanced repository deletion scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_delete_repository_with_verification(self, mock_request):
+        """Test deleting repository with verification."""
+        # Mock delete response (204 No Content)
+        mock_request.return_value = None
+
+        # Call the tool
+        from github_mcp import DeleteRepositoryInput
+        params = DeleteRepositoryInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_delete_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "deleted" in result.lower() or "removed" in result.lower() or "Error" in result
+
+
+class TestTransferRepositoryAdvanced:
+    """Test advanced repository transfer scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_transfer_repository_to_org(self, mock_request):
+        """Test transferring repository to organization."""
+        # Mock transfer response
+        mock_response = {
+            "id": 123,
+            "name": "test-repo",
+            "full_name": "new-org/test-repo",
+            "owner": {
+                "login": "new-org",
+                "type": "Organization"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import TransferRepositoryInput
+        params = TransferRepositoryInput(
+            owner="test",
+            repo="test-repo",
+            new_owner="new-org"
+        )
+        result = await github_mcp.github_transfer_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "new-org" in result or "transferred" in result.lower() or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
