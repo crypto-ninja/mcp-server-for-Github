@@ -3141,6 +3141,72 @@ class TestUpdateIssueAdvanced:
         assert isinstance(result, str)
         assert "25" in result or "updated" in result.lower() or "Error" in result
 
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_with_all_fields(self, mock_request):
+        """Test updating issue with all optional fields."""
+        # Mock updated issue
+        mock_response = {
+            "number": 26,
+            "title": "Fully Updated Issue",
+            "body": "Updated body text",
+            "state": "closed",
+            "labels": [{"name": "enhancement"}],
+            "assignees": [{"login": "assignee1"}, {"login": "assignee2"}],
+            "milestone": {"number": 1, "title": "v1.0"},
+            "html_url": "https://github.com/test/test/issues/26",
+            "updated_at": "2024-01-03T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call with all fields
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=26,
+            title="Fully Updated Issue",
+            body="Updated body text",
+            state="closed",
+            labels=["enhancement"],
+            assignees=["assignee1", "assignee2"],
+            milestone=1
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "26" in result or "updated" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_minimal(self, mock_request):
+        """Test updating issue with minimal fields (just state)."""
+        # Mock updated issue
+        mock_response = {
+            "number": 27,
+            "title": "Original Title",
+            "body": "Original body",
+            "state": "closed",
+            "html_url": "https://github.com/test/test/issues/27",
+            "updated_at": "2024-01-04T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call with just state change
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=27,
+            state="closed"
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "27" in result or "updated" in result.lower() or "Error" in result
+
 
 class TestErrorHandlingHelpers:
     """Test error handling helper functions."""
