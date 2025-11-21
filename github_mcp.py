@@ -5259,15 +5259,21 @@ async def execute_code(code: str) -> str:
             # Format successful result
             return_value = result.get("result", "Code executed successfully")
             
-            # Format as markdown
-            if isinstance(return_value, dict):
-                result_json = json.dumps(return_value, indent=2)
-                return f"✅ Code executed successfully\n\n**Result:**\n```json\n{result_json}\n```"
+            # Return raw JSON for structured data (dict/list) so TypeScript can parse it
+            if isinstance(return_value, (dict, list)):
+                # Return raw JSON string - TypeScript client expects JSON, not markdown
+                return json.dumps(return_value)
             elif isinstance(return_value, str):
-                return f"✅ Code executed successfully\n\n**Result:**\n```\n{return_value}\n```"
+                # For strings, check if it's already JSON
+                if return_value.strip().startswith(('{', '[')):
+                    # Already JSON string, return as-is
+                    return return_value
+                else:
+                    # Plain string, format as markdown for readability
+                    return f"✅ Code executed successfully\n\n**Result:**\n```\n{return_value}\n```"
             else:
-                result_str = str(return_value)
-                return f"✅ Code executed successfully\n\n**Result:**\n```\n{result_str}\n```"
+                # Other types (numbers, booleans, etc.) - convert to JSON
+                return json.dumps(return_value)
         else:
             # Format error
             error = result.get("error", "Unknown error")

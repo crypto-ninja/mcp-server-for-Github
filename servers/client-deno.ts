@@ -197,6 +197,17 @@ export async function callMCPTool<T = string>(
                     }
                 }
                 
+                // Try to extract JSON from markdown code blocks (fallback)
+                // Handles cases like: ```json\n{...}\n```
+                const jsonBlockMatch = text.match(/```(?:json)?\s*([{[].*?[}\]])\s*```/s);
+                if (jsonBlockMatch) {
+                    try {
+                        return JSON.parse(jsonBlockMatch[1]) as T;
+                    } catch {
+                        // Failed to parse extracted JSON, continue
+                    }
+                }
+                
                 // Return text as-is
                 return text as unknown as T;
             }
