@@ -52,6 +52,7 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 import json
 import os
+import sys
 import httpx
 from datetime import datetime
 import base64
@@ -69,6 +70,44 @@ from graphql_client import GraphQLClient
 # Load .env file if it exists
 load_dotenv()
 
+# Validate Deno installation at startup
+def check_deno_installed():
+    """Check if Deno is installed and accessible."""
+    try:
+        result = subprocess.run(
+            ["deno", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode == 0:
+            version = result.stdout.strip().split('\n')[0]
+            return True, version
+        else:
+            return False, "Deno command failed"
+    except FileNotFoundError:
+        return False, "Deno not found in PATH"
+    except subprocess.TimeoutExpired:
+        return False, "Deno version check timed out"
+    except Exception as e:
+        return False, f"Error checking Deno: {str(e)}"
+
+# Check Deno at startup
+deno_available, deno_info = check_deno_installed()
+if not deno_available:
+    print("=" * 60, file=sys.stderr)
+    print("❌ DENO NOT FOUND", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
+    print(f"Error: {deno_info}", file=sys.stderr)
+    print("\nGitHub MCP Server requires Deno to execute TypeScript code.", file=sys.stderr)
+    print("\nInstallation:", file=sys.stderr)
+    print("  Windows: irm https://deno.land/install.ps1 | iex", file=sys.stderr)
+    print("  macOS:    brew install deno", file=sys.stderr)
+    print("  Linux:    curl -fsSL https://deno.land/install.sh | sh", file=sys.stderr)
+    print("\nOr visit: https://deno.land", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
+    sys.exit(1)
+
 # Code-First Mode: Expose only execute_code to Claude Desktop for token efficiency
 # Deno runtime will connect with CODE_FIRST_MODE=false to access all tools internally
 CODE_FIRST_MODE = os.getenv("MCP_CODE_FIRST_MODE", "false").lower() == "true"
@@ -78,11 +117,13 @@ mcp = FastMCP("github_mcp")
 
 # Print startup message based on mode
 if CODE_FIRST_MODE:
-    print(">> GitHub MCP Server v2.2.0 - Code-First Mode (execute_code only)")
+    print(">> GitHub MCP Server v2.2.1 - Code-First Mode (execute_code only)")
     print(">> Token usage: ~800 tokens (98% savings!)")
+    print(f">> Deno: {deno_info}")
 else:
-    print(">> GitHub MCP Server v2.2.0 - Internal Mode (all 42 tools)")
+    print(">> GitHub MCP Server v2.2.1 - Internal Mode (all 42 tools)")
     print(">> Used by Deno runtime for tool execution")
+    print(f">> Deno: {deno_info}")
 
 # Conditional tool registration decorator
 def conditional_tool(*args, **kwargs):
@@ -5289,6 +5330,77 @@ async def execute_code(code: str) -> str:
         return f"❌ Error: Deno runtime not available. {str(e)}\n\nPlease ensure:\n1. Deno is installed\n2. src/github_mcp/deno_runtime.py exists"
     except Exception as e:
         return f"❌ Unexpected error during code execution: {str(e)}"
+
+# ============================================================================
+# HEALTH CHECK TOOL
+# ============================================================================
+
+@mcp.tool(
+    name="health_check",
+    annotations={
+        "title": "Health Check",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def health_check() -> str:
+    """
+    Check server health status.
+    
+    Returns version, authentication status, and Deno availability.
+    Useful for monitoring and debugging.
+    
+    Returns:
+        str: JSON-formatted health status
+    """
+    try:
+        # Check authentication status
+        has_pat = bool(os.getenv("GITHUB_TOKEN"))
+        has_app_id = bool(os.getenv("GITHUB_APP_ID"))
+        has_app_installation = bool(os.getenv("GITHUB_APP_INSTALLATION_ID"))
+        has_app_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"))
+        
+        auth_status = "none"
+        auth_method = None
+        if has_app_id and has_app_installation and has_app_key:
+            auth_status = "configured"
+            auth_method = "github_app"
+        elif has_pat:
+            auth_status = "configured"
+            auth_method = "pat"
+        
+        # Check Deno
+        deno_available, deno_info = check_deno_installed()
+        
+        health_data = {
+            "status": "healthy",
+            "version": "2.2.1",
+            "mode": "code_first" if CODE_FIRST_MODE else "internal",
+            "authentication": {
+                "status": auth_status,
+                "method": auth_method,
+                "pat_configured": has_pat,
+                "app_configured": has_app_id and has_app_installation and has_app_key
+            },
+            "deno": {
+                "available": deno_available,
+                "version": deno_info if deno_available else None
+            },
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        
+        return json.dumps(health_data, indent=2)
+        
+    except Exception as e:
+        error_data = {
+            "status": "error",
+            "version": "2.2.1",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        return json.dumps(error_data, indent=2)
 
 # Entry point
 if __name__ == "__main__":

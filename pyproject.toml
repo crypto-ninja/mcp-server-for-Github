@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "github-mcp-server"
-version = "2.2.0"
+version = "2.2.1"
 description = "A comprehensive Model Context Protocol server for GitHub integration"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ authors = [{ name = "MCP Labs", email = "licensing@mcplabs.co.uk" }]
 license = { text = "AGPL-3.0-or-later" }
 keywords = ["mcp", "model-context-protocol", "github", "api", "assistant", "claude"]
 dependencies = [
-  "mcp>=1.0.0",
+  "mcp>=1.0.0,<2.0.0",
   "httpx>=0.25.0",
   "pydantic>=2.0.0",
   "PyJWT>=2.8.0",
