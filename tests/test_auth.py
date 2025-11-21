@@ -232,9 +232,12 @@ class TestAuthFallback:
         "GITHUB_APP_INSTALLATION_ID": "456",
         "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem"
     })
+    @patch('auth.github_app.load_private_key_from_file')
     @patch('auth.github_app.GitHubAppAuth.get_installation_token')
-    async def test_get_auth_token_app_priority(self, mock_get_token):
+    async def test_get_auth_token_app_priority(self, mock_get_token, mock_load_key):
         """Test GitHub App takes priority over PAT."""
+        # Mock the private key loading to return a valid key
+        mock_load_key.return_value = "-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY\n-----END RSA PRIVATE KEY-----"
         mock_get_token.return_value = "app_token"
 
         # Even if PAT is set, App should be used
@@ -251,15 +254,19 @@ class TestAuthFallback:
         "GITHUB_APP_INSTALLATION_ID": "456",
         "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem"
     })
+    @patch('auth.github_app.load_private_key_from_file')
     @patch('auth.github_app.GitHubAppAuth.get_installation_token')
-    async def test_get_auth_token_app_fallback_to_pat(self, mock_get_token):
+    async def test_get_auth_token_app_fallback_to_pat(self, mock_get_token, mock_load_key):
         """Test fallback to PAT when App fails."""
-        mock_get_token.return_value = None
+        # Mock the private key loading to return a valid key
+        mock_load_key.return_value = "-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY\n-----END RSA PRIVATE KEY-----"
+        # Mock get_installation_token to raise an exception (App auth fails)
+        mock_get_token.side_effect = Exception("App auth failed")
 
         with patch.dict(os.environ, {"GITHUB_TOKEN": "pat_token"}):
             token = await get_auth_token()
 
-        # Should fall back to PAT
+        # Should fall back to PAT when App fails
         assert token == "pat_token"
 
     def test_clear_token_cache_function(self):

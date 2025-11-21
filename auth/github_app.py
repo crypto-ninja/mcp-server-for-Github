@@ -145,6 +145,25 @@ def load_private_key_from_file(key_path: str) -> Optional[str]:
         return None
 
 
+def _has_app_config() -> bool:
+    """
+    Check if GitHub App configuration is present in environment.
+    
+    Returns:
+        True if App ID, Installation ID, and at least one key source are configured
+    """
+    app_id = os.getenv("GITHUB_APP_ID")
+    installation_id = os.getenv("GITHUB_APP_INSTALLATION_ID")
+    
+    if not app_id or not installation_id:
+        return False
+    
+    # Check if we have at least one key source configured
+    has_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY")) or bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"))
+    
+    return has_key
+
+
 async def get_installation_token_from_env() -> Optional[str]:
     """
     Get installation token from environment variables.
@@ -254,7 +273,13 @@ async def get_auth_token() -> Optional[str]:
     """
     Get authentication token with automatic fallback.
     
-    Tries GitHub App first, then falls back to PAT.
+    Tries GitHub App first (when configured), then falls back to PAT.
+    Respects GITHUB_AUTH_MODE environment variable for explicit control.
+    
+    Priority:
+    1. Explicit GITHUB_AUTH_MODE=app (if App is configured)
+    2. GitHub App (if configured)
+    3. PAT (GITHUB_TOKEN)
     
     Returns:
         Token string if available, None otherwise
@@ -271,14 +296,35 @@ async def get_auth_token() -> Optional[str]:
         print(f"  GITHUB_APP_INSTALLATION_ID present: {bool(os.getenv('GITHUB_APP_INSTALLATION_ID'))}", file=sys.stderr)
         print(f"  GITHUB_APP_PRIVATE_KEY_PATH present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY_PATH'))}", file=sys.stderr)
         print(f"  GITHUB_APP_PRIVATE_KEY present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY'))}", file=sys.stderr)
+        print(f"  GITHUB_AUTH_MODE: {os.getenv('GITHUB_AUTH_MODE', 'not set')}", file=sys.stderr)
     
-    # Try GitHub App first
-    app_token = await get_installation_token_from_env()
-    if app_token:
+    # Check for explicit auth mode preference
+    auth_mode = os.getenv("GITHUB_AUTH_MODE", "").lower()
+    
+    # If explicitly requesting App mode and App is configured, prioritize App
+    if auth_mode == "app" and _has_app_config():
+        app_token = await get_installation_token_from_env()
+        if app_token:
+            if DEBUG_AUTH:
+                token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
+                print(f"  ✅ Using GitHub App token (GITHUB_AUTH_MODE=app, prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+            return app_token
+        # If App mode is explicitly requested but fails, don't fall back to PAT
         if DEBUG_AUTH:
-            token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
-            print(f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
-        return app_token
+            print("  ❌ GITHUB_AUTH_MODE=app but App token retrieval failed", file=sys.stderr)
+        return None
+    
+    # Default behavior: Try GitHub App first if configured
+    if _has_app_config():
+        app_token = await get_installation_token_from_env()
+        if app_token:
+            if DEBUG_AUTH:
+                token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
+                print(f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+            return app_token
+        # If App is configured but fails, fall back to PAT
+        if DEBUG_AUTH:
+            print("  ⚠️ App configured but token retrieval failed, falling back to PAT", file=sys.stderr)
     
     # Fall back to PAT
     pat_token = os.getenv("GITHUB_TOKEN")
