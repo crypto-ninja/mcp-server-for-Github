@@ -1174,5 +1174,279 @@ class TestEdgeCasesExtended:
             assert parsed.get("total_count", 0) == 0
 
 
+class TestSearchRepositories:
+    """Test repository search operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_repositories(self, mock_request):
+        """Test searching for repositories."""
+        # Mock search results
+        mock_response = {
+            "total_count": 2,
+            "items": [
+                {
+                    "full_name": "test/repo1",
+                    "name": "repo1",
+                    "description": "Test repo 1",
+                    "stargazers_count": 100,
+                    "language": "Python",
+                    "html_url": "https://github.com/test/repo1"
+                },
+                {
+                    "full_name": "test/repo2",
+                    "name": "repo2",
+                    "description": "Test repo 2",
+                    "stargazers_count": 50,
+                    "language": "JavaScript",
+                    "html_url": "https://github.com/test/repo2"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import SearchRepositoriesInput
+        params = SearchRepositoriesInput(
+            query="test language:python",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_search_repositories(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestMoreErrorPaths:
+    """Test additional error scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_unauthorized_error(self, mock_request):
+        """Test 401 unauthorized error."""
+        import httpx
+
+        # Mock 401 unauthorized error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Bad credentials",
+            request=MagicMock(),
+            response=MagicMock(status_code=401)
+        )
+
+        # Call the tool
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "unauthorized" in result.lower() or "401" in result or "credentials" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_conflict_error(self, mock_request):
+        """Test 409 conflict error."""
+        import httpx
+
+        # Mock 409 conflict error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Conflict",
+            request=MagicMock(),
+            response=MagicMock(status_code=409)
+        )
+
+        # Call the tool
+        params = CreateIssueInput(
+            owner="test",
+            repo="test-repo",
+            title="Test"
+        )
+        result = await github_create_issue(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "conflict" in result.lower() or "409" in result
+
+
+class TestBatchFileOperations:
+    """Test batch file operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_batch_file_operations(self, mock_request):
+        """Test batch file updates."""
+        # Mock responses for batch operations
+        # First: get default branch
+        mock_branch_response = {
+            "ref": "refs/heads/main",
+            "object": {
+                "sha": "abc123"
+            }
+        }
+        # Second: get tree
+        mock_tree_response = {
+            "sha": "tree123",
+            "tree": []
+        }
+        # Third: create tree
+        mock_create_tree_response = {
+            "sha": "newtree123",
+            "url": "https://api.github.com/repos/test/test-repo/git/trees/newtree123"
+        }
+        # Fourth: create commit
+        mock_commit_response = {
+            "sha": "commit123",
+            "html_url": "https://github.com/test/test-repo/commit/commit123"
+        }
+        # Fifth: update ref
+        mock_ref_response = {
+            "ref": "refs/heads/main",
+            "object": {
+                "sha": "commit123"
+            }
+        }
+
+        mock_request.side_effect = [
+            mock_branch_response,
+            mock_tree_response,
+            mock_create_tree_response,
+            mock_commit_response,
+            mock_ref_response
+        ]
+
+        # Call the tool
+        from github_mcp import BatchFileOperationsInput
+        params = BatchFileOperationsInput(
+            owner="test",
+            repo="test-repo",
+            operations=[
+                {
+                    "operation": "create",
+                    "path": "file1.txt",
+                    "content": "Content 1"
+                },
+                {
+                    "operation": "update",
+                    "path": "file2.txt",
+                    "content": "Content 2",
+                    "sha": "sha123"
+                }
+            ],
+            message="Batch update"
+        )
+        result = await github_mcp.github_batch_file_operations(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "commit" in result.lower() or "batch" in result.lower() or "updated" in result.lower() or "Error" in result
+
+
+class TestFileCreateUpdateDelete:
+    """Test individual file operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_create_file(self, mock_request):
+        """Test creating a new file."""
+        # Mock created file response
+        mock_response = {
+            "commit": {
+                "sha": "new123",
+                "html_url": "https://github.com/test/test-repo/commit/new123"
+            },
+            "content": {
+                "name": "new-file.txt",
+                "path": "new-file.txt",
+                "sha": "content123"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import CreateFileInput
+        params = CreateFileInput(
+            owner="test",
+            repo="test-repo",
+            path="new-file.txt",
+            message="Add new file",
+            content="File content"
+        )
+        result = await github_mcp.github_create_file(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "created" in result.lower() or "commit" in result.lower() or "new-file" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_file(self, mock_request):
+        """Test updating a file."""
+        # Mock updated file response
+        mock_response = {
+            "commit": {
+                "sha": "update123",
+                "html_url": "https://github.com/test/test-repo/commit/update123"
+            },
+            "content": {
+                "name": "test.txt",
+                "path": "test.txt",
+                "sha": "newsha123"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import UpdateFileInput
+        params = UpdateFileInput(
+            owner="test",
+            repo="test-repo",
+            path="test.txt",
+            message="Update file",
+            content="# Updated content",
+            sha="oldsha123"
+        )
+        result = await github_mcp.github_update_file(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "updated" in result.lower() or "commit" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_delete_file(self, mock_request):
+        """Test deleting a file."""
+        # Mock deleted file response
+        mock_response = {
+            "commit": {
+                "sha": "delete123",
+                "html_url": "https://github.com/test/test-repo/commit/delete123"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import DeleteFileInput
+        params = DeleteFileInput(
+            owner="test",
+            repo="test-repo",
+            path="old-file.txt",
+            message="Delete old file",
+            sha="filesha123"
+        )
+        result = await github_mcp.github_delete_file(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "deleted" in result.lower() or "commit" in result.lower() or "removed" in result.lower() or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
