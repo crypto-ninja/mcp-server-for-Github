@@ -168,6 +168,50 @@ export async function callMCPTool<T = string>(
     try {
         console.error(`[MCP Bridge] Calling tool: ${toolName}`);
         
+        // For programmatic use, default to JSON format for READ tools that support it
+        // This ensures TypeScript code gets parseable objects, not markdown strings
+        // NOTE: Write operations (create, update, delete, merge, close) don't have response_format parameter!
+        if (params && typeof params === 'object' && !Array.isArray(params)) {
+            // Only add response_format to READ tools that support it
+            // Write tools (create, update, delete, merge, close) don't have this parameter!
+            const READ_TOOLS_WITH_JSON_SUPPORT = [
+                // List operations
+                'github_list_issues',
+                'github_list_commits',
+                'github_list_pull_requests',
+                'github_list_releases',
+                'github_list_workflows',
+                'github_get_workflow_runs',
+                'github_list_repo_contents',
+                
+                // Search operations
+                'github_search_code',
+                'github_search_repositories',
+                'github_search_issues',
+                
+                // Get/Read operations
+                'github_get_repo_info',
+                'github_get_file_content',
+                'github_get_pr_details',
+                'github_get_pr_overview_graphql',
+                'github_get_release',
+                'github_get_user_info',
+                
+                // Advanced read operations
+                'github_grep',
+                'github_read_file_chunk',
+                'repo_read_file_chunk',
+                'workspace_grep'
+            ];
+            
+            // Only add if not already specified and tool supports it
+            if (!params.hasOwnProperty('response_format') && 
+                !params.hasOwnProperty('params') && // Don't modify if already wrapped
+                READ_TOOLS_WITH_JSON_SUPPORT.includes(toolName)) {
+                params = { ...params, response_format: 'json' };
+            }
+        }
+        
         // FastMCP expects arguments wrapped in a 'params' object
         // when the function signature has a single 'params' parameter
         const wrappedParams = Object.keys(params).length > 0 ? { params } : {};
