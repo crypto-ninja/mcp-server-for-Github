@@ -9,9 +9,8 @@ Automatically discovers potential issues:
 """
 
 import re
-import json
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List
 import inspect
 import sys
 
@@ -19,8 +18,7 @@ import sys
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp
-from github_mcp import mcp, ResponseFormat
+import github_mcp  # noqa: E402
 
 
 def read_typescript_tool_list() -> List[str]:
@@ -258,7 +256,6 @@ def discover_missing_tools() -> List[Dict]:
 def _fix_windows_encoding():
     """Fix Windows console encoding for Unicode output."""
     import sys
-    import os
     
     if sys.platform == 'win32':
         try:

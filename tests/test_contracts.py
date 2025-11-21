@@ -8,18 +8,17 @@ Tests that validate:
 """
 
 import pytest
-import json
 import re
 from pathlib import Path
-from typing import List, Dict, Set
+from typing import List, Set
 
 # Import the MCP server
 import sys
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp
-import inspect
+import github_mcp  # noqa: E402
+import inspect  # noqa: E402
 
 
 def read_typescript_tool_list() -> List[str]:
@@ -54,8 +53,9 @@ def get_python_tools_with_response_format() -> Set[str]:
     tools = set()
     
     for name, obj in inspect.getmembers(github_mcp):
+        # Include github_, repo_, workspace_ prefixed tools
         if (inspect.iscoroutinefunction(obj) or inspect.isfunction(obj)) and \
-           name.startswith('github_'):
+           (name.startswith('github_') or name.startswith('repo_') or name.startswith('workspace_')):
             sig = inspect.signature(obj)
             params = sig.parameters
             
@@ -83,7 +83,7 @@ class TestClientServerContract:
         
         if missing_in_python:
             pytest.fail(
-                f"Tools in READ_TOOLS_WITH_JSON_SUPPORT but don't support response_format in Python:\n" +
+                "Tools in READ_TOOLS_WITH_JSON_SUPPORT but don't support response_format in Python:\n" +
                 "\n".join(f"  - {tool}" for tool in sorted(missing_in_python))
             )
         
