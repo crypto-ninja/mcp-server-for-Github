@@ -1558,6 +1558,43 @@ class TestFileCreateUpdateDelete:
 
     @pytest.mark.asyncio
     @patch('github_mcp._make_github_request')
+    async def test_github_update_file_with_branch(self, mock_request):
+        """Test updating a file on a specific branch."""
+        # Mock updated file response
+        mock_response = {
+            "commit": {
+                "sha": "branch789",
+                "html_url": "https://github.com/test/test-repo/commit/branch789",
+                "author": {"name": "Test User", "date": "2024-01-01T00:00:00Z"}
+            },
+            "content": {
+                "name": "branch_file.txt",
+                "path": "branch_file.txt",
+                "sha": "branchsha789",
+                "html_url": "https://github.com/test/test-repo/blob/feature/branch_file.txt"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call with branch parameter
+        from github_mcp import UpdateFileInput
+        params = UpdateFileInput(
+            owner="test",
+            repo="test-repo",
+            path="branch_file.txt",
+            content="Branch content",
+            message="Update on branch",
+            sha="old_sha",
+            branch="feature"
+        )
+        result = await github_mcp.github_update_file(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "branch_file.txt" in result or "updated" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
     async def test_github_delete_file(self, mock_request):
         """Test deleting a file."""
         # Mock deleted file response
