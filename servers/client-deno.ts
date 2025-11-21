@@ -231,11 +231,22 @@ export async function callMCPTool<T = string>(
             if (content.type === 'text') {
                 const text = content.text;
                 
+                // Check if it's an error message (starts with "Error:")
+                // These should not be parsed as JSON even if they look like it
+                if (text.trim().startsWith('Error:') && !text.trim().startsWith('Error: {')) {
+                    // It's a plain error string, return as-is
+                    return text as unknown as T;
+                }
+                
                 // Try to parse as JSON if possible
                 if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
                     try {
                         return JSON.parse(text) as T;
-                    } catch {
+                    } catch (parseError) {
+                        // If JSON parse fails, check if it's an error message
+                        if (text.includes('Error:') || text.includes('error')) {
+                            return text as unknown as T;
+                        }
                         // Not JSON, return as-is
                         return text as unknown as T;
                     }

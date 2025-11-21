@@ -3808,6 +3808,14 @@ async def github_search_code(params: SearchCodeInput) -> str:
         return _truncate_response(markdown, data['total_count'])
         
     except Exception as e:
+        # Return JSON error if response_format is JSON
+        if params.response_format == ResponseFormat.JSON:
+            error_data = {
+                "error": True,
+                "message": _handle_api_error(e),
+                "query": params.query
+            }
+            return json.dumps(error_data, indent=2)
         return _handle_api_error(e)
 
 @conditional_tool(
