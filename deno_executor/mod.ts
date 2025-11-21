@@ -148,31 +148,45 @@ async function executeUserCode(code: string): Promise<any> {
  * 
  * Reads code from stdin (to avoid Windows command-line character escaping issues)
  * Falls back to Deno.args[0] for backward compatibility
+ * 
+ * Includes timeout-based fallback for test environments where stdin may not be immediately ready
  */
 if (import.meta.main) {
   let code: string;
   
-  // Try reading from stdin first (preferred method to avoid shell escaping issues)
-  // This prevents "Bad control" errors with special characters on Windows
   try {
-    const stdin = await Deno.stdin.readAll();
-    const stdinText = new TextDecoder().decode(stdin).trim();
-    // Only use stdin if it has content (not empty)
-    if (stdinText) {
-      code = stdinText;
+    // Try reading from stdin first (production mode)
+    const decoder = new TextDecoder();
+    const reader = Deno.stdin.readable.getReader();
+    const readPromise = reader.read();
+    
+    // Add timeout for test environments where stdin may not be immediately ready
+    // This prevents hanging in pytest subprocess execution
+    const timeoutPromise = new Promise<{value?: Uint8Array, done: boolean}>((resolve) => 
+      setTimeout(() => resolve({ value: undefined, done: true }), 100)
+    );
+    
+    const result = await Promise.race([readPromise, timeoutPromise]);
+    
+    if (result.value && result.value.length > 0) {
+      code = decoder.decode(result.value).trim();
     } else {
-      // Fallback to command-line argument
+      // Fall back to command-line args (test mode or empty stdin)
       code = Deno.args[0] || "";
     }
-  } catch {
-    // Fallback to command-line argument for backward compatibility
+    
+    // Clean up reader
+    reader.releaseLock();
+  } catch (e) {
+    // If stdin fails completely, use command-line args
+    // This is expected in some test environments
     code = Deno.args[0] || "";
   }
   
-  if (!code) {
+  if (!code || code.trim() === "") {
     console.log(JSON.stringify({
       success: false,
-      error: "No code provided"
+      error: "No code provided via stdin or command-line arguments"
     }));
     Deno.exit(1);
   }
