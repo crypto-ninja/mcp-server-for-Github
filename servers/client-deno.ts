@@ -5,8 +5,8 @@
  * This is a Deno-compatible version that doesn't use Node.js built-ins.
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Client } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/index.js";
+import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/stdio.js";
 
 // Global client instance (singleton)
 let mcpClient: Client | null = null;
@@ -199,8 +199,8 @@ export async function callMCPTool<T = string>(
                 
                 // Advanced read operations
                 'github_grep',
-                // Note: github_read_file_chunk and repo_read_file_chunk do NOT support response_format
                 'workspace_grep'
+                // Note: github_read_file_chunk and repo_read_file_chunk do NOT support response_format
             ];
             
             // Only add if not already specified and tool supports it
