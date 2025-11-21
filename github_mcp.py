@@ -64,7 +64,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from license_manager import check_license_on_startup, get_license_manager
 from github_client import GhClient
-from auth.github_app import get_auth_token
+from auth.github_app import get_auth_token, clear_token_cache
 from graphql_client import GraphQLClient
 
 # Load .env file if it exists
@@ -5401,6 +5401,44 @@ async def health_check() -> str:
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
         return json.dumps(error_data, indent=2)
+
+# ============================================================================
+# TOKEN CACHE MANAGEMENT TOOL
+# ============================================================================
+
+@mcp.tool(
+    name="github_clear_token_cache",
+    annotations={
+        "title": "Clear GitHub App Token Cache",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_clear_token_cache() -> str:
+    """
+    Clear the cached GitHub App installation token.
+    
+    Use this after:
+    - Updating GitHub App permissions
+    - Re-installing the app
+    - Getting permission errors despite having correct permissions set
+    
+    This forces the next API call to get a fresh token with current permissions.
+    
+    Returns:
+        Confirmation message
+    """
+    has_app_id = bool(os.getenv("GITHUB_APP_ID"))
+    has_app_installation = bool(os.getenv("GITHUB_APP_INSTALLATION_ID"))
+    has_app_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")) or bool(os.getenv("GITHUB_APP_PRIVATE_KEY"))
+    
+    if has_app_id and has_app_installation and has_app_key:
+        clear_token_cache()
+        return "✅ GitHub App token cache cleared. Next API call will use a fresh token with current permissions."
+    else:
+        return "ℹ️ GitHub App not configured. Using PAT authentication (no cache to clear)."
 
 # Entry point
 if __name__ == "__main__":

@@ -24,8 +24,19 @@ class GitHubAppAuth:
         self._expires_at: float = 0.0
         self._lock = asyncio.Lock()
 
+    def clear_token_cache(self) -> None:
+        """Manually clear the cached installation token.
+        
+        Call this after:
+        - Updating GitHub App permissions
+        - Re-installing the app
+        - Any permission-related changes
+        """
+        self._token = None
+        self._expires_at = 0.0
+
     async def get_installation_token(
-        self, *, app_id: str, private_key_pem: str, installation_id: str
+        self, *, app_id: str, private_key_pem: str, installation_id: str, force_refresh: bool = False
     ) -> str:
         """
         Get installation access token with 1-hour caching.
@@ -34,10 +45,14 @@ class GitHubAppAuth:
             app_id: GitHub App ID
             private_key_pem: Private key in PEM format (string)
             installation_id: Installation ID
+            force_refresh: If True, clear cache and get fresh token
             
         Returns:
             Installation access token
         """
+        if force_refresh:
+            self.clear_token_cache()
+            
         now = time.time()
         async with self._lock:
             # Refresh 60 seconds before expiry (tokens last ~1 hour)
@@ -219,6 +234,20 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
             return True, "⚠️ Could not verify repository access (API call failed)"
     except Exception as e:
         return True, f"⚠️ Could not verify access: {str(e)}"
+
+
+def clear_token_cache() -> None:
+    """
+    Clear the cached GitHub App installation token.
+    
+    Call this after:
+    - Updating GitHub App permissions
+    - Re-installing the app
+    - Any permission-related changes
+    
+    This forces the next API call to get a fresh token with current permissions.
+    """
+    _app_auth.clear_token_cache()
 
 
 async def get_auth_token() -> Optional[str]:
