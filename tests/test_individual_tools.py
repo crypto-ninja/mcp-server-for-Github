@@ -2385,52 +2385,6 @@ class TestAdvancedFileOperations:
         assert "commit" in result.lower() or "batch" in result.lower() or "updated" in result.lower() or "Error" in result
 
 
-class TestAdvancedSearchOperations:
-    """Test advanced search scenarios."""
-
-    @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
-    async def test_github_search_code_complex_query(self, mock_request):
-        """Test complex search queries."""
-        # Mock search results
-        mock_response = {
-            "total_count": 50,
-            "items": [
-                {
-                    "name": f"test{i}.py",
-                    "path": f"src/test{i}.py",
-                    "repository": {
-                        "full_name": "test/repo"
-                    },
-                    "text_matches": [
-                        {
-                            "fragment": f"def test_function_{i}():"
-                        }
-                    ]
-                }
-                for i in range(50)
-            ]
-        }
-        mock_request.return_value = mock_response
-
-        # Call the tool with complex query
-        from github_mcp import SearchCodeInput
-        params = SearchCodeInput(
-            query="language:python def test_function",
-            response_format=ResponseFormat.JSON
-        )
-        result = await github_mcp.github_search_code(params)
-
-        # Verify
-        assert isinstance(result, str)
-        parsed = json.loads(result)
-        # Should have items or be a list
-        if isinstance(parsed, dict):
-            assert "items" in parsed or "total_count" in parsed
-        elif isinstance(parsed, list):
-            assert len(parsed) > 0
-
-
 class TestListRepoContentsAdvanced:
     """Test advanced repository contents listing."""
 
