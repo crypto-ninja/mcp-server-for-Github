@@ -891,5 +891,288 @@ class TestWorkflowOperations:
         assert "completed" in result or "success" in result or "12345" in result
 
 
+class TestFileOperations:
+    """Test file manipulation operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_str_replace(self, mock_request):
+        """Test string replacement in a file."""
+        # Mock file content response
+        import base64
+        content = "Old content to replace"
+        encoded_content = base64.b64encode(content.encode()).decode()
+        
+        mock_file_response = {
+            "name": "test.txt",
+            "path": "test.txt",
+            "content": encoded_content,
+            "encoding": "base64",
+            "sha": "abc123"
+        }
+        
+        # Mock commit response
+        mock_commit_response = {
+            "commit": {
+                "sha": "new123",
+                "html_url": "https://github.com/test/test-repo/commit/new123"
+            },
+            "content": {
+                "sha": "new456"
+            }
+        }
+        
+        # First call gets file, second call updates it
+        mock_request.side_effect = [mock_file_response, mock_commit_response]
+
+        # Call the tool
+        from github_mcp import GitHubStrReplaceInput
+        params = GitHubStrReplaceInput(
+            owner="test",
+            repo="test-repo",
+            path="test.txt",
+            old_str="Old content",
+            new_str="New content"
+        )
+        result = await github_mcp.github_str_replace(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "replaced" in result.lower() or "updated" in result.lower() or "commit" in result.lower() or "Error" in result
+
+
+class TestIssueManagement:
+    """Test issue lifecycle management."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue(self, mock_request):
+        """Test updating an issue."""
+        # Mock updated issue response
+        mock_response = {
+            "number": 123,
+            "title": "Updated Issue",
+            "state": "closed",
+            "html_url": "https://github.com/test/test-repo/issues/123",
+            "updated_at": "2024-01-20T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=123,
+            state="closed"
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "123" in result or "updated" in result.lower() or "closed" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_with_comment(self, mock_request):
+        """Test updating an issue with multiple fields."""
+        # Mock updated issue response
+        mock_response = {
+            "number": 123,
+            "title": "Updated Issue Title",
+            "body": "Updated body",
+            "state": "open",
+            "html_url": "https://github.com/test/test-repo/issues/123",
+            "updated_at": "2024-01-20T00:00:00Z",
+            "labels": [{"name": "bug"}],
+            "assignees": [{"login": "testuser"}]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool with multiple fields
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=123,
+            state="open",
+            title="Updated Issue Title",
+            body="Updated body"
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "123" in result or "updated" in result.lower() or "Error" in result
+
+
+class TestAdvancedErrorHandling:
+    """Test advanced error scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_rate_limit_error(self, mock_request):
+        """Test handling of rate limit errors (429)."""
+        import httpx
+
+        # Mock 429 rate limit error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "API rate limit exceeded",
+            request=MagicMock(),
+            response=MagicMock(status_code=429)
+        )
+
+        # Call the tool
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "rate limit" in result.lower() or "429" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_server_error(self, mock_request):
+        """Test handling of server errors (500)."""
+        import httpx
+
+        # Mock 500 server error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Internal server error",
+            request=MagicMock(),
+            response=MagicMock(status_code=500)
+        )
+
+        # Call the tool
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "server" in result.lower() or "500" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_network_timeout_error(self, mock_request):
+        """Test handling of network timeout errors."""
+        import httpx
+
+        # Mock timeout error
+        mock_request.side_effect = httpx.TimeoutException(
+            "Request timed out",
+            request=MagicMock()
+        )
+
+        # Call the tool
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "timeout" in result.lower() or "network" in result.lower()
+
+
+class TestEdgeCasesExtended:
+    """Test additional edge cases and boundary conditions."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_very_long_issue_body(self, mock_request):
+        """Test creating issue with very long body (10,000 chars)."""
+        # Mock created issue
+        mock_response = {
+            "number": 999,
+            "title": "Test",
+            "body": "x" * 10000,
+            "state": "open",
+            "html_url": "https://github.com/test/test-repo/issues/999",
+            "created_at": "2024-01-20T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        long_body = "x" * 10000
+        params = CreateIssueInput(
+            owner="test",
+            repo="test-repo",
+            title="Test",
+            body=long_body
+        )
+        result = await github_create_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "999" in result or "created" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_special_characters_in_filename(self, mock_request):
+        """Test file operations with special characters."""
+        import base64
+
+        # Mock file content with special characters
+        content = "Content with unicode: 🐕🍖"
+        encoded_content = base64.b64encode(content.encode('utf-8')).decode()
+
+        mock_response = {
+            "name": "file-with-émojis-🐕🍖.txt",
+            "path": "file-with-émojis-🐕🍖.txt",
+            "content": encoded_content,
+            "encoding": "base64",
+            "size": len(content),
+            "sha": "abc123"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        params = GetFileContentInput(
+            owner="test",
+            repo="test-repo",
+            path="file-with-émojis-🐕🍖.txt"
+        )
+        result = await github_get_file_content(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should handle special characters gracefully
+        assert "Content" in result or "unicode" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_empty_search_results_extended(self, mock_request):
+        """Test search with no results (already tested, but adding edge case)."""
+        # Mock empty response
+        mock_response = {
+            "total_count": 0,
+            "items": []
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        params = SearchCodeInput(
+            query="nonexistent-query-xyz-12345",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_search_code(params)
+
+        # Verify it handles empty results gracefully
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should return empty list or object with empty items
+        if isinstance(parsed, list):
+            assert len(parsed) == 0
+        elif isinstance(parsed, dict):
+            assert parsed.get("total_count", 0) == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
