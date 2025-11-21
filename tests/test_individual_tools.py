@@ -8,8 +8,7 @@ without making real API calls.
 import pytest
 import json
 import base64
-from unittest.mock import patch, MagicMock, AsyncMock
-from typing import Dict, Any
+from unittest.mock import patch, MagicMock
 
 # Import the MCP server
 import sys
@@ -26,7 +25,6 @@ from github_mcp import (  # noqa: E402
     github_search_code,
     github_list_commits,
     github_get_pr_details,
-    github_list_pull_requests,
     github_get_release,
     github_list_releases,
     github_create_release,
@@ -224,7 +222,6 @@ class TestReadOperations:
         mock_request.return_value = mock_response
 
         # Call the tool
-        from github_mcp import ListCommitsInput
         params = ListCommitsInput(
             owner="test",
             repo="test-repo",
@@ -388,7 +385,6 @@ class TestErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_github_get_repo_info_not_found(self, mock_request):
         """Test 404 error handling."""
-        from github_mcp import _handle_api_error
         import httpx
 
         # Mock 404 error
@@ -2306,7 +2302,6 @@ class TestPerformanceScenarios:
         mock_request.return_value = mock_response
 
         # Call the tool
-        from github_mcp import ListCommitsInput
         params = ListCommitsInput(
             owner="test",
             repo="test-repo",
@@ -2561,7 +2556,6 @@ class TestListCommitsAdvanced:
         mock_request.return_value = mock_response
 
         # Call the tool
-        from github_mcp import ListCommitsInput
         params = ListCommitsInput(
             owner="test",
             repo="test-repo",
@@ -2607,7 +2601,6 @@ class TestListCommitsAdvanced:
         mock_request.return_value = mock_response
 
         # Call the tool
-        from github_mcp import ListCommitsInput
         params = ListCommitsInput(
             owner="test",
             repo="test-repo",

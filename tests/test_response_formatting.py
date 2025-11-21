@@ -14,7 +14,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp  # noqa: E402
 from github_mcp import (  # noqa: E402
     github_get_repo_info,
     github_list_issues,

@@ -31,4 +31,6 @@ jobs:
         run: pip-audit -r requirements.txt || true
       - name: Tests
         run: pytest -q --capture=tee-sys
+      - name: Coverage Report
+        run: pytest --cov=github_mcp --cov=auth --cov-report=term --cov-report=xml || true
 
