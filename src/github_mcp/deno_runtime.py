@@ -53,9 +53,8 @@ class DenoRuntime:
                 timeout=60,  # 60 second timeout
                 cwd=str(self.project_root),  # Run from project root
                 env={
-                    **os.environ,
-                    # Pass through GitHub token if available
-                    "GITHUB_TOKEN": os.environ.get("GITHUB_TOKEN", ""),
+                    **os.environ,  # Pass through all environment variables (includes GitHub auth)
+                    # Ensure workspace root is set
                     "MCP_WORKSPACE_ROOT": os.environ.get("MCP_WORKSPACE_ROOT", str(self.project_root)),
                 }
             )
