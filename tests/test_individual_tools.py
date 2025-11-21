@@ -2091,8 +2091,8 @@ class TestStringReplaceOperations:
             owner="test",
             repo="test-repo",
             path="test.txt",
-            old_string="old text",
-            new_string="new text"
+            old_str="old text",
+            new_str="new text"
         )
         result = await github_mcp.github_str_replace(params)
 
@@ -2206,12 +2206,12 @@ class TestMoreErrorScenarios:
             response=MagicMock(status_code=422)
         )
 
-        # Call the tool
+        # Call the tool - use a valid title but mock will return 422
         from github_mcp import CreateIssueInput
         params = CreateIssueInput(
             owner="test",
             repo="test-repo",
-            title=""
+            title="Test Issue"
         )
         result = await github_mcp.github_create_issue(params)
 
