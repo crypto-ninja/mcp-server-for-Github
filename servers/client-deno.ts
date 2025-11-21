@@ -199,8 +199,7 @@ export async function callMCPTool<T = string>(
                 
                 // Advanced read operations
                 'github_grep',
-                'github_read_file_chunk',
-                'repo_read_file_chunk',
+                // Note: github_read_file_chunk and repo_read_file_chunk do NOT support response_format
                 'workspace_grep'
             ];
             
