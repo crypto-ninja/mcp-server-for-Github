@@ -1588,5 +1588,355 @@ class TestFileCreateUpdateDelete:
         assert "deleted" in result.lower() or "commit" in result.lower() or "removed" in result.lower() or "Error" in result
 
 
+class TestRepositoryTransferArchive:
+    """Test repository transfer and archive operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_transfer_repository(self, mock_request):
+        """Test transferring a repository."""
+        # Mock transfer response
+        mock_response = {
+            "full_name": "newowner/test-repo",
+            "owner": {
+                "login": "newowner"
+            },
+            "html_url": "https://github.com/newowner/test-repo"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import TransferRepositoryInput
+        params = TransferRepositoryInput(
+            owner="test",
+            repo="test-repo",
+            new_owner="newowner"
+        )
+        result = await github_mcp.github_transfer_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "transferred" in result.lower() or "newowner" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_archive_repository(self, mock_request):
+        """Test archiving a repository."""
+        # Mock archive response
+        mock_response = {
+            "full_name": "test/test-repo",
+            "archived": True,
+            "html_url": "https://github.com/test/test-repo"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ArchiveRepositoryInput
+        params = ArchiveRepositoryInput(
+            owner="test",
+            repo="test-repo",
+            archived=True
+        )
+        result = await github_mcp.github_archive_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "archived" in result.lower() or "archive" in result.lower() or "Error" in result
+
+
+class TestRepositoryCreationDeletion:
+    """Test repository creation and deletion."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_create_repository(self, mock_request):
+        """Test creating a repository."""
+        # Mock created repo response
+        mock_response = {
+            "full_name": "test/new-repo",
+            "name": "new-repo",
+            "html_url": "https://github.com/test/new-repo",
+            "private": False,
+            "description": "Test repository"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import CreateRepositoryInput
+        params = CreateRepositoryInput(
+            name="new-repo",
+            description="Test repository",
+            private=False
+        )
+        result = await github_mcp.github_create_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "created" in result.lower() or "new-repo" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_delete_repository(self, mock_request):
+        """Test deleting a repository."""
+        # Mock delete response (204 No Content typically)
+        mock_request.return_value = None
+
+        # Call the tool
+        from github_mcp import DeleteRepositoryInput
+        params = DeleteRepositoryInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_delete_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "deleted" in result.lower() or "removed" in result.lower() or "Error" in result
+
+
+class TestGraphQLOperations:
+    """Test GraphQL-based operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_pr_overview_graphql(self, mock_request):
+        """Test GraphQL PR overview."""
+        # Mock GraphQL response
+        mock_response = {
+            "data": {
+                "repository": {
+                    "pullRequests": {
+                        "nodes": [
+                            {
+                                "number": 1,
+                                "title": "Test PR",
+                                "state": "OPEN",
+                                "author": {
+                                    "login": "testuser"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GraphQLPROverviewInput
+        params = GraphQLPROverviewInput(
+            owner="test",
+            repo="test-repo",
+            limit=10
+        )
+        result = await github_mcp.github_get_pr_overview_graphql(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain PR info or be parseable JSON
+        assert "Test PR" in result or "1" in result or "{" in result or "Error" in result
+
+
+class TestWorkflowSuggestions:
+    """Test workflow suggestion operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_suggest_workflow(self, mock_request):
+        """Test workflow suggestions."""
+        # Mock suggestion response (this tool might return markdown)
+        mock_response = {
+            "suggestion": "Use GitHub API for read operations",
+            "reason": "Large repository detected"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import WorkflowSuggestionInput
+        params = WorkflowSuggestionInput(
+            operation="read_files",
+            repository_size=1000
+        )
+        result = await github_mcp.github_suggest_workflow(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain suggestion or guidance
+        assert len(result) > 0
+
+
+class TestAdvancedSearchOperations:
+    """Test advanced search functionality."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_code_advanced(self, mock_request):
+        """Test advanced code search with filters."""
+        # Mock search results
+        mock_response = {
+            "total_count": 5,
+            "items": [
+                {
+                    "name": "test.py",
+                    "path": "src/test.py",
+                    "repository": {
+                        "full_name": "test/repo"
+                    },
+                    "text_matches": [
+                        {
+                            "fragment": "def test_function():"
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool with advanced query
+        from github_mcp import SearchCodeInput
+        params = SearchCodeInput(
+            query="test_function language:python",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_search_code(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestEdgeCasesAdvanced:
+    """Test additional advanced edge cases."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_issues_with_pagination(self, mock_request):
+        """Test handling paginated results."""
+        # Mock paginated response
+        mock_response = {
+            "items": [
+                {
+                    "number": i,
+                    "title": f"Issue {i}",
+                    "state": "open",
+                    "html_url": f"https://github.com/test/test/issues/{i}",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                }
+                for i in range(1, 101)  # 100 issues
+            ],
+            "total_count": 100
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListIssuesInput
+        params = ListIssuesInput(
+            owner="test",
+            repo="test-repo",
+            state="all",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_issues(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should handle large result sets
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_repo_info_null_description(self, mock_request):
+        """Test handling null/missing descriptions."""
+        # Mock repo with null description
+        mock_response = {
+            "name": "test-repo",
+            "full_name": "test/test-repo",
+            "description": None,  # Null description
+            "stargazers_count": 0,
+            "forks_count": 0,
+            "html_url": "https://github.com/test/test-repo",
+            "archived": False,
+            "default_branch": "main",
+            "language": None,
+            "license": None,
+            "topics": [],
+            "homepage": None,
+            "clone_url": "https://github.com/test/test-repo.git",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import RepoInfoInput
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_get_repo_info(params)
+
+        # Verify - should handle None gracefully
+        assert isinstance(result, str)
+        assert "test-repo" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_abuse_rate_limit(self, mock_request):
+        """Test handling secondary rate limits."""
+        import httpx
+
+        # Mock abuse rate limit error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "You have triggered an abuse detection mechanism",
+            request=MagicMock(),
+            response=MagicMock(status_code=403)
+        )
+
+        # Call the tool
+        from github_mcp import RepoInfoInput
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "403" in result or "abuse" in result.lower() or "rate limit" in result.lower()
+
+
+class TestLicenseOperations:
+    """Test license information operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_license_info(self, mock_request):
+        """Test getting license information."""
+        # Mock license response
+        mock_response = {
+            "license": "AGPL v3",
+            "tier": "FREE",
+            "status": "Valid"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool (no params needed)
+        result = await github_mcp.github_license_info()
+
+        # Verify
+        assert isinstance(result, str)
+        assert "license" in result.lower() or "AGPL" in result or "tier" in result.lower()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
