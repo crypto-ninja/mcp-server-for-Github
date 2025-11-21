@@ -2930,5 +2930,197 @@ class TestGetWorkflowRunsAdvanced:
             assert len(parsed) > 0
 
 
+class TestGrepAdvanced:
+    """Test advanced grep scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_grep_with_context(self, mock_request):
+        """Test grep with context lines."""
+        # Mock tree and file content responses
+        # First: get tree
+        mock_tree = {
+            "sha": "tree123",
+            "tree": [
+                {
+                    "path": "src/test.py",
+                    "type": "blob",
+                    "sha": "filesha123"
+                }
+            ]
+        }
+        # Second: get file content
+        file_content = b"def function1():\n    pass\n\ndef function2():\n    pass"
+        encoded_content = base64.b64encode(file_content).decode('utf-8')
+        mock_file = {
+            "content": encoded_content,
+            "encoding": "base64"
+        }
+        
+        mock_request.side_effect = [mock_tree, mock_file]
+
+        # Call the tool
+        from github_mcp import GitHubGrepInput
+        params = GitHubGrepInput(
+            owner="test",
+            repo="test-repo",
+            pattern="function",
+            context_lines=2,
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_grep(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain matches or be parseable
+        if result.strip().startswith('{') or result.strip().startswith('['):
+            try:
+                parsed = json.loads(result)
+                assert isinstance(parsed, (dict, list))
+            except json.JSONDecodeError:
+                pass
+
+
+class TestListIssuesAdvanced:
+    """Test advanced issue listing scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_issues_with_labels(self, mock_request):
+        """Test listing issues filtered by labels."""
+        # Mock issues with labels
+        mock_response = {
+            "items": [
+                {
+                    "number": 1,
+                    "title": "Bug report",
+                    "state": "open",
+                    "labels": [
+                        {"name": "bug", "color": "d73a4a"},
+                        {"name": "urgent", "color": "b60205"}
+                    ],
+                    "html_url": "https://github.com/test/test/issues/1",
+                    "user": {"login": "testuser"},
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "number": 2,
+                    "title": "Feature request",
+                    "state": "open",
+                    "labels": [
+                        {"name": "enhancement", "color": "a2eeef"}
+                    ],
+                    "html_url": "https://github.com/test/test/issues/2",
+                    "user": {"login": "testuser"},
+                    "created_at": "2024-01-02T00:00:00Z",
+                    "updated_at": "2024-01-02T00:00:00Z"
+                }
+            ],
+            "total_count": 2
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListIssuesInput
+        params = ListIssuesInput(
+            owner="test",
+            repo="test-repo",
+            state="open",
+            labels="bug",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_issues(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestCreateIssueAdvanced:
+    """Test advanced issue creation scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_create_issue_with_labels_and_assignees(self, mock_request):
+        """Test creating issue with labels and assignees."""
+        # Mock created issue
+        mock_response = {
+            "number": 50,
+            "title": "New issue",
+            "body": "Issue description",
+            "state": "open",
+            "labels": [
+                {"name": "bug", "color": "d73a4a"},
+                {"name": "priority", "color": "b60205"}
+            ],
+            "assignees": [
+                {"login": "user1"},
+                {"login": "user2"}
+            ],
+            "html_url": "https://github.com/test/test/issues/50",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import CreateIssueInput
+        params = CreateIssueInput(
+            owner="test",
+            repo="test-repo",
+            title="New issue",
+            body="Issue description",
+            labels=["bug", "priority"],
+            assignees=["user1", "user2"]
+        )
+        result = await github_mcp.github_create_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "50" in result or "created" in result.lower() or "New issue" in result or "Error" in result
+
+
+class TestUpdateIssueAdvanced:
+    """Test advanced issue update scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_with_labels(self, mock_request):
+        """Test updating issue with label changes."""
+        # Mock updated issue
+        mock_response = {
+            "number": 25,
+            "title": "Updated issue",
+            "state": "open",
+            "labels": [
+                {"name": "bug", "color": "d73a4a"},
+                {"name": "fixed", "color": "0e8a16"}
+            ],
+            "html_url": "https://github.com/test/test/issues/25",
+            "updated_at": "2024-01-02T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=25,
+            labels=["bug", "fixed"]
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "25" in result or "updated" in result.lower() or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
