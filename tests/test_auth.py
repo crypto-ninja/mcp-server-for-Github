@@ -16,7 +16,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from auth.github_app import GitHubAppAuth, get_auth_token, clear_token_cache  # noqa: E402
+from auth.github_app import GitHubAppAuth, get_auth_token, clear_token_cache, verify_installation_access  # noqa: E402
 
 
 class TestGitHubAppAuth:
@@ -514,6 +514,133 @@ class TestLoadPrivateKeyFromFile:
             import os
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
+
+
+class TestAuthHeaders:
+    """Test auth header generation."""
+
+    def test_get_auth_headers(self):
+        """Test getting auth headers."""
+        auth = GitHubAppAuth()
+        headers = auth.get_auth_headers("test_token_123")
+        
+        assert "Authorization" in headers
+        assert "Bearer test_token_123" in headers["Authorization"]
+        assert "Accept" in headers
+        assert "application/vnd.github+json" in headers["Accept"]
+
+
+class TestVerifyInstallationAccess:
+    """Test installation access verification."""
+
+    @pytest.mark.asyncio
+    @patch('auth.github_app.httpx.AsyncClient')
+    async def test_verify_installation_access_success(self, mock_client_class):
+        """Test successful installation access verification."""
+        # Mock successful API responses
+        mock_installation_response = MagicMock()
+        mock_installation_response.status_code = 200
+        mock_installation_response.json.return_value = {
+            "id": 123456,
+            "account": {"type": "User"}
+        }
+        
+        mock_repos_response = MagicMock()
+        mock_repos_response.status_code = 200
+        mock_repos_response.json.return_value = {
+            "repositories": [
+                {"full_name": "test/owner"},
+                {"full_name": "test/repo"}
+            ]
+        }
+        
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.get = AsyncMock(side_effect=[mock_installation_response, mock_repos_response])
+        mock_client_class.return_value = mock_client
+        
+        has_access, message = await verify_installation_access("token", "test", "repo")
+        
+        assert has_access is True
+        assert "repo" in message.lower() or "access" in message.lower()
+
+    @pytest.mark.asyncio
+    @patch('auth.github_app.httpx.AsyncClient')
+    async def test_verify_installation_access_not_found(self, mock_client_class):
+        """Test installation access verification when repo not in list."""
+        # Mock API responses
+        mock_installation_response = MagicMock()
+        mock_installation_response.status_code = 200
+        mock_installation_response.json.return_value = {
+            "id": 123456,
+            "account": {"type": "Organization"}
+        }
+        
+        mock_repos_response = MagicMock()
+        mock_repos_response.status_code = 200
+        mock_repos_response.json.return_value = {
+            "repositories": [
+                {"full_name": "test/other-repo"}
+            ]
+        }
+        
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.get = AsyncMock(side_effect=[mock_installation_response, mock_repos_response])
+        mock_client_class.return_value = mock_client
+        
+        has_access, message = await verify_installation_access("token", "test", "nonexistent")
+        
+        assert has_access is False
+        assert "not" in message.lower() or "NOT" in message
+
+    @pytest.mark.asyncio
+    @patch('auth.github_app.httpx.AsyncClient')
+    async def test_verify_installation_access_user_level(self, mock_client_class):
+        """Test user-level installation (has access to all repos)."""
+        # Mock user-level installation
+        mock_installation_response = MagicMock()
+        mock_installation_response.status_code = 200
+        mock_installation_response.json.return_value = {
+            "id": 123456,
+            "account": {"type": "User"}
+        }
+        
+        mock_repos_response = MagicMock()
+        mock_repos_response.status_code = 200
+        mock_repos_response.json.return_value = {
+            "repositories": []  # Empty list for user-level
+        }
+        
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.get = AsyncMock(side_effect=[mock_installation_response, mock_repos_response])
+        mock_client_class.return_value = mock_client
+        
+        has_access, message = await verify_installation_access("token", "test", "any-repo")
+        
+        assert has_access is True
+        assert "user-level" in message.lower() or "all" in message.lower()
+
+    @pytest.mark.asyncio
+    @patch('auth.github_app.httpx.AsyncClient')
+    async def test_verify_installation_access_api_error(self, mock_client_class):
+        """Test installation access verification with API error."""
+        # Mock API error
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.get = AsyncMock(side_effect=Exception("API Error"))
+        mock_client_class.return_value = mock_client
+        
+        has_access, message = await verify_installation_access("token", "test", "repo")
+        
+        # Should return True with warning message on error
+        assert has_access is True
+        assert "could not verify" in message.lower() or "error" in message.lower()
 
 
 if __name__ == "__main__":

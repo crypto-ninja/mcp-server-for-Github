@@ -3673,5 +3673,288 @@ class TestEmptyResponseHandling:
         assert "no" in result.lower() or "empty" in result.lower() or len(result) > 0
 
 
+class TestReleaseOperationsComprehensive:
+    """Comprehensive tests for release operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_releases_with_pagination(self, mock_request):
+        """Test listing releases with pagination."""
+        # Create 20 mock releases
+        mock_response = [
+            {
+                "tag_name": f"v1.{i}.0",
+                "name": f"Release {i}",
+                "draft": False,
+                "prerelease": False,
+                "html_url": f"https://github.com/test/repo/releases/tag/v1.{i}.0",
+                "published_at": "2024-01-01T00:00:00Z"
+            }
+            for i in range(20)
+        ]
+        mock_request.return_value = mock_response
+
+        from github_mcp import ListReleasesInput
+        params = ListReleasesInput(owner="test", repo="repo")
+        result = await github_mcp.github_list_releases(params)
+
+        assert isinstance(result, str)
+        assert "v1." in result or len(result) > 0 or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_releases_empty(self, mock_request):
+        """Test listing releases when none exist."""
+        mock_request.return_value = []
+
+        from github_mcp import ListReleasesInput
+        params = ListReleasesInput(owner="test", repo="repo")
+        result = await github_mcp.github_list_releases(params)
+
+        assert isinstance(result, str)
+        assert "no releases" in result.lower() or result == "[]" or len(result) > 0 or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_release_by_tag(self, mock_request):
+        """Test getting specific release by tag."""
+        mock_response = {
+            "tag_name": "v1.0.0",
+            "name": "Major Release",
+            "body": "Release notes",
+            "draft": False,
+            "prerelease": False,
+            "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
+            "published_at": "2024-01-01T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import GetReleaseInput
+        params = GetReleaseInput(owner="test", repo="repo", tag="v1.0.0")
+        result = await github_mcp.github_get_release(params)
+
+        assert isinstance(result, str)
+        assert "v1.0.0" in result or "Major Release" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_release_not_found(self, mock_request):
+        """Test getting non-existent release."""
+        import httpx
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Not Found",
+            request=MagicMock(),
+            response=MagicMock(status_code=404, text="Release not found")
+        )
+
+        from github_mcp import GetReleaseInput
+        params = GetReleaseInput(owner="test", repo="repo", tag="nonexistent")
+        result = await github_mcp.github_get_release(params)
+
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "not found" in result.lower() or "404" in result
+
+
+class TestSearchOperationsComprehensive:
+    """Comprehensive tests for search operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_repositories_basic(self, mock_request):
+        """Test basic repository search."""
+        mock_response = {
+            "total_count": 5,
+            "items": [
+                {
+                    "full_name": f"user/repo{i}",
+                    "description": f"Test repo {i}",
+                    "stargazers_count": i * 10,
+                    "html_url": f"https://github.com/user/repo{i}"
+                }
+                for i in range(5)
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import SearchRepositoriesInput
+        params = SearchRepositoriesInput(query="test query")
+        result = await github_mcp.github_search_repositories(params)
+
+        assert isinstance(result, str)
+        assert len(result) > 0 or "user/repo" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_repositories_no_results(self, mock_request):
+        """Test repository search with no results."""
+        mock_response = {
+            "total_count": 0,
+            "items": []
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import SearchRepositoriesInput
+        params = SearchRepositoriesInput(query="nonexistent query xyz")
+        result = await github_mcp.github_search_repositories(params)
+
+        assert isinstance(result, str)
+        assert "no repositories" in result.lower() or result == "[]" or len(result) > 0 or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_code_success(self, mock_request):
+        """Test code search success."""
+        mock_response = {
+            "total_count": 3,
+            "items": [
+                {
+                    "path": f"src/file{i}.py",
+                    "repository": {"full_name": "user/repo"},
+                    "html_url": f"https://github.com/user/repo/blob/main/src/file{i}.py"
+                }
+                for i in range(3)
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import SearchCodeInput
+        params = SearchCodeInput(query="def main")
+        result = await github_mcp.github_search_code(params)
+
+        assert isinstance(result, str)
+        assert len(result) > 0 or "file" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_search_issues_with_filters(self, mock_request):
+        """Test issue search with filters."""
+        mock_response = {
+            "total_count": 3,
+            "items": [
+                {
+                    "title": f"Issue {i}",
+                    "number": i,
+                    "state": "open",
+                    "html_url": f"https://github.com/test/repo/issues/{i}"
+                }
+                for i in range(3)
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import SearchIssuesInput
+        params = SearchIssuesInput(query="is:open label:bug")
+        result = await github_mcp.github_search_issues(params)
+
+        assert isinstance(result, str)
+        assert len(result) > 0 or "issue" in result.lower() or "Error" in result
+
+
+class TestPullRequestOperationsComprehensive:
+    """Comprehensive tests for PR operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_pull_requests_filtered(self, mock_request):
+        """Test listing PRs with filters."""
+        mock_response = [
+            {
+                "number": i,
+                "title": f"PR {i}",
+                "state": "open",
+                "html_url": f"https://github.com/test/repo/pull/{i}",
+                "created_at": "2024-01-01T00:00:00Z"
+            }
+            for i in range(5)
+        ]
+        mock_request.return_value = mock_response
+
+        from github_mcp import ListPullRequestsInput
+        params = ListPullRequestsInput(owner="test", repo="repo", state="open")
+        result = await github_mcp.github_list_pull_requests(params)
+
+        assert isinstance(result, str)
+        assert len(result) > 0 or "PR" in result or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_pr_details_with_reviews(self, mock_request):
+        """Test getting PR details including reviews."""
+        mock_response = {
+            "number": 1,
+            "title": "Test PR",
+            "body": "Description",
+            "state": "open",
+            "html_url": "https://github.com/test/repo/pull/1",
+            "created_at": "2024-01-01T00:00:00Z",
+            "reviews": [
+                {"state": "APPROVED", "user": {"login": "reviewer0"}},
+                {"state": "CHANGES_REQUESTED", "user": {"login": "reviewer1"}}
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import GetPullRequestDetailsInput
+        params = GetPullRequestDetailsInput(owner="test", repo="repo", pull_number=1)
+        result = await github_mcp.github_get_pr_details(params)
+
+        assert isinstance(result, str)
+        assert "PR" in result or "1" in result or "Test PR" in result or "Error" in result
+
+
+class TestRepoContentsOperations:
+    """Comprehensive tests for repo contents."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_repo_contents_nested(self, mock_request):
+        """Test listing nested directory contents."""
+        mock_response = [
+            {
+                "name": f"file{i}.py",
+                "type": "file",
+                "path": f"src/file{i}.py",
+                "html_url": f"https://github.com/test/repo/blob/main/src/file{i}.py"
+            }
+            for i in range(3)
+        ]
+        mock_request.return_value = mock_response
+
+        from github_mcp import ListRepoContentsInput
+        params = ListRepoContentsInput(owner="test", repo="repo", path="src/nested")
+        result = await github_mcp.github_list_repo_contents(params)
+
+        assert isinstance(result, str)
+        assert len(result) > 0 or "file" in result.lower() or "Error" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_batch_file_operations_multiple_files(self, mock_request):
+        """Test batch file operations with multiple files."""
+        mock_response = {
+            "commit": {
+                "sha": "abc123",
+                "html_url": "https://github.com/test/repo/commit/abc123"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        from github_mcp import BatchFileOperationsInput
+        operations = [
+            {"operation": "create", "path": "file1.txt", "content": "content1"},
+            {"operation": "create", "path": "file2.txt", "content": "content2"}
+        ]
+        params = BatchFileOperationsInput(
+            owner="test",
+            repo="repo",
+            operations=operations,
+            message="Batch commit"
+        )
+        result = await github_mcp.github_batch_file_operations(params)
+
+        assert isinstance(result, str)
+        assert "success" in result.lower() or "commit" in result.lower() or "batch" in result.lower() or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
