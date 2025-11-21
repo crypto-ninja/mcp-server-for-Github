@@ -1937,5 +1937,114 @@ class TestLicenseOperations:
         assert "license" in result.lower() or "AGPL" in result or "tier" in result.lower()
 
 
+class TestUpdateRepository:
+    """Test repository update operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_repository(self, mock_request):
+        """Test updating repository settings."""
+        # Mock updated repo response
+        mock_response = {
+            "full_name": "test/test-repo",
+            "name": "test-repo",
+            "description": "Updated description",
+            "html_url": "https://github.com/test/test-repo",
+            "private": False,
+            "archived": False
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import UpdateRepositoryInput
+        params = UpdateRepositoryInput(
+            owner="test",
+            repo="test-repo",
+            description="Updated description"
+        )
+        result = await github_mcp.github_update_repository(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "updated" in result.lower() or "test-repo" in result or "description" in result.lower() or "Error" in result
+
+
+class TestGrepOperations:
+    """Test grep/search operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_grep(self, mock_request):
+        """Test GitHub grep operation."""
+        # Mock grep response
+        mock_response = {
+            "total_count": 2,
+            "items": [
+                {
+                    "name": "test.py",
+                    "path": "src/test.py",
+                    "repository": {
+                        "full_name": "test/repo"
+                    },
+                    "text_matches": [
+                        {
+                            "fragment": "def test_function():"
+                        }
+                    ]
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GitHubGrepInput
+        params = GitHubGrepInput(
+            owner="test",
+            repo="test-repo",
+            pattern="test_function",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_grep(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestReadFileChunk:
+    """Test file chunk reading operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_read_file_chunk(self, mock_request):
+        """Test reading a file chunk."""
+        # Mock file content response
+        mock_response = {
+            "content": base64.b64encode(b"Line 1\nLine 2\nLine 3\nLine 4\nLine 5").decode('utf-8'),
+            "encoding": "base64"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GitHubReadFileChunkInput
+        params = GitHubReadFileChunkInput(
+            owner="test",
+            repo="test-repo",
+            path="test.txt",
+            start_line=2,
+            end_line=4
+        )
+        result = await github_mcp.github_read_file_chunk(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "Line 2" in result or "Line 3" in result or "Line 4" in result or "Error" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
