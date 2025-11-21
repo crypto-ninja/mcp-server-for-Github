@@ -301,6 +301,16 @@ async def get_auth_token() -> Optional[str]:
     # Check for explicit auth mode preference
     auth_mode = os.getenv("GITHUB_AUTH_MODE", "").lower()
     
+    # If explicitly requesting PAT mode, skip App and use PAT
+    if auth_mode == "pat":
+        pat_token = os.getenv("GITHUB_TOKEN")
+        if DEBUG_AUTH:
+            if pat_token:
+                print(f"  ✅ Using PAT token (GITHUB_AUTH_MODE=pat, prefix: {pat_token[:10]}...)", file=sys.stderr)
+            else:
+                print("  ❌ GITHUB_AUTH_MODE=pat but no PAT configured", file=sys.stderr)
+        return pat_token
+    
     # If explicitly requesting App mode and App is configured, prioritize App
     if auth_mode == "app" and _has_app_config():
         app_token = await get_installation_token_from_env()
