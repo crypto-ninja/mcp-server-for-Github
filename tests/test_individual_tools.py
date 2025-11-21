@@ -2240,6 +2240,80 @@ class TestMoreErrorScenarios:
         assert isinstance(result, str)
         assert "error" in result.lower() or "blocked" in result.lower() or "410" in result or "gone" in result.lower()
 
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_conflict_error_409(self, mock_request):
+        """Test 409 Conflict errors."""
+        import httpx
+
+        # Mock 409 conflict error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Conflict",
+            request=MagicMock(),
+            response=MagicMock(status_code=409)
+        )
+
+        # Call the tool
+        from github_mcp import CreateFileInput
+        params = CreateFileInput(
+            owner="test",
+            repo="test-repo",
+            path="test.txt",
+            content="test",
+            message="Add file"
+        )
+        result = await github_mcp.github_create_file(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "conflict" in result.lower() or "409" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_server_error_502(self, mock_request):
+        """Test 502 Bad Gateway errors."""
+        import httpx
+
+        # Mock 502 server error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Bad Gateway",
+            request=MagicMock(),
+            response=MagicMock(status_code=502)
+        )
+
+        # Call the tool
+        from github_mcp import RepoInfoInput
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "service error" in result.lower() or "502" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_timeout_error(self, mock_request):
+        """Test timeout errors."""
+        import httpx
+
+        # Mock timeout error
+        mock_request.side_effect = httpx.TimeoutException("Request timed out")
+
+        # Call the tool
+        from github_mcp import RepoInfoInput
+        params = RepoInfoInput(
+            owner="test",
+            repo="test-repo"
+        )
+        result = await github_mcp.github_get_repo_info(params)
+
+        # Verify error handling
+        assert isinstance(result, str)
+        assert "timeout" in result.lower() or "timed out" in result.lower() or "error" in result.lower()
+
 
 class TestPerformanceScenarios:
     """Test handling of large data sets."""
