@@ -108,10 +108,10 @@ class TestToolSchemas:
         tools = get_all_tools()
         tool_names = [t['name'] for t in tools]
         
-        # Should have at least execute_code and health_check
+        # Should have at least execute_code (health_check is now CLI-only, not an MCP tool)
         assert 'execute_code' in tool_names, "execute_code tool not found"
-        assert 'health_check' in tool_names, "health_check tool not found"
-        assert len(tool_names) >= 2, f"Expected at least 2 tools, found {len(tool_names)}"
+        # Note: health_check is no longer an MCP tool - it's available via CLI (github-mcp-cli health)
+        assert len(tool_names) >= 1, f"Expected at least 1 tool (execute_code), found {len(tool_names)}"
         
         # Found tools (verified by assertions above)
     
