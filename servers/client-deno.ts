@@ -191,7 +191,7 @@ export async function callMCPTool<T = string>(
                 
                 // Get/Read operations
                 'github_get_repo_info',
-                'github_get_file_content',
+                // Note: github_get_file_content does NOT support response_format
                 'github_get_pr_details',
                 'github_get_pr_overview_graphql',
                 'github_get_release',
