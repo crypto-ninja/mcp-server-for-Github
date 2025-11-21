@@ -5,19 +5,13 @@ These utilities are NOT exposed as MCP tools - they're for developers and operat
 to diagnose issues, check health, and manage the server.
 """
 
-"""
-Command-line utilities for GitHub MCP Server debugging and diagnostics.
-
-These utilities are NOT exposed as MCP tools - they're for developers and operators
-to diagnose issues, check health, and manage the server.
-"""
-
 import asyncio
 import json
-import click
 import os
 import sys
 from pathlib import Path
+
+import click  # noqa: E402
 
 # Add project root to path to import github_mcp
 project_root = Path(__file__).parent.parent.parent
@@ -25,8 +19,8 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Import functions (these are now internal, not MCP tools)
-import github_mcp
-from auth.github_app import clear_token_cache
+import github_mcp  # noqa: E402
+from auth.github_app import clear_token_cache  # noqa: E402
 
 
 @click.group()
@@ -78,4 +72,3 @@ def check_deno():
 
 if __name__ == '__main__':
     cli()
-
