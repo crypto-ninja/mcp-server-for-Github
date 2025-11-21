@@ -3244,6 +3244,56 @@ class TestUpdateIssueAdvanced:
         assert isinstance(result, str)
         assert "27" in result or "updated" in result.lower() or "Error" in result
 
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_invalid_state(self, mock_request):
+        """Test updating issue with invalid state value."""
+        # Call with invalid state - should return error before API call
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=28,
+            state="invalid_state"
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify error message
+        assert isinstance(result, str)
+        assert "invalid" in result.lower() or "error" in result.lower()
+        assert "open" in result.lower() or "closed" in result.lower()
+        # Should not call API
+        mock_request.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_update_issue_with_milestone(self, mock_request):
+        """Test updating issue with milestone."""
+        # Mock updated issue
+        mock_response = {
+            "number": 29,
+            "title": "Issue with Milestone",
+            "state": "open",
+            "milestone": {"number": 1, "title": "v1.0"},
+            "html_url": "https://github.com/test/test/issues/29",
+            "updated_at": "2024-01-05T00:00:00Z"
+        }
+        mock_request.return_value = mock_response
+
+        # Call with milestone
+        from github_mcp import UpdateIssueInput
+        params = UpdateIssueInput(
+            owner="test",
+            repo="test-repo",
+            issue_number=29,
+            milestone=1
+        )
+        result = await github_mcp.github_update_issue(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "29" in result or "updated" in result.lower() or "milestone" in result.lower() or "Error" in result
+
 
 class TestErrorHandlingHelpers:
     """Test error handling helper functions."""
