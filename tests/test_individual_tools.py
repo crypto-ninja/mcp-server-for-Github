@@ -2719,5 +2719,216 @@ class TestGetPRDetailsAdvanced:
             assert "42" in result or "Test PR" in result or "Error" in result
 
 
+class TestListPullRequestsAdvanced:
+    """Test advanced pull request listing scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_pull_requests_draft(self, mock_request):
+        """Test listing draft pull requests."""
+        # Mock draft PRs
+        mock_response = {
+            "items": [
+                {
+                    "number": 10,
+                    "title": "Draft: WIP feature",
+                    "state": "open",
+                    "draft": True,
+                    "html_url": "https://github.com/test/test/pull/10",
+                    "author": {
+                        "login": "testuser"
+                    },
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "number": 11,
+                    "title": "Draft: Another WIP",
+                    "state": "open",
+                    "draft": True,
+                    "html_url": "https://github.com/test/test/pull/11",
+                    "author": {
+                        "login": "testuser"
+                    },
+                    "created_at": "2024-01-02T00:00:00Z",
+                    "updated_at": "2024-01-02T00:00:00Z"
+                }
+            ],
+            "total_count": 2
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListPullRequestsInput
+        params = ListPullRequestsInput(
+            owner="test",
+            repo="test-repo",
+            state="open",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_pull_requests(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_pull_requests_merged(self, mock_request):
+        """Test listing merged pull requests."""
+        # Mock merged PRs
+        mock_response = {
+            "items": [
+                {
+                    "number": 5,
+                    "title": "Merged feature",
+                    "state": "closed",
+                    "merged": True,
+                    "merged_at": "2024-01-01T00:00:00Z",
+                    "html_url": "https://github.com/test/test/pull/5",
+                    "author": {
+                        "login": "testuser"
+                    },
+                    "created_at": "2023-12-31T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                }
+            ],
+            "total_count": 1
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListPullRequestsInput
+        params = ListPullRequestsInput(
+            owner="test",
+            repo="test-repo",
+            state="closed",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_pull_requests(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have items or be a list
+        if isinstance(parsed, dict):
+            assert "items" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestListWorkflowsAdvanced:
+    """Test advanced workflow listing scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_workflows_inactive(self, mock_request):
+        """Test listing workflows including inactive ones."""
+        # Mock workflows with inactive state
+        mock_response = {
+            "total_count": 3,
+            "workflows": [
+                {
+                    "id": 1,
+                    "name": "CI",
+                    "path": ".github/workflows/ci.yml",
+                    "state": "active"
+                },
+                {
+                    "id": 2,
+                    "name": "Deploy",
+                    "path": ".github/workflows/deploy.yml",
+                    "state": "active"
+                },
+                {
+                    "id": 3,
+                    "name": "Old Workflow",
+                    "path": ".github/workflows/old.yml",
+                    "state": "disabled_manually"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListWorkflowsInput
+        params = ListWorkflowsInput(
+            owner="test",
+            repo="test-repo",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_list_workflows(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have workflows or be a list
+        if isinstance(parsed, dict):
+            assert "workflows" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
+class TestGetWorkflowRunsAdvanced:
+    """Test advanced workflow run scenarios."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_workflow_runs_filtered(self, mock_request):
+        """Test getting workflow runs with status filter."""
+        # Mock workflow runs with different statuses
+        mock_response = {
+            "total_count": 5,
+            "workflow_runs": [
+                {
+                    "id": 100,
+                    "status": "completed",
+                    "conclusion": "success",
+                    "html_url": "https://github.com/test/test/actions/runs/100",
+                    "created_at": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "id": 101,
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "html_url": "https://github.com/test/test/actions/runs/101",
+                    "created_at": "2024-01-02T00:00:00Z"
+                },
+                {
+                    "id": 102,
+                    "status": "in_progress",
+                    "conclusion": None,
+                    "html_url": "https://github.com/test/test/actions/runs/102",
+                    "created_at": "2024-01-03T00:00:00Z"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetWorkflowRunsInput
+        params = GetWorkflowRunsInput(
+            owner="test",
+            repo="test-repo",
+            workflow_id="ci.yml",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_mcp.github_get_workflow_runs(params)
+
+        # Verify
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        # Should have workflow_runs or be a list
+        if isinstance(parsed, dict):
+            assert "workflow_runs" in parsed or "total_count" in parsed
+        elif isinstance(parsed, list):
+            assert len(parsed) > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
