@@ -3099,6 +3099,78 @@ class TestErrorHandlingHelpers:
         assert isinstance(result, str)
         assert "error" in result.lower() or "connection" in result.lower()
 
+    def test_handle_api_error_rate_limit(self):
+        """Test _handle_api_error with 429 rate limit error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test 429 rate limit with Retry-After header
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.headers = {"Retry-After": "60"}
+        mock_response.text = "Rate limit exceeded"
+        
+        error = httpx.HTTPStatusError(
+            "Rate limit exceeded",
+            request=MagicMock(),
+            response=mock_response
+        )
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "rate limit" in result.lower() or "429" in result or "retry" in result.lower()
+
+    def test_handle_api_error_server_error(self):
+        """Test _handle_api_error with 500 server error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test 500 server error
+        error = httpx.HTTPStatusError(
+            "Internal Server Error",
+            request=MagicMock(),
+            response=MagicMock(status_code=500, text="Server error")
+        )
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "service error" in result.lower() or "500" in result or "error" in result.lower()
+
+    def test_handle_api_error_timeout(self):
+        """Test _handle_api_error with timeout error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test timeout error
+        error = httpx.TimeoutException("Request timed out")
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "timeout" in result.lower() or "timed out" in result.lower()
+
+    def test_handle_api_error_network_error(self):
+        """Test _handle_api_error with network error."""
+        from github_mcp import _handle_api_error
+        import httpx
+
+        # Test network error
+        error = httpx.NetworkError("Network error occurred")
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "network" in result.lower() or "error" in result.lower()
+
+    def test_handle_api_error_generic_exception(self):
+        """Test _handle_api_error with generic exception."""
+        from github_mcp import _handle_api_error
+
+        # Test generic exception
+        error = ValueError("Unexpected error")
+        result = _handle_api_error(error)
+
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "unexpected" in result.lower()
+
     def test_format_timestamp(self):
         """Test _format_timestamp helper."""
         from github_mcp import _format_timestamp
@@ -3122,13 +3194,25 @@ class TestErrorHandlingHelpers:
         result = _truncate_response(short)
         assert result == short
 
-        # Test long response (CHARACTER_LIMIT is 50000, so use something longer)
-        long_response = "x" * 60000
+        # Test long response (CHARACTER_LIMIT is 25000, so use something longer)
+        long_response = "x" * 30000
         result = _truncate_response(long_response)
         # Should be truncated
         assert len(result) < len(long_response)
         # Should contain truncation notice
-        assert "truncated" in result.lower() or "truncation" in result.lower() or len(result) < 60000
+        assert "truncated" in result.lower() or "truncation" in result.lower() or len(result) < 30000
+
+    def test_truncate_response_with_data_count(self):
+        """Test _truncate_response with data_count parameter."""
+        from github_mcp import _truncate_response
+
+        # Test long response with data_count
+        long_response = "x" * 30000
+        result = _truncate_response(long_response, data_count=100)
+        # Should be truncated
+        assert len(result) < len(long_response)
+        # Should contain truncation notice with data count info
+        assert "truncated" in result.lower() or "partial" in result.lower() or len(result) < 30000
 
 
 class TestUpdateReleaseAdvanced:

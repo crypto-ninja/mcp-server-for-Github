@@ -418,6 +418,50 @@ class TestAppAuthErrors:
         # Should fall back to PAT
         assert token == "pat_token"
 
+    @pytest.mark.asyncio
+    @patch('auth.github_app.httpx.AsyncClient')
+    async def test_get_installation_token_api_error(self, mock_client_class):
+        """Test get_installation_token when API call fails."""
+        from auth.github_app import GitHubAppAuth
+        import httpx
+
+        # Mock client to raise error
+        mock_client = AsyncMock()
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+        mock_client.post.side_effect = httpx.HTTPStatusError(
+            "Forbidden",
+            request=MagicMock(),
+            response=MagicMock(status_code=403)
+        )
+        mock_client_class.return_value = mock_client
+
+        auth = GitHubAppAuth()
+        
+        # Should raise exception
+        with pytest.raises(Exception):
+            await auth.get_installation_token(
+                app_id="123",
+                private_key_pem="-----BEGIN RSA PRIVATE KEY-----\nKEY\n-----END RSA PRIVATE KEY-----",
+                installation_id="456"
+            )
+
+    @pytest.mark.asyncio
+    @patch('auth.github_app.jwt.encode')
+    async def test_generate_jwt_error(self, mock_jwt_encode):
+        """Test _generate_jwt when JWT encoding fails."""
+        from auth.github_app import GitHubAppAuth
+        import jwt
+
+        # Mock JWT encoding to fail
+        mock_jwt_encode.side_effect = jwt.InvalidKeyError("Invalid key")
+
+        auth = GitHubAppAuth()
+        
+        # Should raise exception
+        with pytest.raises(Exception):
+            auth._generate_jwt("123", "invalid_key")
+
 
 class TestLoadPrivateKeyFromFile:
     """Test load_private_key_from_file function."""
