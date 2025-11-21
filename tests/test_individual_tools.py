@@ -2046,7 +2046,7 @@ class TestReadFileChunk:
             repo="test-repo",
             path="test.txt",
             start_line=2,
-            end_line=4
+            num_lines=3
         )
         result = await github_mcp.github_read_file_chunk(params)
 
