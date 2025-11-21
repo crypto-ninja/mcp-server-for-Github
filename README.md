@@ -56,7 +56,8 @@
 - 95% faster initialization (45s → 2s)
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
-**Total Tools:** 42 (41 GitHub + 1 execute_code) 🚀  
+**Total Tools:** 1 tool exposed to MCP clients (`execute_code`) 🚀  
+**Internal Tools:** 44 GitHub tools available via `execute_code`  
 **Token Efficiency:** 98% reduction vs traditional MCP
 
 ---
@@ -234,7 +235,7 @@ The GitHub MCP Server v2.0 uses a revolutionary **code-first architecture** that
 
 **Traditional MCP Servers:**
 ```
-Load all 41 tools → 70,000 tokens → $1.05 per conversation
+Load all 44 tools → 70,000 tokens → $1.05 per conversation
 ```
 
 Every tool must be loaded into Claude's context, consuming massive tokens.
@@ -250,7 +251,28 @@ Load 1 tool → 800 tokens → $0.01 per conversation
 
 ### How It Works
 
-Instead of loading all 41 tools, Claude only sees the `execute_code` tool. You simply describe what you want, and Claude writes TypeScript code that calls tools on-demand:
+**The GitHub MCP Server exposes ONLY ONE tool to MCP clients:**
+
+- `execute_code` - Execute TypeScript code with access to all 44 GitHub tools
+
+This achieves **98% token reduction** compared to traditional MCP implementations:
+- Traditional: 70,000+ tokens (loading all 44 tools upfront)
+- Code-first: 800-2,000 tokens (loading only execute_code)
+
+**Simple. Elegant. Powerful.** ✨
+
+**Why only 1 tool?** Diagnostic utilities (`health_check`, `clear_token_cache`) are available via CLI, not as MCP tools. This maintains the clean "1 tool" architecture and maximizes token savings.
+
+Inside `execute_code`, you can call any of 44 GitHub tools via:
+
+```typescript
+const result = await callMCPTool("github_get_repo_info", {
+  owner: "facebook",
+  repo: "react"
+});
+```
+
+Instead of loading all 44 tools, Claude only sees the `execute_code` tool. You simply describe what you want, and Claude writes TypeScript code that calls tools on-demand:
 
 **You ask:**
 ```
@@ -302,7 +324,7 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
 ✅ 95% faster initialization - 45s → 2s  
 ✅ More powerful - Loops, conditionals, complex logic  
 ✅ Easier to use - Just describe what you want  
-✅ Same capabilities - All 41 tools available
+✅ Same capabilities - All 44 GitHub tools available via `execute_code`
 
 ### Simple Setup
 
@@ -338,7 +360,7 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
 }
 ```
 
-**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode (98% token savings). Omit it for traditional mode (all 41 tools visible).
+**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode (98% token savings). Omit it for traditional mode (all 44 tools visible).
 
 That's it! No configuration needed - you get 98% savings by default. 🚀
 
@@ -497,6 +519,23 @@ GITHUB_MCP_DEBUG_AUTH=true
 This will print authentication diagnostics to help troubleshoot issues.
 
 **See `env.example` for all configuration options.**
+
+### Diagnostic Utilities
+
+For debugging and diagnostics, use the CLI utilities (these are **NOT** exposed as MCP tools):
+
+```bash
+# Check server health
+github-mcp-cli health
+
+# Clear GitHub App token cache (after permission updates)
+github-mcp-cli clear-cache
+
+# Verify Deno installation
+github-mcp-cli check-deno
+```
+
+**Note:** These utilities are for developers and operators. The MCP server exposes **only one tool** (`execute_code`) to maintain the 98% token reduction value proposition.
 
 ---
 

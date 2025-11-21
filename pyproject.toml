@@ -17,6 +17,7 @@ dependencies = [
   "pydantic>=2.0.0",
   "PyJWT>=2.8.0",
   "python-dotenv>=1.0.0",
+  "click>=8.0.0",
 ]
 
 [project.urls]
@@ -28,6 +29,7 @@ dependencies = [
 
 [project.scripts]
 github-mcp = "github_mcp:main"
+github-mcp-cli = "src.github_mcp.cli:cli"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

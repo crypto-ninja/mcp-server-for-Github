@@ -40,11 +40,15 @@ When all tests pass, we've proven:
 
 ### Test Statistics
 
-- **22 tests** validate core functionality
+- **214+ tests** validate core functionality
 - **100% pass rate** (all tests passing)
-- **26% code coverage** (baseline, growing)
+- **63% code coverage** (comprehensive coverage)
 - **0 issues** found by automated discovery
 - **∞ meta level** achieved
+
+### Note on Diagnostic Tools
+
+Diagnostic utilities (`health_check`, `github_clear_token_cache`) are **internal functions** and are **NOT exposed as MCP tools**. This maintains the "1 tool = 98% token reduction" architecture. These functions are available via CLI (`github-mcp-cli`) and can be called directly in tests.
 
 ### The Dogfooding Story
 

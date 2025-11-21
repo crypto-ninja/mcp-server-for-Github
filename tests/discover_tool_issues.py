@@ -82,8 +82,8 @@ def get_python_tools() -> Dict[str, Dict]:
                 'param_model': param_model
             }
     
-    # Also check for execute_code and health_check
-    for name in ['execute_code', 'health_check']:
+    # Also check for execute_code (health_check is no longer an MCP tool)
+    for name in ['execute_code']:
         if hasattr(github_mcp, name):
             obj = getattr(github_mcp, name)
             if inspect.iscoroutinefunction(obj) or inspect.isfunction(obj):

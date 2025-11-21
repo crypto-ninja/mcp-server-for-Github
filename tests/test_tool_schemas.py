@@ -29,10 +29,11 @@ def get_all_tools() -> List[Dict[str, Any]]:
     
     # Get all functions from github_mcp module
     for name, obj in inspect.getmembers(github_mcp):
-        # Look for async functions that start with github_, repo_, workspace_, or are execute_code/health_check
+        # Look for async functions that start with github_, repo_, workspace_, or are execute_code
+        # Note: health_check is no longer an MCP tool (it's internal/CLI only)
         if (inspect.iscoroutinefunction(obj) or inspect.isfunction(obj)) and \
            (name.startswith('github_') or name.startswith('repo_') or 
-            name.startswith('workspace_') or name in ['execute_code', 'health_check']):
+            name.startswith('workspace_') or name == 'execute_code'):
             tools.append({
                 'name': name,
                 'function': obj

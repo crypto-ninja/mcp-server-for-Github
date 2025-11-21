@@ -5340,25 +5340,17 @@ async def execute_code(code: str) -> str:
         return f"❌ Unexpected error during code execution: {str(e)}"
 
 # ============================================================================
-# HEALTH CHECK TOOL
+# INTERNAL UTILITY FUNCTIONS (NOT MCP TOOLS)
 # ============================================================================
+# These functions are available for internal use and CLI utilities,
+# but are NOT exposed as MCP tools to maintain the "1 tool" architecture.
 
-@mcp.tool(
-    name="health_check",
-    annotations={
-        "title": "Health Check",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False
-    }
-)
 async def health_check() -> str:
     """
-    Check server health status.
+    Internal health check function (use CLI: github-mcp-cli health).
     
-    Returns version, authentication status, and Deno availability.
-    Useful for monitoring and debugging.
+    This function is NOT exposed as an MCP tool to maintain the "1 tool" architecture.
+    Use the CLI utility for diagnostics: `github-mcp-cli health`
     
     Returns:
         str: JSON-formatted health status
@@ -5410,23 +5402,12 @@ async def health_check() -> str:
         }
         return json.dumps(error_data, indent=2)
 
-# ============================================================================
-# TOKEN CACHE MANAGEMENT TOOL
-# ============================================================================
-
-@mcp.tool(
-    name="github_clear_token_cache",
-    annotations={
-        "title": "Clear GitHub App Token Cache",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False
-    }
-)
 async def github_clear_token_cache() -> str:
     """
-    Clear the cached GitHub App installation token.
+    Internal token cache clearing function (use CLI: github-mcp-cli clear-cache).
+    
+    This function is NOT exposed as an MCP tool to maintain the "1 tool" architecture.
+    Use the CLI utility: `github-mcp-cli clear-cache`
     
     Use this after:
     - Updating GitHub App permissions

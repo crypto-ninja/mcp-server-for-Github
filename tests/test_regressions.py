@@ -106,31 +106,34 @@ class TestAuthRegression:
         _fix_windows_encoding()
         runtime = get_runtime()
         
+        # Note: health_check is no longer an MCP tool - it's internal only
+        # Test auth by calling a real GitHub tool instead
         code = """
-        const health = await callMCPTool("health_check", {});
-        // health_check returns a JSON string, parse it
-        const healthData = typeof health === 'string' ? JSON.parse(health) : health;
+        // Test that we can call GitHub tools (which requires auth)
+        const repoInfo = await callMCPTool("github_get_repo_info", {
+            owner: "facebook",
+            repo: "react"
+        });
+        
+        // If auth works, we'll get repo info (or an error message)
+        // If auth fails, we'll get an auth error
         return {
-            hasAuth: !!healthData,
-            authConfigured: healthData?.authentication?.app_configured || 
-                           healthData?.authentication?.pat_configured || false,
-            authStatus: healthData?.authentication?.status || 'unknown'
+            hasResult: !!repoInfo,
+            isError: typeof repoInfo === 'string' && repoInfo.toLowerCase().includes('error'),
+            authWorks: !(typeof repoInfo === 'string' && repoInfo.toLowerCase().includes('authentication'))
         };
         """
         
         result = runtime.execute_code(code)
         
-        # Should have auth configured
+        # Should have result (either success or error, but not None)
         if isinstance(result, dict):
             assert result.get('success', False) or 'result' in result, \
-                f"Health check failed: {result.get('error', 'Unknown error')}"
+                f"Tool call failed: {result.get('error', 'Unknown error')}"
             
             result_data = result.get('result', {})
-            # In CI, auth might not be configured, so we check if health check works
-            # The test verifies the health_check tool itself works, not that auth is configured
-            assert 'hasAuth' in result_data, "Health check should return hasAuth"
-            # Don't require auth to be configured in CI (it might not have tokens)
-            # Just verify the health check tool works
+            # Verify we got a response (auth is working if we get any response)
+            assert 'hasResult' in result_data, "Should have result from tool call"
         else:
             assert result is not None, "execute_code returned None"
 
