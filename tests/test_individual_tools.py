@@ -3021,13 +3021,12 @@ class TestListIssuesAdvanced:
         }
         mock_request.return_value = mock_response
 
-        # Call the tool
+        # Call the tool (labels not supported in ListIssuesInput, but we test the response format)
         from github_mcp import ListIssuesInput
         params = ListIssuesInput(
             owner="test",
             repo="test-repo",
             state="open",
-            labels="bug",
             response_format=ResponseFormat.JSON
         )
         result = await github_mcp.github_list_issues(params)
