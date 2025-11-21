@@ -28,7 +28,12 @@ from github_mcp import (  # noqa: E402
     github_list_pull_requests,
     github_get_release,
     github_list_releases,
+    github_create_release,
     github_get_user_info,
+    github_list_workflows,
+    github_get_workflow_runs,
+    github_create_pull_request,
+    github_merge_pull_request,
     RepoInfoInput,
     ListIssuesInput,
     CreateIssueInput,
@@ -524,6 +529,7 @@ class TestResponseFormatting:
             "homepage": None,
             "clone_url": "https://github.com/test/test-repo.git",
             "html_url": "https://github.com/test/test-repo",
+            "archived": False,
             "owner": {
                 "login": "test",
                 "type": "User"
@@ -540,7 +546,6 @@ class TestResponseFormatting:
 
         # Should contain markdown elements
         assert isinstance(result, str)
-        # If there's an error, that's okay - we're testing the function works
         # Markdown might have #, **, or other formatting
         assert "test-repo" in result or "100" in result or "Error" in result
 
@@ -594,6 +599,297 @@ class TestEdgeCases:
         assert len(parsed) == 100
 
 
+class TestReleaseOperations:
+    """Test release operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_releases(self, mock_request):
+        """Test listing releases."""
+        # Mock releases response
+        mock_response = [
+            {
+                "tag_name": "v1.0.0",
+                "name": "Release v1.0.0",
+                "body": "Release notes",
+                "draft": False,
+                "prerelease": False,
+                "html_url": "https://github.com/test/test-repo/releases/tag/v1.0.0",
+                "created_at": "2024-01-01T00:00:00Z",
+                "published_at": "2024-01-01T00:00:00Z",
+                "author": {
+                    "login": "testuser"
+                }
+            },
+            {
+                "tag_name": "v0.9.0",
+                "name": "Release v0.9.0",
+                "body": "Previous release",
+                "draft": False,
+                "prerelease": False,
+                "html_url": "https://github.com/test/test-repo/releases/tag/v0.9.0",
+                "created_at": "2023-12-01T00:00:00Z",
+                "published_at": "2023-12-01T00:00:00Z",
+                "author": {
+                    "login": "testuser"
+                }
+            }
+        ]
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListReleasesInput
+        params = ListReleasesInput(
+            owner="test",
+            repo="test-repo",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_list_releases(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain release info
+        assert "v1.0.0" in result or "v0.9.0" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_release(self, mock_request):
+        """Test getting release details."""
+        # Mock release response
+        mock_response = {
+            "tag_name": "v2.0.0",
+            "name": "Release v2.0.0",
+            "body": "Major release notes",
+            "draft": False,
+            "prerelease": False,
+            "html_url": "https://github.com/test/test-repo/releases/tag/v2.0.0",
+            "created_at": "2024-01-15T00:00:00Z",
+            "published_at": "2024-01-15T00:00:00Z",
+            "author": {
+                "login": "testuser"
+            },
+            "assets": []
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetReleaseInput
+        params = GetReleaseInput(
+            owner="test",
+            repo="test-repo",
+            tag="v2.0.0",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_get_release(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "v2.0.0" in result or "Release v2.0.0" in result
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_create_release(self, mock_request):
+        """Test creating a release."""
+        # Mock created release
+        mock_response = {
+            "tag_name": "v2.0.0",
+            "name": "Release v2.0.0",
+            "body": "Release notes",
+            "draft": False,
+            "prerelease": False,
+            "html_url": "https://github.com/test/test-repo/releases/tag/v2.0.0",
+            "created_at": "2024-01-20T00:00:00Z",
+            "published_at": "2024-01-20T00:00:00Z",
+            "author": {
+                "login": "testuser"
+            },
+            "assets": []
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import CreateReleaseInput
+        params = CreateReleaseInput(
+            owner="test",
+            repo="test-repo",
+            tag_name="v2.0.0",
+            name="Release v2.0.0",
+            body="Release notes"
+        )
+        result = await github_create_release(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should indicate success
+        assert "v2.0.0" in result or "created" in result.lower() or "success" in result.lower()
+
+
+class TestPullRequestOperations:
+    """Test pull request operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_create_pull_request(self, mock_request):
+        """Test creating a pull request."""
+        # Mock created PR
+        mock_response = {
+            "number": 42,
+            "title": "Test PR",
+            "body": "PR body",
+            "state": "open",
+            "draft": False,
+            "head": {
+                "ref": "feature",
+                "sha": "abc123"
+            },
+            "base": {
+                "ref": "main",
+                "sha": "def456"
+            },
+            "html_url": "https://github.com/test/test-repo/pull/42",
+            "created_at": "2024-01-20T00:00:00Z",
+            "user": {
+                "login": "testuser"
+            },
+            "merged": False,
+            "mergeable": True
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import CreatePullRequestInput
+        params = CreatePullRequestInput(
+            owner="test",
+            repo="test-repo",
+            title="Test PR",
+            body="PR body",
+            head="feature",
+            base="main"
+        )
+        result = await github_create_pull_request(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain PR info
+        assert "42" in result or "created" in result.lower() or "success" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_merge_pull_request(self, mock_request):
+        """Test merging a pull request."""
+        # Mock merge response
+        mock_response = {
+            "sha": "merged123",
+            "merged": True,
+            "message": "Pull request successfully merged"
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import MergePullRequestInput
+        params = MergePullRequestInput(
+            owner="test",
+            repo="test-repo",
+            pull_number=42
+        )
+        result = await github_merge_pull_request(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should indicate success
+        assert "merged" in result.lower() or "success" in result.lower() or "42" in result
+
+
+class TestWorkflowOperations:
+    """Test GitHub Actions workflow operations."""
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_list_workflows(self, mock_request):
+        """Test listing workflows."""
+        # Mock workflows response
+        mock_response = {
+            "total_count": 2,
+            "workflows": [
+                {
+                    "id": 123,
+                    "name": "CI",
+                    "path": ".github/workflows/ci.yml",
+                    "state": "active",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "id": 124,
+                    "name": "Deploy",
+                    "path": ".github/workflows/deploy.yml",
+                    "state": "active",
+                    "created_at": "2024-01-02T00:00:00Z",
+                    "updated_at": "2024-01-02T00:00:00Z"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import ListWorkflowsInput
+        params = ListWorkflowsInput(
+            owner="test",
+            repo="test-repo",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_list_workflows(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain workflow info
+        assert "CI" in result or "Deploy" in result or "workflow" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('github_mcp._make_github_request')
+    async def test_github_get_workflow_runs(self, mock_request):
+        """Test getting workflow runs."""
+        # Mock workflow runs response
+        mock_response = {
+            "total_count": 2,
+            "workflow_runs": [
+                {
+                    "id": 12345,
+                    "name": "CI",
+                    "status": "completed",
+                    "conclusion": "success",
+                    "html_url": "https://github.com/test/test-repo/actions/runs/12345",
+                    "created_at": "2024-01-20T00:00:00Z",
+                    "updated_at": "2024-01-20T01:00:00Z"
+                },
+                {
+                    "id": 12346,
+                    "name": "CI",
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "html_url": "https://github.com/test/test-repo/actions/runs/12346",
+                    "created_at": "2024-01-19T00:00:00Z",
+                    "updated_at": "2024-01-19T01:00:00Z"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        # Call the tool
+        from github_mcp import GetWorkflowRunsInput
+        params = GetWorkflowRunsInput(
+            owner="test",
+            repo="test-repo",
+            workflow_id="ci.yml",
+            response_format=ResponseFormat.JSON
+        )
+        result = await github_get_workflow_runs(params)
+
+        # Verify
+        assert isinstance(result, str)
+        # Should contain run info
+        assert "completed" in result or "success" in result or "12345" in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
