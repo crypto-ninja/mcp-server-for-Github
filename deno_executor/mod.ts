@@ -153,9 +153,17 @@ if (import.meta.main) {
   let code: string;
   
   // Try reading from stdin first (preferred method to avoid shell escaping issues)
+  // This prevents "Bad control" errors with special characters on Windows
   try {
     const stdin = await Deno.stdin.readAll();
-    code = new TextDecoder().decode(stdin).trim();
+    const stdinText = new TextDecoder().decode(stdin).trim();
+    // Only use stdin if it has content (not empty)
+    if (stdinText) {
+      code = stdinText;
+    } else {
+      // Fallback to command-line argument
+      code = Deno.args[0] || "";
+    }
   } catch {
     // Fallback to command-line argument for backward compatibility
     code = Deno.args[0] || "";
