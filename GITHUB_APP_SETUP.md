@@ -41,6 +41,61 @@ Under "Repository permissions," set:
 | Administration | Read and write | Manage repo settings |
 | Commit statuses | Read-only | Read CI/CD status |
 
+### ⚠️ Known Limitation: Releases Permission
+
+**Issue:** As of November 2025, the "Releases" permission is **missing from the GitHub App permissions UI** for some apps. This is a known GitHub platform issue.
+
+**Impact:** 
+
+- GitHub Apps cannot create, update, or delete releases
+- The `github_create_release`, `github_update_release` tools will fail with "Permission denied"
+
+**Workaround:** Use **PAT fallback authentication**
+
+This server has dual authentication built-in. If GitHub App auth fails, it automatically falls back to Personal Access Token (PAT):
+
+1. **Generate a PAT:**
+
+   - Go to: https://github.com/settings/tokens/new
+   - Note: "MCP Server - Full access"
+   - Expiration: 90 days (or your preference)
+   - Scopes: Select **`repo`** (full control - includes releases)
+   - Generate token
+
+2. **Add to environment:**
+
+```bash
+   export GITHUB_TOKEN="ghp_your_token_here"
+```
+
+3. **Automatic fallback:**
+
+   - Server tries GitHub App first
+   - If releases permission missing → automatically uses PAT
+   - No code changes needed!
+
+**Verification:**
+
+```bash
+# Check which auth method is active
+curl http://localhost:3000/health
+
+# Should show:
+# "authentication": {
+#   "method": "pat",  # ← Using PAT fallback
+#   "pat_configured": true,
+#   "app_configured": true
+# }
+```
+
+**When to use PAT fallback:**
+
+- ✅ Release operations (create, update, delete)
+- ✅ Any operation failing with "Permission denied" despite correct GitHub App config
+- ✅ When you need permissions not available in GitHub App UI
+
+**Security Note:** PATs are user-scoped (not app-scoped) and more powerful. Keep them secure and rotate regularly.
+
 ### 3. Create the App
 
 1. Click "Create GitHub App"
