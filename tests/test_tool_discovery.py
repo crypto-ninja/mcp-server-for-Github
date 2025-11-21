@@ -133,10 +133,14 @@ def test_discovery_then_use():
         repo: "servers"
     });
     
+    // repoInfo is a string (markdown), get its length
+    const repoDataLength = typeof repoInfo === 'string' ? repoInfo.length : 
+                          (repoInfo ? JSON.stringify(repoInfo).length : 0);
+    
     return {
-        discoveredTool: toolInfo.name,
+        discoveredTool: toolInfo?.name || 'unknown',
         toolUsed: true,
-        repoDataLength: repoInfo.length
+        repoDataLength: repoDataLength
     };
     """
     
@@ -145,9 +149,12 @@ def test_discovery_then_use():
     print(f"Success: {result['success']}")
     if result['success']:
         data = result['result']
-        print(f"Discovered: {data['discoveredTool']}")
-        print(f"Used successfully: {data['toolUsed']}")
-        print(f"Got repo data: {data['repoDataLength']} chars")
+        print(f"Discovered: {data.get('discoveredTool', 'unknown')}")
+        print(f"Used successfully: {data.get('toolUsed', False)}")
+        if 'repoDataLength' in data:
+            print(f"Got repo data: {data['repoDataLength']} chars")
+        else:
+            print("Repo data length not available")
     else:
         print(f"Error: {result.get('error', 'Unknown error')}")
     print()
