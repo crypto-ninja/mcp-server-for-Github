@@ -484,6 +484,8 @@ GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
 GITHUB_TOKEN=ghp_fallback_token  # Used if App auth fails
 ```
 
+**Note:** Due to GitHub platform limitations, some operations (like releases) may require PAT authentication even when using a GitHub App. The server automatically falls back to PAT when needed. See [GITHUB_APP_SETUP.md](GITHUB_APP_SETUP.md) for details.
+
 ### Troubleshooting
 
 **Enable debug logging:**
