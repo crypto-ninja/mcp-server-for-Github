@@ -4112,24 +4112,99 @@ async def github_create_release(params: CreateReleaseInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
+    # Get token (try param, then GitHub App, then PAT) - EXACTLY like github_create_issue
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating releases. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
 
     try:
-        endpoint = f"repos/{params.owner}/{params.repo}/releases"
+        # Get default branch and commit SHA if target_commitish not provided
+        target_commitish = params.target_commitish
+        if not target_commitish:
+            repo_info = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}",
+                token=auth_token
+            )
+            target_commitish = repo_info['default_branch']
         
-        # Build request body
+        # Get commit SHA from target_commitish (could be branch name or SHA)
+        # If it's a branch name, get the SHA; if it's already a SHA, use it
+        if len(target_commitish) == 40 and all(c in '0123456789abcdef' for c in target_commitish.lower()):
+            # It's already a SHA
+            commit_sha = target_commitish
+        else:
+            # It's a branch name, get the SHA
+            branch_ref = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/git/ref/heads/{target_commitish}",
+                token=auth_token
+            )
+            commit_sha = branch_ref['object']['sha']
+        
+        # CRITICAL: Create the Git tag FIRST using Git References API
+        # This ensures the tag exists before creating the release
+        # Without this, GitHub creates "untagged" releases
+        tag_exists = False
+        try:
+            # Check if tag already exists
+            await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/git/refs/tags/{params.tag_name}",
+                method="GET",
+                token=auth_token
+            )
+            # Tag exists, that's fine
+            tag_exists = True
+        except httpx.HTTPStatusError as tag_check_error:
+            # Only create tag if it's a 404 (not found) error
+            # If it's an auth error (401/403), we should fail immediately
+            status_code = tag_check_error.response.status_code
+            
+            # If it's an auth error (401/403), re-raise it immediately
+            if status_code in (401, 403):
+                raise tag_check_error
+            
+            # Only create tag if it's a 404 (tag doesn't exist)
+            if status_code == 404:
+                tag_ref_data = {
+                    "ref": f"refs/tags/{params.tag_name}",
+                    "sha": commit_sha
+                }
+                try:
+                    await _make_github_request(
+                        f"repos/{params.owner}/{params.repo}/git/refs",
+                        method="POST",
+                        token=auth_token,
+                        json=tag_ref_data
+                    )
+                    tag_exists = True
+                except Exception as tag_create_error:
+                    # If tag creation fails, raise the error (don't silently continue)
+                    raise tag_create_error
+            else:
+                # Other HTTP errors (500, etc.) - re-raise
+                raise tag_check_error
+        except Exception as tag_check_error:
+            # Non-HTTP errors (network, timeout, etc.) - re-raise
+            raise tag_check_error
+        
+        # Now create the release (tag already exists)
+        endpoint = f"repos/{params.owner}/{params.repo}/releases"
         body_data = {
             "tag_name": params.tag_name,
             "name": params.name or params.tag_name,
             "draft": params.draft or False,
-            "prerelease": params.prerelease or False
+            "prerelease": params.prerelease or False,
+            "target_commitish": target_commitish
         }
         
         # Add optional fields
         if params.body:
             body_data["body"] = params.body
-        if params.target_commitish:
-            body_data["target_commitish"] = params.target_commitish
         
         # Create the release
         data = await _make_github_request(
@@ -4207,6 +4282,14 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         - Returns error if invalid parameters (422)
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating releases. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
     
     try:
         # First, get the release to find its ID if tag name was provided
@@ -4314,6 +4397,14 @@ async def github_create_file(params: CreateFileInput) -> str:
         - Returns error if branch doesn't exist (404)
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating files. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
 
     try:
         # Encode content to base64
@@ -4410,6 +4501,14 @@ async def github_update_file(params: UpdateFileInput) -> str:
         - Returns error if authentication fails (401/403)
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating files. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
 
     try:
         # Encode content to base64
@@ -4513,6 +4612,14 @@ async def github_delete_file(params: DeleteFileInput) -> str:
         - File history is preserved in Git
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting files. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
 
     try:
         # Prepare request body
@@ -4815,6 +4922,15 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
     Create a new repository for the authenticated user or in an organization.
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
         body = {
             "name": params.name,
@@ -4853,6 +4969,15 @@ async def github_delete_repository(params: DeleteRepositoryInput) -> str:
     Delete a repository. Destructive; requires appropriate permissions.
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
         await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
         return f"✅ Repository deleted: {params.owner}/{params.repo}"
@@ -4875,6 +5000,15 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
     Update repository settings such as description, visibility, and features.
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
         body: Dict[str, Any] = {}
         for field in ["name", "description", "homepage", "private", "has_issues", "has_projects", "has_wiki", "default_branch", "archived"]:
@@ -4902,6 +5036,15 @@ async def github_transfer_repository(params: TransferRepositoryInput) -> str:
     Transfer a repository to a new owner (user or organization).
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for transferring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
         body: Dict[str, Any] = {"new_owner": params.new_owner}
         if params.team_ids:
@@ -4932,6 +5075,15 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
     Archive or unarchive a repository by toggling the archived flag.
     """
     auth_token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for archiving repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
         body = {"archived": params.archived}
         data = await _make_github_request(
@@ -4986,10 +5138,18 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
         - Returns error if insufficient permissions (403)
         - Returns error if conflicts exist (409)
     """
+    # Get token (try param, then GitHub App, then PAT)
+    token = await _get_auth_token_fallback(params.token)
+    
+    # Ensure we have a valid token before proceeding
+    if not token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for merging pull requests. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
     try:
-        # Get token from env if not provided
-        token = await _get_auth_token_fallback(params.token)
-        
         # Build merge data
         merge_data = {
             "merge_method": params.merge_method or "squash"
