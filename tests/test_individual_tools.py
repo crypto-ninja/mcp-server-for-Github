@@ -8,6 +8,7 @@ without making real API calls.
 import pytest
 import json
 import base64
+import httpx
 from unittest.mock import patch, MagicMock
 
 # Import the MCP server
@@ -385,7 +386,6 @@ class TestErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_github_get_repo_info_not_found(self, mock_request):
         """Test 404 error handling."""
-        import httpx
 
         # Mock 404 error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -409,7 +409,6 @@ class TestErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_github_create_issue_permission_denied(self, mock_request):
         """Test 403 error handling."""
-        import httpx
 
         # Mock 403 error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -434,7 +433,6 @@ class TestErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_github_get_file_content_not_found(self, mock_request):
         """Test file not found error."""
-        import httpx
 
         # Mock 404 error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -687,8 +685,32 @@ class TestReleaseOperations:
     @patch('github_mcp._make_github_request')
     async def test_github_create_release(self, mock_request):
         """Test creating a release."""
-        # Mock created release
-        mock_response = {
+        
+        # Mock responses for multiple API calls:
+        # 1. Get repo info (for default_branch)
+        repo_info = {
+            "name": "test-repo",
+            "default_branch": "main"
+        }
+        # 2. Get branch ref (for commit SHA)
+        branch_ref = {
+            "object": {
+                "sha": "abc123def456"
+            }
+        }
+        # 3. Tag check (404 - tag doesn't exist)
+        tag_check_error = httpx.HTTPStatusError(
+            "Not Found",
+            request=MagicMock(),
+            response=MagicMock(status_code=404)
+        )
+        # 4. Tag creation response
+        tag_creation = {
+            "ref": "refs/tags/v2.0.0",
+            "sha": "abc123def456"
+        }
+        # 5. Release creation response
+        release_response = {
             "tag_name": "v2.0.0",
             "name": "Release v2.0.0",
             "body": "Release notes",
@@ -702,7 +724,15 @@ class TestReleaseOperations:
             },
             "assets": []
         }
-        mock_request.return_value = mock_response
+        
+        # Configure mock to return different values for different calls
+        mock_request.side_effect = [
+            repo_info,      # Call 1: Get repo info
+            branch_ref,     # Call 2: Get branch ref
+            tag_check_error,  # Call 3: Tag check (404)
+            tag_creation,   # Call 4: Create tag
+            release_response  # Call 5: Create release
+        ]
 
         # Call the tool
         from github_mcp import CreateReleaseInput
@@ -1010,7 +1040,6 @@ class TestAdvancedErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_rate_limit_error(self, mock_request):
         """Test handling of rate limit errors (429)."""
-        import httpx
 
         # Mock 429 rate limit error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -1034,7 +1063,6 @@ class TestAdvancedErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_server_error(self, mock_request):
         """Test handling of server errors (500)."""
-        import httpx
 
         # Mock 500 server error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -1058,7 +1086,6 @@ class TestAdvancedErrorHandling:
     @patch('github_mcp._make_github_request')
     async def test_network_timeout_error(self, mock_request):
         """Test handling of network timeout errors."""
-        import httpx
 
         # Mock timeout error
         mock_request.side_effect = httpx.TimeoutException(
@@ -1367,7 +1394,6 @@ class TestMoreErrorPaths:
     @patch('github_mcp._make_github_request')
     async def test_github_unauthorized_error(self, mock_request):
         """Test 401 unauthorized error."""
-        import httpx
 
         # Mock 401 unauthorized error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -1391,7 +1417,6 @@ class TestMoreErrorPaths:
     @patch('github_mcp._make_github_request')
     async def test_github_conflict_error(self, mock_request):
         """Test 409 conflict error."""
-        import httpx
 
         # Mock 409 conflict error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -1926,7 +1951,6 @@ class TestEdgeCasesAdvanced:
     @patch('github_mcp._make_github_request')
     async def test_github_abuse_rate_limit(self, mock_request):
         """Test handling secondary rate limits."""
-        import httpx
 
         # Mock abuse rate limit error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -2230,7 +2254,6 @@ class TestMoreErrorScenarios:
     @patch('github_mcp._make_github_request')
     async def test_github_validation_error(self, mock_request):
         """Test validation errors (422)."""
-        import httpx
 
         # Mock 422 validation error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -2256,7 +2279,6 @@ class TestMoreErrorScenarios:
     @patch('github_mcp._make_github_request')
     async def test_github_gone_error(self, mock_request):
         """Test 410 Gone errors (deleted resources)."""
-        import httpx
 
         # Mock 410 Gone error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -2281,7 +2303,6 @@ class TestMoreErrorScenarios:
     @patch('github_mcp._make_github_request')
     async def test_github_conflict_error_409(self, mock_request):
         """Test 409 Conflict errors."""
-        import httpx
 
         # Mock 409 conflict error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -2309,7 +2330,6 @@ class TestMoreErrorScenarios:
     @patch('github_mcp._make_github_request')
     async def test_github_server_error_502(self, mock_request):
         """Test 502 Bad Gateway errors."""
-        import httpx
 
         # Mock 502 server error
         mock_request.side_effect = httpx.HTTPStatusError(
@@ -2334,7 +2354,6 @@ class TestMoreErrorScenarios:
     @patch('github_mcp._make_github_request')
     async def test_github_timeout_error(self, mock_request):
         """Test timeout errors."""
-        import httpx
 
         # Mock timeout error
         mock_request.side_effect = httpx.TimeoutException("Request timed out")
@@ -3301,7 +3320,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_httpx_error(self):
         """Test _handle_api_error with httpx error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test HTTP status error
         error = httpx.HTTPStatusError(
@@ -3317,7 +3335,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_connection_error(self):
         """Test _handle_api_error with connection error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test connection error
         error = httpx.ConnectError("Connection failed")
@@ -3329,7 +3346,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_rate_limit(self):
         """Test _handle_api_error with 429 rate limit error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test 429 rate limit with Retry-After header
         mock_response = MagicMock()
@@ -3350,7 +3366,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_server_error(self):
         """Test _handle_api_error with 500 server error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test 500 server error
         error = httpx.HTTPStatusError(
@@ -3366,7 +3381,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_timeout(self):
         """Test _handle_api_error with timeout error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test timeout error
         error = httpx.TimeoutException("Request timed out")
@@ -3378,7 +3392,6 @@ class TestErrorHandlingHelpers:
     def test_handle_api_error_network_error(self):
         """Test _handle_api_error with network error."""
         from github_mcp import _handle_api_error
-        import httpx
 
         # Test network error
         error = httpx.NetworkError("Network error occurred")
@@ -3740,7 +3753,6 @@ class TestReleaseOperationsComprehensive:
     @patch('github_mcp._make_github_request')
     async def test_github_get_release_not_found(self, mock_request):
         """Test getting non-existent release."""
-        import httpx
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
             request=MagicMock(),
