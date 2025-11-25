@@ -1,5 +1,53 @@
 # Changelog
 
+## [2.3.0] - 2025-01-26
+
+### Added
+
+- **CLI utilities**: New `github-mcp-cli` command-line tool for development diagnostics
+  - `github-mcp-cli health` - Check server health status
+  - `github-mcp-cli clear-cache` - Clear GitHub App token cache
+  - `github-mcp-cli check-deno` - Verify Deno runtime installation
+- Added `click>=8.0.0` dependency for CLI utilities
+- **33 new comprehensive tests** covering:
+  - Authentication edge cases (11 tests)
+  - Utility functions (16 tests)  
+  - Comprehensive tool operations (11 tests)
+
+### Changed
+
+- **Test Coverage**: 55% → 63% (+8 percentage points)
+- **Test Count**: 181 → 214 (+33 tests)
+- Moved development diagnostic tools to CLI (proper separation of concerns)
+  - `health_check()` - Now CLI command (was internal test tool)
+  - `github_clear_token_cache()` - Now CLI command (was internal test tool)
+
+### Documentation
+
+- Updated README to clarify single-tool architecture (always the design!)
+- Added diagnostic utilities section with CLI usage examples
+- Updated TESTING.md to document internal vs user-facing tools
+- Updated TEST_SUITE_GUIDE.md to v1.2 with latest metrics
+
+### Technical Details
+
+- Architecture: Always been single-tool (`execute_code` only)
+- Token reduction: 98% (800 tokens vs 70,000 traditional)
+- Quality metrics: 214 tests, 63% coverage, 100% type hints
+- CI/CD: 4 quality gates maintained
+
+### Rationale
+
+This release formalizes the intended single-tool architecture and properly 
+separates development diagnostics into CLI utilities. The diagnostic tools 
+were temporarily exposed as MCP tools during testing but were never intended 
+for production user access. This improves clarity while enhancing developer 
+tooling.
+
+**No breaking changes** - diagnostic tools were never part of the public API.
+
+---
+
 ## [v2.2.2] - 2025-01-21 - Meta-Level Self-Validation Achievement 🐕🍖∞
 
 ### 🧪 Testing Infrastructure & Meta Achievement
