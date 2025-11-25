@@ -4,7 +4,6 @@ Comprehensive test suite for all 10 fixed write operations.
 Tests authentication validation and operation success.
 """
 import asyncio
-import json
 import sys
 from pathlib import Path
 
@@ -13,16 +12,15 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from github_mcp import (
+from github_mcp import (  # noqa: E402
     github_create_file, github_update_file, github_delete_file,
     github_create_release, github_update_release,
     github_update_repository, github_archive_repository, github_delete_repository,
-    github_merge_pull_request,
     github_get_file_content, github_get_release,
     CreateFileInput, UpdateFileInput, DeleteFileInput,
     CreateReleaseInput, UpdateReleaseInput,
     UpdateRepositoryInput, ArchiveRepositoryInput, DeleteRepositoryInput,
-    MergePullRequestInput, GetFileContentInput, GetReleaseInput
+    GetFileContentInput, GetReleaseInput
 )
 
 # Test repository configuration

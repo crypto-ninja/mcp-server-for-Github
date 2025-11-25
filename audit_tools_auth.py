@@ -3,7 +3,7 @@
 Systematic audit of all GitHub MCP tools for authentication and error handling.
 """
 import re
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 def extract_tool_functions(file_path: str) -> List[Dict]:
     """Extract all tool functions and their authentication patterns."""
@@ -155,11 +155,11 @@ def generate_report(tools: List[Dict], critical: List[Dict], high_priority: List
             report.append(f"### {tool['name']}\n\n")
             report.append(f"- **Line:** {tool['line']}\n")
             report.append(f"- **Risk Level:** {tool['risk_level']} - Write Operation\n")
-            report.append(f"- **Issues Found:**\n")
+            report.append("- **Issues Found:**\n")
             for issue in tool['issues']:
                 report.append(f"  - ❌ {issue}\n")
-            report.append(f"- **Priority:** CRITICAL\n")
-            report.append(f"- **Recommendation:** Add explicit token validation before API call\n\n")
+            report.append("- **Priority:** CRITICAL\n")
+            report.append("- **Recommendation:** Add explicit token validation before API call\n\n")
         report.append("---\n\n")
     
     # High Priority Issues
@@ -169,10 +169,10 @@ def generate_report(tools: List[Dict], critical: List[Dict], high_priority: List
             report.append(f"### {tool['name']}\n\n")
             report.append(f"- **Line:** {tool['line']}\n")
             report.append(f"- **Risk Level:** {tool['risk_level']}\n")
-            report.append(f"- **Issues Found:**\n")
+            report.append("- **Issues Found:**\n")
             for issue in tool['issues']:
                 report.append(f"  - ⚠️ {issue}\n")
-            report.append(f"- **Priority:** HIGH\n\n")
+            report.append("- **Priority:** HIGH\n\n")
         report.append("---\n\n")
     
     # Low Priority Issues
@@ -225,6 +225,6 @@ if __name__ == '__main__':
         f.write(report)
     
     # Print summary (safe for Windows console)
-    print(f"\nAudit complete! Report saved to AUTH_AUDIT_REPORT.md")
+    print("\nAudit complete! Report saved to AUTH_AUDIT_REPORT.md")
     print(f"   Found {len(critical)} critical, {len(high_priority)} high, {len(low_priority)} low priority issues")
 

@@ -4149,7 +4149,6 @@ async def github_create_release(params: CreateReleaseInput) -> str:
         # CRITICAL: Create the Git tag FIRST using Git References API
         # This ensures the tag exists before creating the release
         # Without this, GitHub creates "untagged" releases
-        tag_exists = False
         try:
             # Check if tag already exists
             await _make_github_request(
@@ -4157,8 +4156,7 @@ async def github_create_release(params: CreateReleaseInput) -> str:
                 method="GET",
                 token=auth_token
             )
-            # Tag exists, that's fine
-            tag_exists = True
+            # Tag exists, that's fine - continue to create release
         except httpx.HTTPStatusError as tag_check_error:
             # Only create tag if it's a 404 (not found) error
             # If it's an auth error (401/403), we should fail immediately
@@ -4181,7 +4179,7 @@ async def github_create_release(params: CreateReleaseInput) -> str:
                         token=auth_token,
                         json=tag_ref_data
                     )
-                    tag_exists = True
+                    # Tag created successfully - continue to create release
                 except Exception as tag_create_error:
                     # If tag creation fails, raise the error (don't silently continue)
                     raise tag_create_error
