@@ -112,7 +112,6 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
-        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "/Users/yourname/projects/my-app"
       }
     }
@@ -129,7 +128,6 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
-        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "C:\\Users\\yourname\\projects\\my-app"
       }
     }
@@ -146,7 +144,6 @@ Edit your Claude Desktop config file (location varies by OS):
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_TOKEN": "ghp_...",
-        "MCP_CODE_FIRST_MODE": "true",
         "MCP_WORKSPACE_ROOT": "/home/yourname/projects/my-app"
       }
     }
@@ -240,67 +237,55 @@ For working with files directly on GitHub (no cloning required):
 
 ---
 
-## 🚀 Code-First Architecture: Single Tool Design
+## 🏗️ Architecture: Code-First MCP
 
-The GitHub MCP Server implements Anthropic's code-first pattern with 
-**ONE user-facing MCP tool** - this has been the design from day one:
+### How It Works
 
-```typescript
-execute_code  // The ONLY tool exposed to MCP clients
+The GitHub MCP Server uses **code-first architecture** - a revolutionary approach that reduces token usage by 98% while maintaining full functionality.
+
+#### What You See
+
+When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
+
+- **One tool:** `execute_code`
+- **Token cost:** ~800 tokens
+- **All functionality:** Access to 42 GitHub operations
+
+#### What Happens Under The Hood
+
+```
+┌─────────────────────────────────┐
+│   MCP Client                    │
+│   Sees: execute_code (1 tool)   │
+└────────────┬────────────────────┘
+             │
+             ↓ You write TypeScript code
+┌─────────────────────────────────┐
+│   Deno Runtime                  │
+│   Executes your code securely   │
+│   Access to all 42 tools via    │
+│   callMCPTool()                 │
+└─────────────────────────────────┘
 ```
 
-**Why This Achieves 98% Token Reduction:**
+#### Traditional MCP vs Code-First
 
-| Approach | Tools Loaded | Tokens | Experience |
-|----------|-------------|--------|------------|
-| Traditional MCP | 44 tools upfront | ~70,000 | Choose from exposed tools |
-| Code-First MCP | 1 tool upfront | ~800-2,000 | Execute code that calls tools |
-| **Reduction** | **98% fewer** | **69,200 saved** | **Same functionality** |
+| Aspect | Traditional MCP | Code-First MCP (Us) |
+|--------|----------------|---------------------|
+| Tools exposed | 42 tools | 1 tool |
+| Token cost | ~70,000 | ~800 |
+| Reduction | - | **98%** |
+| Functionality | Same | Same |
+| Flexibility | Tool calls only | Code + logic + loops |
 
-Inside `execute_code`, you have dynamic access to all 44 GitHub tools:
+#### Why This Matters
 
-```typescript
-// Analyze a repository
-const repo = await callMCPTool("github_get_repo_info", {
-  owner: "facebook",
-  repo: "react"
-});
+- **Massive token savings:** 98% reduction means faster responses and lower costs
+- **Complex workflows:** Combine multiple operations in single execution
+- **Conditional logic:** Use if/else, loops, and full programming capability
+- **Same functionality:** All 42 GitHub operations still available
 
-// Create an issue
-const issue = await callMCPTool("github_create_issue", {
-  owner: "facebook",
-  repo: "react",
-  title: "Bug: Memory leak in useEffect",
-  body: "Detailed description..."
-});
-
-// Search code
-const results = await callMCPTool("github_search_code", {
-  query: "useState language:typescript"
-});
-```
-
-### Development Utilities (CLI)
-
-For server diagnostics and development, we provide CLI commands 
-(these are NOT MCP tools):
-
-```bash
-# Check server health
-github-mcp-cli health
-
-# Clear GitHub App token cache  
-github-mcp-cli clear-cache
-
-# Verify Deno runtime installation
-github-mcp-cli check-deno
-```
-
-**Note:** These CLI utilities are for development and debugging only. 
-They are not exposed to MCP clients and were created for testing the 
-server itself during development.
-
----
+This architecture validates Anthropic's research predictions about code-first MCP.
 
 ### Tool Discovery
 
@@ -323,14 +308,22 @@ console.log(toolInfo.example);
 
 This discovery happens **inside your TypeScript code** - no extra tools loaded into Claude's context!
 
-### Benefits
+### Development Utilities (CLI)
 
-✅ 98% token reduction - 70,000 → 800 tokens  
-✅ 98% cost reduction - $1.05 → $0.01 per conversation  
-✅ 95% faster initialization - 45s → 2s  
-✅ More powerful - Loops, conditionals, complex logic  
-✅ Easier to use - Just describe what you want  
-✅ Same capabilities - All 44 GitHub tools available via `execute_code`
+For server diagnostics and development, we provide CLI commands (these are NOT MCP tools):
+
+```bash
+# Check server health
+github-mcp-cli health
+
+# Clear GitHub App token cache  
+github-mcp-cli clear-cache
+
+# Verify Deno runtime installation
+github-mcp-cli check-deno
+```
+
+**Note:** These CLI utilities are for development and debugging only. They are not exposed to MCP clients and were created for testing the server itself during development.
 
 ### Simple Setup
 
@@ -342,8 +335,7 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
       "command": "python3",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_token_here"
       }
     }
   }
@@ -358,17 +350,16 @@ This discovery happens **inside your TypeScript code** - no extra tools loaded i
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_token_here"
       }
     }
   }
 }
 ```
 
-**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode (98% token savings). Omit it for traditional mode (all 44 tools visible).
+**Note:** Code-first mode is enforced by the architecture. No additional configuration is needed. You get 98% token savings automatically.
 
-That's it! No configuration needed - you get 98% savings by default. 🚀
+That's it! You get 98% token savings by default. 🚀
 
 ### Learn More
 
@@ -399,122 +390,219 @@ Thank you to the Anthropic team for pioneering this approach! 🎉
 
 ---
 
-## 🔐 Authentication
+## ⚙️ Configuration & Authentication
 
-GitHub MCP Server supports two authentication methods:
+### Dual Authentication Strategy (Recommended)
 
-### Method 1: Personal Access Token (Quick Start)
-
-Perfect for individual developers:
-
-1. Create a token at https://github.com/settings/tokens
-   - Scopes needed: `repo`, `read:org` (for organization repos)
-
-2. Create a `.env` file:
-
-   ```bash
-   GITHUB_TOKEN=ghp_your_token_here
-   ```
-
-**For Claude Desktop:**
+For maximum functionality and rate limits, configure **both** authentication methods:
 
 ```json
 {
   "mcpServers": {
-    "github": {
+    "github-mcp": {
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        // === GitHub App Authentication (Primary) ===
+        "GITHUB_APP_ID": "123456",
+        "GITHUB_APP_INSTALLATION_ID": "12345678",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/private-key.pem",
+        
+        // === Personal Access Token (Fallback - REQUIRED for releases) ===
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
+        
+        // === Optional: Workspace for local file operations ===
+        "MCP_WORKSPACE_ROOT": "/path/to/your/project"
       }
     }
   }
 }
 ```
 
-### Method 2: GitHub App (Recommended for Teams)
+### Why Both Authentication Methods?
 
-**Better rate limits (15,000/hour vs 5,000/hour) and fine-grained permissions:**
+#### 🏆 GitHub App Authentication (Primary)
 
-1. **Create a GitHub App:**
-   - Go to https://github.com/settings/apps/new
-   - Name: `My GitHub MCP Server` (or any name)
-   - Homepage URL: `https://github.com/crypto-ninja/github-mcp-server`
-   - Webhook: Uncheck "Active"
+- **Rate Limit:** 15,000 requests/hour (3x better than PAT)
+- **Best For:** Most operations, team collaboration, production use
+- **Covers:** Repository management, issues, PRs, files, search, workflows
 
-2. **Set Permissions:**
-   - Repository permissions:
-     - Contents: Read and write
-     - Issues: Read and write
-     - Pull requests: Read and write
-     - Metadata: Read-only (automatic)
-     - Actions: Read and write
-     - Administration: Read and write
-     - Commit statuses: Read-only
+**Setup GitHub App:**
 
-3. **Install the App:**
-   - Click "Install App" in the left sidebar
-   - Choose your account
-   - Select repositories (or all repositories)
-   - Note the Installation ID from the URL
+1. Go to GitHub Settings → Developer settings → GitHub Apps → New GitHub App
+2. Set permissions: Contents (read/write), Issues (read/write), Pull requests (read/write), Metadata (read)
+3. Install the app on your account/organization
+4. Generate and download private key
+5. Note your App ID and Installation ID
 
-4. **Generate Private Key:**
-   - In app settings, click "Generate a private key"
-   - Download the `.pem` file
-   - Save it securely (e.g., `~/github-mcp-key.pem`)
+#### 🔑 Personal Access Token (Required Fallback)
 
-5. **Configure credentials:**
+- **Rate Limit:** 5,000 requests/hour
+- **Required For:** Release operations (GitHub App limitation)
+- **Also Covers:** All operations if GitHub App unavailable
 
-   ```bash
-   # .env file
-   GITHUB_APP_ID=123456
-   GITHUB_APP_INSTALLATION_ID=789012
-   GITHUB_APP_PRIVATE_KEY_PATH=/path/to/private-key.pem
-   ```
+**Why PAT is Required:**
 
-**For Claude Desktop:**
+GitHub Apps have a permission limitation - they cannot create/manage releases that involve tagging commits (the "releases" permission scope is not available for GitHub Apps). The following operations **require PAT fallback**:
+
+- ✅ `github_create_release` - Creating releases with tags
+- ✅ `github_update_release` - Updating release information
+- ✅ Any operation involving non-HEAD commit tagging
+
+**The server automatically falls back to PAT** for these operations even if GitHub App is configured.
+
+**Create PAT:**
+
+1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Generate new token with scopes: `repo`, `workflow`
+3. Copy the token (you won't see it again!)
+
+### Authentication Behavior
+
+```text
+Operation Requested
+    ↓
+Try GitHub App (if configured)
+    ↓
+├─ Success → Use App (15k rate limit) ✅
+└─ Fails or requires releases permission
+       ↓
+   Fall back to PAT (if configured)
+       ↓
+   ├─ Success → Use PAT (5k rate limit) ✅
+   └─ Fails → Return auth error ❌
+```
+
+### Quick Start (PAT Only)
+
+For quick setup, you can start with just a PAT:
 
 ```json
 {
   "mcpServers": {
-    "github": {
+    "github-mcp": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
+      }
+    }
+  }
+}
+```
+
+**Limitations:**
+
+- ⚠️ Lower rate limit (5,000 vs 15,000 requests/hour)
+- ⚠️ No team collaboration benefits
+- ✅ All operations work, including releases
+
+### Platform-Specific Examples
+
+#### macOS
+
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_APP_ID": "123456",
+        "GITHUB_APP_INSTALLATION_ID": "12345678",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "/Users/yourname/.github/private-key.pem",
+        "GITHUB_TOKEN": "ghp_your_token",
+        "MCP_WORKSPACE_ROOT": "/Users/yourname/projects/my-app"
+      }
+    }
+  }
+}
+```
+
+#### Windows
+
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
         "GITHUB_APP_ID": "123456",
-        "GITHUB_APP_INSTALLATION_ID": "789012",
-        "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem"
+        "GITHUB_APP_INSTALLATION_ID": "12345678",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "C:\\Users\\yourname\\.github\\private-key.pem",
+        "GITHUB_TOKEN": "ghp_your_token",
+        "MCP_WORKSPACE_ROOT": "C:\\Users\\yourname\\projects\\my-app"
       }
     }
   }
 }
 ```
 
-### Feature Comparison
+#### Linux
 
-| Feature | Personal Access Token | GitHub App |
-|---------|----------------------|------------|
-| Setup Time | 30 seconds | 15 minutes |
-| Rate Limit | 5,000/hour | 15,000/hour ⚡ |
-| Permissions | Coarse (all or nothing) | Fine-grained ✅ |
-| Enterprise Ready | ⚠️ Limited | ✅ Yes 🏢 |
-| Team Management | ❌ | ✅ Yes 👥 |
-
-### Dual Authentication
-
-You can configure BOTH methods - the server will automatically use GitHub App if configured, with PAT as fallback:
-
-```bash
-# .env file - both configured
-GITHUB_APP_ID=123456
-GITHUB_APP_INSTALLATION_ID=789012
-GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
-GITHUB_TOKEN=ghp_fallback_token  # Used if App auth fails
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_APP_ID": "123456",
+        "GITHUB_APP_INSTALLATION_ID": "12345678",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "/home/yourname/.github/private-key.pem",
+        "GITHUB_TOKEN": "ghp_your_token",
+        "MCP_WORKSPACE_ROOT": "/home/yourname/projects/my-app"
+      }
+    }
+  }
+}
 ```
 
-**Note:** Due to GitHub platform limitations, some operations (like releases) may require PAT authentication even when using a GitHub App. The server automatically falls back to PAT when needed. See [GITHUB_APP_SETUP.md](GITHUB_APP_SETUP.md) for details.
+### Environment Variables Reference
 
-### Troubleshooting
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | Yes* | Personal Access Token (required for releases) |
+| `GITHUB_APP_ID` | No | GitHub App ID (for 3x better rate limits) |
+| `GITHUB_APP_INSTALLATION_ID` | No | Installation ID of your GitHub App |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | No | Path to GitHub App private key (.pem file) |
+| `GITHUB_APP_PRIVATE_KEY` | No | Direct private key content (for CI/CD) |
+| `GITHUB_AUTH_MODE` | No | Force auth method: "app" or "pat" (auto by default) |
+| `MCP_WORKSPACE_ROOT` | No | Root directory for local file operations |
+
+*Either `GITHUB_TOKEN` or all three GitHub App variables required
+
+### Troubleshooting Authentication
+
+#### "Authentication required" errors
+
+1. ✅ Verify `GITHUB_TOKEN` is set and valid
+2. ✅ Check token has `repo` and `workflow` scopes
+3. ✅ If using GitHub App, verify Installation ID is correct
+4. ✅ Verify private key path is correct and file exists
+
+#### Which auth method is being used?
+
+- Check server logs: `[OK] Using GitHub App authentication` or `[OK] Using PAT authentication`
+- GitHub App is tried first (if configured)
+- Automatic fallback to PAT for release operations
+- Manual override: Set `GITHUB_AUTH_MODE=pat` to force PAT
+
+#### Rate limit comparison
+
+| Auth Method | Requests/Hour | Best For |
+|-------------|---------------|----------|
+| GitHub App | 15,000 | Most operations, production use |
+| PAT | 5,000 | Quick setup, release operations |
+| Both (Dual) | 15,000 + fallback | **Recommended** - Best of both |
+
+#### Release operations fail with "403" or "Authentication required"
+
+- ✅ **This is expected** if only GitHub App is configured
+- ✅ **Solution:** Add `GITHUB_TOKEN` for PAT fallback
+- ✅ GitHub Apps cannot create releases (API limitation)
+- ✅ Server automatically falls back to PAT for these operations
 
 **Enable debug logging:**
 
@@ -678,6 +766,42 @@ Profile and organization data retrieval.
 ---
 
 *For complete tool documentation and examples, see sections below*
+
+---
+
+## ❓ Common Questions
+
+### "Why do I only see one tool in my MCP client?"
+
+This is correct! The code-first architecture exposes only `execute_code` to maximize token efficiency. All 42 GitHub operations are available inside your code via `callMCPTool()`.
+
+### "How do I use the GitHub operations?"
+
+Write TypeScript code inside `execute_code`:
+
+```typescript
+const issue = await callMCPTool("github_create_issue", {
+  owner: "user",
+  repo: "repo",
+  title: "Bug report"
+});
+```
+
+### "Is this the same as traditional MCP?"
+
+Functionality-wise: **Yes** - all operations available.  
+Architecture-wise: **No** - 98% more efficient token usage.
+
+### "Can I use multiple tools in one call?"
+
+**Yes!** That's a key advantage:
+
+```typescript
+// Get repo info, create issue, add label - in one execution
+const repo = await callMCPTool("github_get_repo_info", {...});
+const issue = await callMCPTool("github_create_issue", {...});
+await callMCPTool("github_add_label", {...});
+```
 
 ---
 

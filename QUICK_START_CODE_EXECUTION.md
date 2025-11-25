@@ -30,8 +30,7 @@ Add to your Claude Desktop config file:
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_token_here"
       }
     }
   }
@@ -40,7 +39,7 @@ Add to your Claude Desktop config file:
 
 **Note:** On macOS/Linux, you may need to use `python3` instead of `python`.
 
-**Important:** `MCP_CODE_FIRST_MODE=true` enables code-first mode for 98% token savings. 🚀
+**Note:** Code-first mode is enforced by the architecture. No additional configuration is needed. You get 98% token savings automatically. 🚀
 
 ### 3. Restart Claude Desktop
 

@@ -352,7 +352,7 @@ Internal (Deno): Has all 41 tools → full functionality
 - TypeScript tooling (bundled)
 
 **Configuration:**
-- Add `MCP_CODE_FIRST_MODE=true` to Claude Desktop config (optional - default)
+- Code-first mode is enforced by architecture (no configuration needed)
 - Existing `GITHUB_TOKEN` still required
 
 #### 🎯 Use Cases
@@ -405,7 +405,6 @@ return {
       "args": ["github-mcp-server"],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token",
-        "MCP_CODE_FIRST_MODE": "true"
       }
     }
   }

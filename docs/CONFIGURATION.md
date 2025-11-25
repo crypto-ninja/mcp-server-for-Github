@@ -22,15 +22,14 @@ Add this to your `claude_desktop_config.json`:
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
       }
     }
   }
 }
 ```
 
-**Note:** `MCP_CODE_FIRST_MODE=true` enables code-first mode for 98% token savings. Omit it for traditional mode (all 41 tools visible).
+**Note:** Code-first mode is enforced by the architecture. No additional configuration is needed. You get 98% token savings automatically.
 
 ## Using UV (Recommended)
 
@@ -54,8 +53,7 @@ If you're using UV for dependency management:
         "github_mcp"
       ],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
       }
     }
   }
@@ -65,10 +63,11 @@ If you're using UV for dependency management:
 ## Environment Variables
 
 ### GitHub App (recommended for orgs)
-- `GITHUB_AUTH_MODE=app`
 - `GITHUB_APP_ID` (numeric)
-- `GITHUB_APP_PRIVATE_KEY` (PEM string)
 - `GITHUB_APP_INSTALLATION_ID` (numeric)
+- `GITHUB_APP_PRIVATE_KEY` (PEM string) OR `GITHUB_APP_PRIVATE_KEY_PATH` (path to .pem file)
+
+**Note:** You can use either `GITHUB_APP_PRIVATE_KEY` (for CI/CD) or `GITHUB_APP_PRIVATE_KEY_PATH` (for local development). The server will automatically use GitHub App if configured, with PAT as fallback.
 
 ### Personal Access Token (PAT)
 - `GITHUB_TOKEN` (fine-grained or classic)
@@ -110,9 +109,10 @@ After adding the configuration:
 ## Troubleshooting
 
 ### Server Not Connecting
-- Verify the path to `github_mcp.py` is absolute and correct
-- Check that Python is in your PATH
-- Ensure all dependencies are installed (`mcp`, `httpx`, `pydantic`)
+- Verify Python is in your PATH: `python --version` (should be 3.9+)
+- Ensure the package is installed: `pip show github-mcp-server`
+- Test the module: `python -m github_mcp` (should start without errors)
+- Ensure all dependencies are installed: `pip install mcp httpx pydantic`
 
 ### Authentication Errors
 - Verify your GitHub token is valid
@@ -120,10 +120,8 @@ After adding the configuration:
 - Ensure the token isn't expired
 
 ### Permission Errors
-- On Unix systems, make sure `github_mcp.py` has execute permissions:
-  ```bash
-  chmod +x /path/to/github_mcp.py
-  ```
+- If using file-based execution, ensure the file has execute permissions
+- For module-based execution (`python -m github_mcp`), no special permissions needed
 
 ### Rate Limiting
 - Use a GitHub token to increase rate limits
@@ -135,10 +133,21 @@ After adding the configuration:
 If you need different tokens for different operations, you can pass tokens directly in tool calls rather than using environment variables.
 
 ### Custom Base URL (GitHub Enterprise)
-For GitHub Enterprise installations, you can modify the `API_BASE_URL` constant in `github_mcp.py`:
+For GitHub Enterprise installations, set the `GITHUB_API_BASE_URL` environment variable:
 
-```python
-API_BASE_URL = "https://github.your-company.com/api/v3"
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_API_BASE_URL": "https://github.your-company.com/api/v3"
+      }
+    }
+  }
+}
 ```
 
 ## Security Notes
