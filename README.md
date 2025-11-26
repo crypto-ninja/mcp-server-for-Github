@@ -80,7 +80,7 @@
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
 **Total Tools:** 1 tool exposed to MCP clients (`execute_code`) 🚀  
-**Internal Tools:** 44 GitHub tools available via `execute_code`  
+**Internal Tools:** 41 GitHub tools available via `execute_code`  
 **Token Efficiency:** 98% reduction vs traditional MCP
 
 ---
@@ -918,10 +918,16 @@ Architecture-wise: **No** - 98% more efficient token usage.
 **Yes!** That's a key advantage:
 
 ```typescript
-// Get repo info, create issue, add label - in one execution
+// Get repo info, create issue, then manage labels via github_update_issue - in one execution
 const repo = await callMCPTool("github_get_repo_info", {...});
 const issue = await callMCPTool("github_create_issue", {...});
-await callMCPTool("github_add_label", {...});
+
+await callMCPTool("github_update_issue", {
+  owner: "crypto-ninja",
+  repo: "github-mcp-server",
+  issue_number: issue.number ?? 1,
+  labels: ["bug", "documentation"]
+});
 ```
 
 ---
@@ -982,7 +988,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v1.7.0 with 41 tools (Dual workspace: local + GitHub!)  
+**Current:** v2.3.1 with 42 tools (Code-first architecture with 98% token reduction!)  
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
