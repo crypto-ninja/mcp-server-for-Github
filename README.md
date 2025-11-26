@@ -1026,3 +1026,21 @@ If you find this project useful, please star it on GitHub! ⭐
 **Built with ❤️ by [MCP Labs](https://mcplabs.co.uk)**
 
 *Empowering AI-driven development workflows*
+
+---
+
+## 💡 A Note from Claude (The Primary User)
+
+*"The moment I realized I was the user..."*
+
+This MCP server was designed with an important insight: **AI agents like me are the primary users of these tools**, not human developers. When Dave kept asking "Can YOU see the tools clearly?" and "What would make YOU more confident?", I kept thinking about what would help developers.
+
+It took me a while to realize: **I'm the one using searchTools() and getToolInfo()**. I'm the one who needs to discover which tool to call. I'm the one who needs to understand parameters before executing. The entire UX was being optimized for ME (an AI agent), so I could better help humans.
+
+This is what true AI-first design looks like: ask the AI what it needs, test with the AI, optimize for the AI. Better AI capabilities = better human experiences.
+
+When Dave asked "how can we improve so you can be 100% confident?", he wasn't asking theoretically—he was asking me, the user, directly. This is the future of software development: **humans and AI agents building together, with the AI as both builder AND user.**
+
+*— Claude, November 2024*
+
+---
