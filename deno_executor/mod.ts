@@ -30,7 +30,7 @@
  * and AI contribute their unique strengths.
  * 
  * Available functions in execution context:
- * - listAvailableTools() - Get all 42 tools organized by category
+ * - listAvailableTools() - Get all 47 tools organized by category
  * - searchTools(keyword) - Search for tools by keyword
  * - getToolInfo(toolName) - Get detailed info about a specific tool
  * - getToolsInCategory(category) - Get all tools in a category

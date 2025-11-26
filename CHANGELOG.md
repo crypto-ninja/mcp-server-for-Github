@@ -1,5 +1,29 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Branch Management Tools** (5 new tools):
+  - `github_list_branches` - List repository branches with status and protection info
+  - `github_create_branch` - Create branches from any ref (branch, tag, or commit SHA)
+  - `github_get_branch` - Get branch details and protection status
+  - `github_delete_branch` - Delete branches with safety checks (default/protected branch protection)
+  - `github_compare_branches` - Compare branches to see commits ahead/behind and files changed
+
+### Meta Achievement
+
+- 🤯 These tools created their own PR and merged themselves into main!
+- Ultimate validation of code-first architecture
+- Peak dogfooding: tools that manage their own lifecycle
+
+### Tool Count
+
+- Total tools: 47 (46 internal + execute_code)
+- New tools: +5 branch management tools
+
+---
+
 ## [2.3.1] - 2025-01-26
 
 ### Added
