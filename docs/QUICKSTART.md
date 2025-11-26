@@ -2,22 +2,34 @@
 
 Get up and running with the GitHub MCP Server in 5 minutes!
 
-## Step 1: Install Dependencies (1 minute)
+## Step 1: Install the Package (1 minute)
 
-Choose one method:
-
-### Option A: Using pip
+### Recommended: Install from PyPI
 ```bash
-pip install mcp httpx pydantic --break-system-packages
+pip install github-mcp-server
 ```
 
-### Option B: Using UV (Recommended)
+This installs the package and all dependencies automatically.
+
+### Alternative: Install from Source
+If you're developing or want the latest code:
+
+```bash
+# Clone the repository
+git clone https://github.com/crypto-ninja/github-mcp-server.git
+cd github-mcp-server
+
+# Install in development mode
+pip install -e .
+```
+
+### Using UV (Optional)
 ```bash
 # Install UV if you don't have it
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
-uv pip install mcp httpx pydantic
+# Install the package
+uv pip install github-mcp-server
 ```
 
 ## Step 2: Choose Authentication
@@ -74,28 +86,37 @@ nano ~/.config/Claude/claude_desktop_config.json
 
 ### Add Server Configuration
 
-Replace `/path/to/github_mcp.py` with the actual path to your file:
+Use the module-based approach (recommended):
 
 ```json
 {
   "mcpServers": {
     "github": {
       "command": "python",
-      "args": [
-        "/path/to/github_mcp.py"
-      ],
+      "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here",
       }
     }
   }
 }
 ```
 
-**Example paths:**
-- macOS: `/Users/yourname/github_mcp.py`
-- Windows: `C:\\Users\\yourname\\github_mcp.py`
-- Linux: `/home/yourname/github_mcp.py`
+**Note:** On macOS/Linux, you may need to use `python3` instead of `python`:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python3",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+      }
+    }
+  }
+}
+```
 
 ### Alternative: Without Token (Public Repos Only)
 
@@ -104,9 +125,9 @@ Replace `/path/to/github_mcp.py` with the actual path to your file:
   "mcpServers": {
     "github": {
       "command": "python",
-      "args": [
-        "/path/to/github_mcp.py"
-      ]
+      "args": ["-m", "github_mcp"],
+      "env": {
+      }
     }
   }
 }
@@ -182,9 +203,9 @@ summarize its main points."
 
 ### "Server not connecting"
 
-1. **Check the path**: Ensure the path to `github_mcp.py` is absolute and correct
-2. **Verify Python**: Run `python --version` (should be 3.10+)
-3. **Test the server**: Run `python /path/to/github_mcp.py` (it should start without errors)
+1. **Verify Python**: Run `python --version` (should be 3.9+)
+2. **Test the module**: Run `python -m github_mcp` (it should start without errors)
+3. **Check installation**: Ensure the package is installed: `pip install github-mcp-server`
 4. **Check logs**: Look at Claude Desktop logs for errors
 
 ### "Authentication errors"
@@ -262,10 +283,10 @@ For large result sets:
 
 If you encounter issues:
 
-1. **Check syntax**: Run `python -m py_compile github_mcp.py`
-2. **Test manually**: Run `python github_mcp.py` and check for errors
+1. **Test the module**: Run `python -m github_mcp` and check for errors
+2. **Verify installation**: Ensure package is installed: `pip show github-mcp-server`
 3. **Review logs**: Check Claude Desktop logs
-4. **Verify dependencies**: Ensure all packages are installed
+4. **Verify dependencies**: Ensure all packages are installed: `pip install mcp httpx pydantic`
 5. **Test token**: Try using GitHub's API directly to verify your token
 
 ## ⚡ Performance Tips

@@ -4,8 +4,7 @@
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
-        "MCP_CODE_FIRST_MODE": "true"
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
       }
     }
   }

@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-42-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.3.0)
+[![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.3.1)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,7 +12,17 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.3.0 - Architecture Formalization (January 26, 2025)
+### 🚀 Latest: v2.3.1 - Code-First Mode Enforced by Default (January 26, 2025)
+
+**CRITICAL FIX:** Code-first mode now truly enforced by default - one character change with massive impact!
+
+**New in v2.3.1:**
+- 🎯 **Default Enforcement** - Code-first mode now defaults to `true` (was `false`)
+- 🚀 **Zero Configuration** - New users get 98% token reduction automatically
+- ✅ **Documentation Alignment** - Code now matches documentation claims
+- 🔧 **Architectural Integrity** - True reference implementation of code-first MCP
+
+**Previous: v2.3.0 - Architecture Formalization (January 26, 2025)**
 
 **Single-Tool Architecture Formalized:** The intended design from day one - one tool, 98% token reduction!
 
@@ -287,24 +297,135 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 This architecture validates Anthropic's research predictions about code-first MCP.
 
-### Tool Discovery
+### 🔍 Tool Discovery
 
-Don't know what tools are available? Discover them dynamically:
+The GitHub MCP Server includes powerful tool discovery functions to help you find and understand tools quickly.
+
+#### searchTools(keyword)
+
+Search for tools by keyword. Searches tool names, descriptions, categories, and parameters with relevance scoring.
+
+**Example:**
 
 ```typescript
-// List all available tools
-const tools = listAvailableTools();
-console.log(`Total tools: ${tools.totalTools}`);
-console.log(`Categories: ${tools.categories.join(", ")}`);
-
-// Search for specific tools
+// Find all issue-related tools
 const issueTools = searchTools("issue");
-console.log(`Found ${issueTools.length} tools related to issues`);
+// Returns: Array of tools sorted by relevance
 
-// Get detailed info about a tool
-const toolInfo = getToolInfo("github_create_issue");
-console.log(toolInfo.example);
+issueTools.forEach(tool => {
+  console.log(`${tool.name} (relevance: ${tool.relevance})`);
+  console.log(`  Category: ${tool.category}`);
+  console.log(`  Matched in: ${tool.matchedIn.join(", ")}`);
+});
+
+// Output:
+// github_create_issue (relevance: 15)
+//   Category: Issues
+//   Matched in: name, description
 ```
+
+**Returns:**
+
+```typescript
+Array<{
+  name: string;           // Tool name
+  category: string;       // Category (e.g., "Issues")
+  description: string;    // Tool description
+  relevance: number;      // Relevance score (higher = better match)
+  matchedIn: string[];    // Where matches were found
+  tool: object;          // Full tool object
+}>
+```
+
+**Relevance Scoring:**
+
+- Tool name match: +10 points
+- Description match: +5 points
+- Category match: +3 points
+- Parameter name match: +2 points
+- Parameter description match: +1 point
+
+#### getToolInfo(toolName)
+
+Get complete details about a specific tool including parameters, usage, and metadata.
+
+**Example:**
+
+```typescript
+// Get detailed info about a tool
+const info = getToolInfo("github_create_issue");
+
+console.log(`Name: ${info.name}`);
+console.log(`Category: ${info.category}`);
+console.log(`Description: ${info.description}`);
+console.log(`Usage: ${info.usage}`);
+
+// See metadata
+console.log(`Total tools: ${info.metadata.totalTools}`);
+console.log(`Tools in category: ${info.metadata.categoryTools}`);
+
+// Check parameters
+Object.entries(info.parameters).forEach(([name, param]) => {
+  console.log(`${name}: ${param.type} ${param.required ? '(required)' : '(optional)'}`);
+  console.log(`  ${param.description}`);
+});
+```
+
+**Returns:**
+
+```typescript
+{
+  name: string;              // Tool name
+  category: string;          // Category
+  description: string;       // Description
+  parameters: object;        // Parameter definitions
+  returns: string;           // Return value description
+  example: string;           // Code example
+  usage: string;            // Usage syntax
+  metadata: {
+    totalTools: number;      // Total available tools
+    categoryTools: number;   // Tools in same category
+    relatedCategory: string; // Category name
+  }
+}
+```
+
+**Error Handling:**
+
+```typescript
+const info = getToolInfo("nonexistent_tool");
+// Returns: { error: "Tool not found", suggestion: "Use searchTools()...", availableTools: 42 }
+```
+
+#### Workflow Example: Discover → Learn → Use
+
+```typescript
+// 1. Discover tools
+const prTools = searchTools("pull request");
+console.log(`Found ${prTools.length} PR-related tools`);
+
+// 2. Learn about the best match
+const bestMatch = prTools[0];
+const info = getToolInfo(bestMatch.name);
+console.log(`Using: ${info.name}`);
+console.log(`Required params: ${Object.keys(info.parameters).filter(k => info.parameters[k].required).join(", ")}`);
+
+// 3. Use the tool
+const result = await callMCPTool(info.name, {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});
+```
+
+#### Available Discovery Functions
+
+| Function | Purpose | Returns |
+|----------|---------|---------|
+| `listAvailableTools()` | Get all 42 tools organized by category | Full tool catalog |
+| `searchTools(keyword)` | Find tools by keyword | Relevance-sorted matches |
+| `getToolInfo(toolName)` | Get complete tool details | Full tool information |
+| `callMCPTool(name, params)` | Execute a tool | Tool result |
 
 This discovery happens **inside your TypeScript code** - no extra tools loaded into Claude's context!
 
@@ -801,6 +922,49 @@ Architecture-wise: **No** - 98% more efficient token usage.
 const repo = await callMCPTool("github_get_repo_info", {...});
 const issue = await callMCPTool("github_create_issue", {...});
 await callMCPTool("github_add_label", {...});
+```
+
+---
+
+## 🚀 Quick Reference
+
+### Find Tools
+
+```typescript
+// Search by keyword
+searchTools("issue")      // Find issue-related tools
+searchTools("create")     // Find tools that create things
+searchTools("pull request") // Find PR tools
+```
+
+### Learn About Tools
+
+```typescript
+// Get complete details
+const info = getToolInfo("github_create_issue");
+console.log(info.parameters);  // See all parameters
+console.log(info.usage);       // See usage example
+console.log(info.metadata);    // See context
+```
+
+### Use Tools
+
+```typescript
+// Call any tool
+const result = await callMCPTool("github_create_issue", {
+  owner: "user",
+  repo: "repo",
+  title: "Bug report"
+});
+```
+
+### Discover All Tools
+
+```typescript
+// Get complete catalog
+const tools = listAvailableTools();
+console.log(`${tools.totalTools} tools available`);
+console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 ```
 
 ---

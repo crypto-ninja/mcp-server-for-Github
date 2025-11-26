@@ -1,13 +1,20 @@
 /**
  * Deno Runtime Executor
  * Executes user TypeScript code with access to GitHub MCP tools
+ * 
+ * Available functions in execution context:
+ * - listAvailableTools() - Get all 42 tools organized by category
+ * - searchTools(keyword) - Search for tools by keyword
+ * - getToolInfo(toolName) - Get detailed info about a specific tool
+ * - getToolsInCategory(category) - Get all tools in a category
+ * - callMCPTool(name, params) - Call any MCP tool
  */
 
 // Note: We need to use the compiled version or import directly
 // For Deno, we'll import from the TypeScript source
 // Use Deno-compatible client
 import { initializeMCPClient, callMCPTool, closeMCPClient } from "../servers/client-deno.ts";
-import { GITHUB_TOOLS, getToolsByCategory, getCategories, type ToolDefinition } from "./tool-definitions.ts";
+import { GITHUB_TOOLS, getToolsByCategory, getCategories, type ToolDefinition, type ToolParameter } from "./tool-definitions.ts";
 
 /**
  * List all available GitHub MCP tools with complete schemas
@@ -40,26 +47,136 @@ function listAvailableTools() {
 }
 
 /**
- * Search for tools by name, description, or category
- * @param query Search term to match against tool name, description, or category
- * @returns Array of matching tools
+ * Search for tools by keyword
+ * Searches tool names, descriptions, categories, and parameter descriptions
+ * Returns matching tools sorted by relevance
+ * 
+ * @param keyword - Search term (case-insensitive)
+ * @returns Array of matching tools with relevance scores
+ * 
+ * @example
+ * const issueTools = searchTools("issue");
+ * // Returns all tools related to issues
+ * 
+ * const createTools = searchTools("create");
+ * // Returns all tools that create resources
  */
-function searchTools(query: string): ToolDefinition[] {
-  const lowerQuery = query.toLowerCase();
-  return GITHUB_TOOLS.filter(tool => 
-    tool.name.toLowerCase().includes(lowerQuery) ||
-    tool.description.toLowerCase().includes(lowerQuery) ||
-    tool.category.toLowerCase().includes(lowerQuery)
-  );
+function searchTools(keyword: string): Array<{
+  name: string;
+  category: string;
+  description: string;
+  relevance: number;
+  matchedIn: string[];
+  tool: ToolDefinition;
+}> {
+  const results: Array<{
+    name: string;
+    category: string;
+    description: string;
+    relevance: number;
+    matchedIn: string[];
+    tool: ToolDefinition;
+  }> = [];
+  const searchTerm = keyword.toLowerCase();
+  
+  // Get all tools from GITHUB_TOOLS
+  for (const tool of GITHUB_TOOLS) {
+    const matches: string[] = [];
+    let relevance = 0;
+    
+    // Check tool name (highest relevance)
+    if (tool.name.toLowerCase().includes(searchTerm)) {
+      matches.push("name");
+      relevance += 10;
+    }
+    
+    // Check description
+    if (tool.description?.toLowerCase().includes(searchTerm)) {
+      matches.push("description");
+      relevance += 5;
+    }
+    
+    // Check category
+    if (tool.category.toLowerCase().includes(searchTerm)) {
+      matches.push("category");
+      relevance += 3;
+    }
+    
+    // Check parameter names and descriptions
+    if (tool.parameters) {
+      for (const [paramName, paramInfo] of Object.entries(tool.parameters)) {
+        const param = paramInfo as ToolParameter;
+        if (paramName.toLowerCase().includes(searchTerm)) {
+          matches.push(`parameter: ${paramName}`);
+          relevance += 2;
+        }
+        if (param.description?.toLowerCase().includes(searchTerm)) {
+          matches.push(`parameter description: ${paramName}`);
+          relevance += 1;
+        }
+      }
+    }
+    
+    // If matches found, add to results
+    if (matches.length > 0) {
+      results.push({
+        name: tool.name,
+        category: tool.category,
+        description: tool.description,
+        relevance: relevance,
+        matchedIn: matches,
+        tool: tool  // Include full tool object
+      });
+    }
+  }
+  
+  // Sort by relevance (highest first)
+  results.sort((a, b) => b.relevance - a.relevance);
+  
+  return results;
 }
 
 /**
  * Get detailed information about a specific tool
- * @param toolName The exact tool name
- * @returns Tool definition or undefined if not found
+ * Returns complete tool metadata including parameters, examples, and usage
+ * 
+ * @param toolName - Name of the tool (e.g., "github_create_issue")
+ * @returns Complete tool information or null if not found
+ * 
+ * @example
+ * const info = getToolInfo("github_create_issue");
+ * console.log(info.description);
+ * console.log(info.parameters);
+ * console.log(info.example);
  */
-function getToolInfo(toolName: string): ToolDefinition | undefined {
-  return GITHUB_TOOLS.find(tool => tool.name === toolName);
+function getToolInfo(toolName: string): any {
+  const allTools = listAvailableTools();
+  
+  // Search through all categories for the tool
+  for (const [category, tools] of Object.entries(allTools.tools)) {
+    for (const tool of tools as ToolDefinition[]) {
+      if (tool.name === toolName) {
+        return {
+          ...tool,
+          category: category,
+          usage: `await callMCPTool("${toolName}", parameters)`,
+          // Add helpful metadata
+          metadata: {
+            totalTools: allTools.totalTools,
+            categoryTools: (tools as ToolDefinition[]).length,
+            relatedCategory: category
+          }
+        };
+      }
+    }
+  }
+  
+  // Tool not found
+  return {
+    error: `Tool "${toolName}" not found`,
+    suggestion: "Use searchTools() to find available tools",
+    availableTools: allTools.totalTools
+  };
 }
 
 /**

@@ -182,6 +182,126 @@ const result = await callMCPTool("tool_name", {
 - Releases (4 tools)
 - And more...
 
+### Tool Discovery Functions
+
+#### searchTools(keyword)
+
+Search for tools by keyword with intelligent relevance scoring.
+
+**Signature:**
+
+```typescript
+function searchTools(keyword: string): Array<ToolSearchResult>
+```
+
+**Use Cases:**
+
+1. **Find tools by action:** `searchTools("create")` → All tools that create resources
+2. **Find tools by resource:** `searchTools("issue")` → All issue-related tools
+3. **Find tools by feature:** `searchTools("search")` → All tools that search
+4. **Find tools by parameter:** `searchTools("owner")` → Tools that take owner parameter
+
+**Example:**
+
+```typescript
+// User wants to work with releases
+const releaseTools = searchTools("release");
+
+releaseTools.forEach(tool => {
+  console.log(`${tool.name}: ${tool.description}`);
+});
+
+// Output:
+// github_list_releases: Get all releases for a repository
+// github_create_release: Create a new release with tag
+// github_update_release: Update release information
+// github_get_release: Get details about a specific release
+```
+
+**Relevance Scoring:**
+
+Results are automatically sorted by relevance. Higher scores appear first.
+
+#### getToolInfo(toolName)
+
+Get comprehensive information about a specific tool.
+
+**Signature:**
+
+```typescript
+function getToolInfo(toolName: string): ToolInfo | ErrorInfo
+```
+
+**Use Cases:**
+
+1. **Before using a tool:** Check parameters and requirements
+2. **Understanding return values:** See what you'll get back
+3. **Finding related tools:** Check what category it's in
+4. **Learning by example:** See usage examples
+
+**Example:**
+
+```typescript
+// Learn about creating issues before using it
+const info = getToolInfo("github_create_issue");
+
+// See what's required
+const required = Object.entries(info.parameters)
+  .filter(([_, p]) => p.required)
+  .map(([name]) => name);
+  
+console.log(`Required: ${required.join(", ")}`);
+// Output: Required: owner, repo, title
+
+// See usage
+console.log(info.usage);
+// Output: await callMCPTool("github_create_issue", parameters)
+
+// See metadata
+console.log(`This is one of ${info.metadata.categoryTools} tools in the ${info.category} category`);
+// Output: This is one of 4 tools in the Issues category
+```
+
+**Error Handling:**
+
+```typescript
+const info = getToolInfo("github_invalid_tool");
+
+if (info.error) {
+  console.log(info.error);        // "Tool 'github_invalid_tool' not found"
+  console.log(info.suggestion);   // "Use searchTools() to find available tools"
+  console.log(info.availableTools); // 42
+}
+```
+
+### Recommended Workflow
+
+```typescript
+// Step 1: Search for what you need
+const tools = searchTools("create pull request");
+console.log(`Found ${tools.length} relevant tools`);
+
+// Step 2: Get details on the best match
+const info = getToolInfo(tools[0].name);
+console.log(`Tool: ${info.name}`);
+console.log(`Description: ${info.description}`);
+
+// Step 3: Check parameters
+Object.entries(info.parameters).forEach(([name, param]) => {
+  const required = param.required ? "REQUIRED" : "optional";
+  console.log(`  ${name} (${param.type}): ${required}`);
+});
+
+// Step 4: Use the tool
+const result = await callMCPTool(info.name, {
+  owner: "facebook",
+  repo: "react",
+  title: "Feature request",
+  head: "feature-branch",
+  base: "main"
+});
+```
+
 ## Token Savings Breakdown
 
 ### Traditional MCP

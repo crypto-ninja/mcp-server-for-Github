@@ -6,9 +6,9 @@
 
 New here? Follow these steps:
 
-1. **Install dependencies**: `pip install mcp httpx pydantic`
-2. **Configure Claude Desktop**: Add server to your config
-3. **Run**: `python github_mcp.py`
+1. **Install package**: `pip install github-mcp-server`
+2. **Configure Claude Desktop**: Add server to your config (see [docs/QUICKSTART.md](docs/QUICKSTART.md))
+3. **Restart Claude Desktop**: The server runs automatically via MCP
 4. **Test**: Ask Claude about a GitHub repository!
 
 **Need detailed setup?** → See [docs/QUICKSTART.md](docs/QUICKSTART.md)
