@@ -110,7 +110,7 @@ if not deno_available:
 
 # Code-First Mode: Expose only execute_code to Claude Desktop for token efficiency
 # Deno runtime will connect with CODE_FIRST_MODE=false to access all tools internally
-CODE_FIRST_MODE = os.getenv("MCP_CODE_FIRST_MODE", "false").lower() == "true"
+CODE_FIRST_MODE = os.getenv("MCP_CODE_FIRST_MODE", "true").lower() == "true"
 
 # Initialize the MCP server
 mcp = FastMCP("github_mcp")
