@@ -3079,7 +3079,7 @@ async def github_create_branch(params: CreateBranchInput) -> str:
                 token=auth_token
             )
             sha = ref_data["object"]["sha"]
-        except:
+        except Exception:
             commit_endpoint = f"repos/{params.owner}/{params.repo}/commits/{params.from_ref}"
             commit_data = await _make_github_request(
                 commit_endpoint,
@@ -3089,7 +3089,7 @@ async def github_create_branch(params: CreateBranchInput) -> str:
             sha = commit_data["sha"]
         
         create_endpoint = f"repos/{params.owner}/{params.repo}/git/refs"
-        data = await _make_github_request(
+        await _make_github_request(
             create_endpoint,
             method="POST",
             token=auth_token,
@@ -3178,7 +3178,7 @@ async def github_get_branch(params: GetBranchInput) -> str:
             result = f"# Branch: {data['name']}\n\n"
             result += f"**Repository:** {params.owner}/{params.repo}\n"
             result += f"**Protected:** {'🔒 Yes' if data.get('protected', False) else '🔓 No'}\n\n"
-            result += f"## Latest Commit\n\n"
+            result += "## Latest Commit\n\n"
             result += f"**SHA:** {data['commit']['sha'][:7]}\n"
             result += f"**Message:** {data['commit']['commit']['message'].split(chr(10))[0]}\n"
             result += f"**Author:** {data['commit']['commit']['author']['name']}\n"
@@ -3261,7 +3261,7 @@ async def github_delete_branch(params: DeleteBranchInput) -> str:
                     "message": f"'{params.branch}' is protected and cannot be deleted.",
                     "success": False
                 }, indent=2)
-        except:
+        except Exception:
             pass
         
         endpoint = f"repos/{params.owner}/{params.repo}/git/refs/heads/{params.branch}"
@@ -3352,7 +3352,7 @@ async def github_compare_branches(params: CompareBranchesInput) -> str:
                 ]
             }, indent=2)
         else:
-            result = f"# Branch Comparison\n\n"
+            result = "# Branch Comparison\n\n"
             result += f"**Base:** {params.base} → **Head:** {params.head}\n\n"
             result += f"**Status:** {data['status']}\n"
             result += f"**Commits Ahead:** {data['ahead_by']}\n"
