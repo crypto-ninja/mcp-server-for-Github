@@ -3953,11 +3953,15 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             json=payload
         )
         
-        # CRITICAL: Return the FULL GitHub API response as JSON
+        # Return a wrapper that includes a stable "created" marker while preserving the full API response
         # This includes all fields: number, html_url, state, title, etc.
         # This makes it easy for programmatic use (e.g., TypeScript code)
-        # The response is the complete PR object from GitHub API
-        return json.dumps(data, indent=2)
+        response = {
+            "success": True,
+            "created": True,
+            "pr": data
+        }
+        return json.dumps(response, indent=2)
         
     except Exception as e:
         # Return structured JSON error for programmatic use
@@ -4979,9 +4983,13 @@ async def github_create_file(params: CreateFileInput) -> str:
             json=body
         )
         
-        # Format success response
-        # Return the FULL GitHub API response as JSON
-        return json.dumps(data, indent=2)
+        # Return a wrapper that includes a stable "created" marker while preserving the full API response
+        response = {
+            "success": True,
+            "created": True,
+            "file": data
+        }
+        return json.dumps(response, indent=2)
         
     except Exception as e:
         # Return structured JSON error for programmatic use
