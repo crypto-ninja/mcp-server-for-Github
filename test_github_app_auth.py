@@ -36,7 +36,7 @@ async def test_app_auth():
     pat_token = os.getenv("GITHUB_TOKEN")
     auth_mode = os.getenv("GITHUB_AUTH_MODE", "app")
     
-    print(f"\nEnvironment Configuration:")
+    print("\nEnvironment Configuration:")
     print(f"  GITHUB_APP_ID: {'✅ Set' if app_id else '❌ Not set'}")
     print(f"  GITHUB_APP_INSTALLATION_ID: {'✅ Set' if installation_id else '❌ Not set'}")
     print(f"  GITHUB_APP_PRIVATE_KEY_PATH: {'✅ Set' if key_path else '❌ Not set'}")
@@ -96,7 +96,7 @@ async def test_app_auth():
                         limit = rate['limit']
                         remaining = rate['remaining']
                         
-                        print(f"\n📊 Rate Limit Status:")
+                        print("\n📊 Rate Limit Status:")
                         print(f"   Limit: {limit}/hour")
                         print(f"   Remaining: {remaining}")
                         
