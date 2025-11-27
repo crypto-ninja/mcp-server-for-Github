@@ -6,6 +6,7 @@ Tests JSON and Markdown response formatting for different tools.
 
 import pytest
 import json
+import httpx
 from unittest.mock import patch, MagicMock
 
 # Import the MCP server
@@ -23,6 +24,38 @@ from github_mcp import (  # noqa: E402
     SearchCodeInput,
     ResponseFormat,
 )
+
+
+def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
+    """
+    Create a properly mockable httpx response object that returns serializable values.
+    
+    This prevents MagicMock serialization errors when error responses are converted to JSON.
+    """
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.text = text
+    mock_response.headers = headers or {}
+    
+    # Make json() return actual dict, not MagicMock
+    if json_data is not None:
+        mock_response.json.return_value = json_data
+    else:
+        # Default error response structure
+        mock_response.json.return_value = {
+            "message": text or f"Error {status_code}",
+            "errors": []
+        }
+    
+    return mock_response
+
+
+def create_mock_request():
+    """Create a properly mockable httpx request object."""
+    mock_request = MagicMock()
+    mock_request.url = "https://api.github.com/test"
+    mock_request.method = "GET"
+    return mock_request
 
 
 class TestResponseFormatting:
@@ -259,13 +292,11 @@ class TestErrorResponseFormatting:
     @patch('github_mcp._make_github_request')
     async def test_error_response_json_format(self, mock_request):
         """Test error response in JSON format."""
-        import httpx
-
         # Mock error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404)
+            request=create_mock_request(),
+            response=create_mock_response(404, "Not Found")
         )
 
         params = RepoInfoInput(
@@ -284,13 +315,11 @@ class TestErrorResponseFormatting:
     @patch('github_mcp._make_github_request')
     async def test_error_response_markdown_format(self, mock_request):
         """Test error response in Markdown format."""
-        import httpx
-
         # Mock error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Permission denied",
-            request=MagicMock(),
-            response=MagicMock(status_code=403)
+            request=create_mock_request(),
+            response=create_mock_response(403, "Permission denied")
         )
 
         params = RepoInfoInput(
