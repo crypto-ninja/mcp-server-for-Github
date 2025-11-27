@@ -380,6 +380,96 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   path: "packages"
 });`
   },
+
+  // BRANCH MANAGEMENT (5 tools)
+  {
+    name: "github_list_branches",
+    category: "Branch Management",
+    description: "List all branches in a GitHub repository with protection status and commit information",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      protected: { type: "boolean", required: false, description: "Filter by protected status" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "List of branches with names, commit SHAs, protection status, and default branch indicator",
+    example: `const branches = await callMCPTool("github_list_branches", {
+  owner: "myuser",
+  repo: "myrepo",
+  protected: false
+});`
+  },
+  {
+    name: "github_create_branch",
+    category: "Branch Management",
+    description: "Create a new branch from a specified ref (branch, tag, or commit SHA)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "New branch name" },
+      from_ref: { type: "string", required: false, description: "Branch, tag, or commit SHA to branch from (default: 'main')" }
+    },
+    returns: "Success confirmation with branch details and URL",
+    example: `const result = await callMCPTool("github_create_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "feature/new-feature",
+  from_ref: "main"
+});`
+  },
+  {
+    name: "github_get_branch",
+    category: "Branch Management",
+    description: "Get detailed information about a branch including protection status and latest commit",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "Branch name" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "Detailed branch information with commit details and protection status",
+    example: `const branch = await callMCPTool("github_get_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "feature-branch"
+});`
+  },
+  {
+    name: "github_delete_branch",
+    category: "Branch Management",
+    description: "Delete a branch from a repository. Cannot delete default or protected branches",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "Branch name to delete" }
+    },
+    returns: "Success confirmation (permanent operation)",
+    example: `const result = await callMCPTool("github_delete_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "old-feature-branch"
+});`
+  },
+  {
+    name: "github_compare_branches",
+    category: "Branch Management",
+    description: "Compare two branches to see commits ahead/behind and files changed. Useful before merging",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      base: { type: "string", required: true, description: "Base branch name (usually 'main')" },
+      head: { type: "string", required: true, description: "Head branch name to compare" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "Comparison results with commits ahead/behind and files changed",
+    example: `const comparison = await callMCPTool("github_compare_branches", {
+  owner: "myuser",
+  repo: "myrepo",
+  base: "main",
+  head: "feature-branch"
+});`
+  },
   {
     name: "github_create_file",
     category: "File Operations",
