@@ -67,8 +67,19 @@ from github_client import GhClient
 from auth.github_app import get_auth_token, clear_token_cache
 from graphql_client import GraphQLClient
 
-# Load .env file if it exists
-load_dotenv()
+# Get the directory where THIS script is located
+SCRIPT_DIR = Path(__file__).parent
+
+# Load .env file from the same directory as the script
+# This ensures .env is found regardless of where the server is started from
+env_path = SCRIPT_DIR / ".env"
+load_dotenv(env_path)
+
+# Debug: Log if token was loaded (only if DEBUG_AUTH is enabled)
+if os.getenv("GITHUB_MCP_DEBUG_AUTH", "false").lower() == "true":
+    token_loaded = os.getenv("GITHUB_TOKEN") is not None
+    print(f"[DEBUG] .env loaded from: {env_path}", file=sys.stderr)
+    print(f"[DEBUG] GITHUB_TOKEN loaded: {token_loaded}", file=sys.stderr)
 
 # Validate Deno installation at startup
 def check_deno_installed():
@@ -121,7 +132,7 @@ if CODE_FIRST_MODE:
     print(">> Token usage: ~800 tokens (98% savings!)")
     print(f">> Deno: {deno_info}")
 else:
-    print(">> GitHub MCP Server v2.3.1 - Internal Mode (all 42 tools)")
+    print(">> GitHub MCP Server v2.3.1 - Internal Mode (all 47 tools)")
     print(">> Used by Deno runtime for tool execution")
     print(f">> Deno: {deno_info}")
 
@@ -493,6 +504,77 @@ class ListCommitsInput(BaseModel):
     page: Optional[int] = Field(default=1, description="Page number", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListBranchesInput(BaseModel):
+    """Input model for listing repository branches."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    protected: Optional[bool] = Field(default=None, description="Filter by protected status")
+    per_page: Optional[int] = Field(default=30, description="Results per page", ge=1, le=100)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Response format")
+
+class CreateBranchInput(BaseModel):
+    """Input model for creating a new branch."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    branch: str = Field(..., description="New branch name", min_length=1, max_length=250)
+    from_ref: str = Field(default="main", description="Branch, tag, or commit SHA to branch from")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+class GetBranchInput(BaseModel):
+    """Input model for getting branch details."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    branch: str = Field(..., description="Branch name", min_length=1, max_length=250)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Response format")
+
+class DeleteBranchInput(BaseModel):
+    """Input model for deleting a branch."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    branch: str = Field(..., description="Branch name to delete", min_length=1, max_length=250)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+class CompareBranchesInput(BaseModel):
+    """Input model for comparing two branches."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    base: str = Field(..., description="Base branch name", min_length=1, max_length=250)
+    head: str = Field(..., description="Head branch name to compare", min_length=1, max_length=250)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Response format")
 
 class ListPullRequestsInput(BaseModel):
     """Input model for listing pull requests."""
@@ -1076,7 +1158,7 @@ class GitHubStrReplaceInput(BaseModel):
 # GITHUB TOOLS (Internal Use Only - Called by execute_code via Deno runtime)
 # ============================================================================
 # Note: Claude Desktop only sees execute_code tool (exposed below)
-# These 41 tools are registered for internal use by the Deno runtime
+# These 46 tools are registered for internal use by the Deno runtime
 # This architecture provides 98% token savings vs traditional MCP
 # ============================================================================
 
@@ -2387,28 +2469,30 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             json=payload
         )
         
-        result = f"""✅ Issue Created Successfully!
-
-**Issue:** #{data['number']} - {data['title']}
-**State:** {data['state']}
-**URL:** {data['html_url']}
-**Created:** {_format_timestamp(data['created_at'])}
-**Author:** @{data['user']['login']}
-
-"""
-        
-        if data.get('labels'):
-            labels = ', '.join([f"`{label['name']}`" for label in data['labels']])
-            result += f"**Labels:** {labels}\n"
-        
-        if data.get('assignees'):
-            assignees = ', '.join([f"@{a['login']}" for a in data['assignees']])
-            result += f"**Assignees:** {assignees}\n"
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_update_issue",
@@ -2842,6 +2926,463 @@ async def github_list_commits(params: ListCommitsInput) -> str:
         
         return _truncate_response(response, len(commits))
         
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_branches",
+    annotations={
+        "title": "List Repository Branches",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_branches(params: ListBranchesInput) -> str:
+    """
+    List all branches in a GitHub repository.
+    
+    Returns branch names, latest commit SHA, protection status, and whether
+    it's the default branch. Essential for branch management workflows.
+    
+    Args:
+        params (ListBranchesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - protected (Optional[bool]): Filter by protected status
+            - per_page (Optional[int]): Results per page (1-100, default 30)
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of branches with details
+    
+    Examples:
+        - Use when: "List all branches in my repository"
+        - Use when: "Show me only protected branches"
+        - Use when: "What branches exist in this repo?"
+    
+    Error Handling:
+        - Returns error if repository not found (404)
+        - Returns error if authentication fails (401/403)
+    """
+    try:
+        auth_token = await _get_auth_token_fallback(params.token)
+        
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for listing branches. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False
+            }, indent=2)
+        
+        endpoint = f"repos/{params.owner}/{params.repo}/branches"
+        query_params = {"per_page": params.per_page}
+        
+        if params.protected is not None:
+            query_params["protected"] = "true" if params.protected else "false"
+        
+        data = await _make_github_request(
+            endpoint,
+            method="GET",
+            token=auth_token,
+            params=query_params
+        )
+        
+        repo_info = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}",
+            method="GET",
+            token=auth_token
+        )
+        default_branch = repo_info.get("default_branch", "main")
+        
+        branches = data if isinstance(data, list) else []
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({
+                "owner": params.owner,
+                "repo": params.repo,
+                "default_branch": default_branch,
+                "total_branches": len(branches),
+                "branches": [
+                    {
+                        "name": b["name"],
+                        "commit_sha": b["commit"]["sha"],
+                        "protected": b.get("protected", False),
+                        "is_default": b["name"] == default_branch
+                    }
+                    for b in branches
+                ]
+            }, indent=2)
+        else:
+            result = f"# Branches: {params.owner}/{params.repo}\n\n"
+            result += f"**Default Branch:** {default_branch}\n"
+            result += f"**Total Branches:** {len(branches)}\n\n"
+            
+            if branches:
+                result += "| Branch | Commit | Protected | Default |\n"
+                result += "|--------|--------|-----------|----------|\n"
+                for b in branches:
+                    sha = b["commit"]["sha"][:7]
+                    protected = "🔒" if b.get("protected", False) else "🔓"
+                    is_default = "⭐" if b["name"] == default_branch else ""
+                    result += f"| {b['name']} | {sha} | {protected} | {is_default} |\n"
+            else:
+                result += "*No branches found*\n"
+            
+            return result
+            
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_create_branch",
+    annotations={
+        "title": "Create Branch",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_branch(params: CreateBranchInput) -> str:
+    """
+    Create a new branch in a GitHub repository.
+    
+    Creates a new branch from a specified ref (branch, tag, or commit).
+    Uses Git References API for reliability.
+    
+    Args:
+        params (CreateBranchInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - branch (str): New branch name
+            - from_ref (str): Branch, tag, or commit SHA to branch from (default: "main")
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message with branch details
+    
+    Examples:
+        - Use when: "Create a new feature branch from main"
+        - Use when: "Create branch from specific commit"
+        - Use when: "Branch off from tag v1.0.0"
+    
+    Error Handling:
+        - Returns error if branch already exists (422)
+        - Returns error if from_ref doesn't exist (404)
+        - Returns error if authentication fails (401/403)
+    """
+    try:
+        auth_token = await _get_auth_token_fallback(params.token)
+        
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for creating branches.",
+                "success": False
+            }, indent=2)
+        
+        ref_endpoint = f"repos/{params.owner}/{params.repo}/git/ref/heads/{params.from_ref}"
+        try:
+            ref_data = await _make_github_request(
+                ref_endpoint,
+                method="GET",
+                token=auth_token
+            )
+            sha = ref_data["object"]["sha"]
+        except Exception:
+            commit_endpoint = f"repos/{params.owner}/{params.repo}/commits/{params.from_ref}"
+            commit_data = await _make_github_request(
+                commit_endpoint,
+                method="GET",
+                token=auth_token
+            )
+            sha = commit_data["sha"]
+        
+        create_endpoint = f"repos/{params.owner}/{params.repo}/git/refs"
+        await _make_github_request(
+            create_endpoint,
+            method="POST",
+            token=auth_token,
+            json={
+                "ref": f"refs/heads/{params.branch}",
+                "sha": sha
+            }
+        )
+        
+        return json.dumps({
+            "success": True,
+            "branch": params.branch,
+            "sha": sha,
+            "from_ref": params.from_ref,
+            "url": f"https://github.com/{params.owner}/{params.repo}/tree/{params.branch}",
+            "message": f"Branch '{params.branch}' created successfully from '{params.from_ref}'"
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_branch",
+    annotations={
+        "title": "Get Branch Details",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_branch(params: GetBranchInput) -> str:
+    """
+    Get detailed information about a branch including protection status,
+    latest commit, and whether it's ahead/behind the default branch.
+    
+    Args:
+        params (GetBranchInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - branch (str): Branch name
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed branch information
+    
+    Examples:
+        - Use when: "Get details about the feature branch"
+        - Use when: "Check if branch is protected"
+        - Use when: "Show me the latest commit on this branch"
+    
+    Error Handling:
+        - Returns error if branch not found (404)
+        - Returns error if authentication fails (401/403)
+    """
+    try:
+        auth_token = await _get_auth_token_fallback(params.token)
+        
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "success": False
+            }, indent=2)
+        
+        endpoint = f"repos/{params.owner}/{params.repo}/branches/{params.branch}"
+        data = await _make_github_request(
+            endpoint,
+            method="GET",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({
+                "branch": data["name"],
+                "protected": data.get("protected", False),
+                "commit": {
+                    "sha": data["commit"]["sha"],
+                    "message": data["commit"]["commit"]["message"].split('\n')[0],
+                    "author": data["commit"]["commit"]["author"]["name"],
+                    "date": data["commit"]["commit"]["author"]["date"]
+                },
+                "url": f"https://github.com/{params.owner}/{params.repo}/tree/{params.branch}"
+            }, indent=2)
+        else:
+            result = f"# Branch: {data['name']}\n\n"
+            result += f"**Repository:** {params.owner}/{params.repo}\n"
+            result += f"**Protected:** {'🔒 Yes' if data.get('protected', False) else '🔓 No'}\n\n"
+            result += "## Latest Commit\n\n"
+            result += f"**SHA:** {data['commit']['sha'][:7]}\n"
+            result += f"**Message:** {data['commit']['commit']['message'].split(chr(10))[0]}\n"
+            result += f"**Author:** {data['commit']['commit']['author']['name']}\n"
+            result += f"**Date:** {_format_timestamp(data['commit']['commit']['author']['date'])}\n\n"
+            result += f"**URL:** https://github.com/{params.owner}/{params.repo}/tree/{params.branch}\n"
+            
+            return result
+            
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_delete_branch",
+    annotations={
+        "title": "Delete Branch",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_delete_branch(params: DeleteBranchInput) -> str:
+    """
+    Delete a branch from a GitHub repository.
+    
+    Safety: Cannot delete the default branch or protected branches.
+    Use with caution - this is permanent!
+    
+    Args:
+        params (DeleteBranchInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - branch (str): Branch name to delete
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message
+    
+    Examples:
+        - Use when: "Delete the old feature branch"
+        - Use when: "Clean up merged branches"
+        - Use when: "Remove test branch"
+    
+    Error Handling:
+        - Returns error if trying to delete default branch
+        - Returns error if trying to delete protected branch
+        - Returns error if branch not found (404)
+    """
+    try:
+        auth_token = await _get_auth_token_fallback(params.token)
+        
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "success": False
+            }, indent=2)
+        
+        repo_info = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}",
+            method="GET",
+            token=auth_token
+        )
+        
+        if params.branch == repo_info.get("default_branch"):
+            return json.dumps({
+                "error": "Cannot delete default branch",
+                "message": f"'{params.branch}' is the default branch and cannot be deleted.",
+                "success": False
+            }, indent=2)
+        
+        try:
+            branch_data = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/branches/{params.branch}",
+                method="GET",
+                token=auth_token
+            )
+            if branch_data.get("protected", False):
+                return json.dumps({
+                    "error": "Cannot delete protected branch",
+                    "message": f"'{params.branch}' is protected and cannot be deleted.",
+                    "success": False
+                }, indent=2)
+        except Exception:
+            pass
+        
+        endpoint = f"repos/{params.owner}/{params.repo}/git/refs/heads/{params.branch}"
+        await _make_github_request(
+            endpoint,
+            method="DELETE",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "branch": params.branch,
+            "message": f"Branch '{params.branch}' deleted successfully"
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_compare_branches",
+    annotations={
+        "title": "Compare Branches",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_compare_branches(params: CompareBranchesInput) -> str:
+    """
+    Compare two branches to see commits ahead/behind and files changed.
+    
+    Useful before merging to understand what will change.
+    
+    Args:
+        params (CompareBranchesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - base (str): Base branch name
+            - head (str): Head branch name to compare
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Comparison results with commits and files changed
+    
+    Examples:
+        - Use when: "Compare feature branch to main"
+        - Use when: "See what's different between branches"
+        - Use when: "Check if branch is ready to merge"
+    
+    Error Handling:
+        - Returns error if branches not found (404)
+        - Returns error if authentication fails (401/403)
+    """
+    try:
+        auth_token = await _get_auth_token_fallback(params.token)
+        
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "success": False
+            }, indent=2)
+        
+        endpoint = f"repos/{params.owner}/{params.repo}/compare/{params.base}...{params.head}"
+        data = await _make_github_request(
+            endpoint,
+            method="GET",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({
+                "base": params.base,
+                "head": params.head,
+                "status": data["status"],
+                "ahead_by": data["ahead_by"],
+                "behind_by": data["behind_by"],
+                "total_commits": data["total_commits"],
+                "files_changed": len(data.get("files", [])),
+                "commits": [
+                    {
+                        "sha": c["sha"][:7],
+                        "message": c["commit"]["message"].split('\n')[0],
+                        "author": c["commit"]["author"]["name"]
+                    }
+                    for c in data["commits"][:10]
+                ]
+            }, indent=2)
+        else:
+            result = "# Branch Comparison\n\n"
+            result += f"**Base:** {params.base} → **Head:** {params.head}\n\n"
+            result += f"**Status:** {data['status']}\n"
+            result += f"**Commits Ahead:** {data['ahead_by']}\n"
+            result += f"**Commits Behind:** {data['behind_by']}\n"
+            result += f"**Files Changed:** {len(data.get('files', []))}\n\n"
+            
+            if data["ahead_by"] > 0:
+                result += f"## Commits in {params.head} (not in {params.base})\n\n"
+                for commit in data["commits"][:5]:
+                    sha = commit["sha"][:7]
+                    msg = commit["commit"]["message"].split('\n')[0]
+                    result += f"- {sha}: {msg}\n"
+                if data["total_commits"] > 5:
+                    result += f"\n*...and {data['total_commits'] - 5} more commits*\n"
+            
+            return result
+            
     except Exception as e:
         return _handle_api_error(e)
 
@@ -3412,32 +3953,37 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             json=payload
         )
         
-        # Status emoji based on draft status
-        status_emoji = "📝" if params.draft else "🔀"
-        
-        result = f"""✅ Pull Request Created Successfully!
-
-{status_emoji} **PR:** #{data['number']} - {data['title']}
-**State:** {data['state']}
-**Draft:** {'Yes' if data['draft'] else 'No'}
-**Base:** `{data['base']['ref']}` ← **Head:** `{data['head']['ref']}`
-**URL:** {data['html_url']}
-**Created:** {_format_timestamp(data['created_at'])}
-**Author:** @{data['user']['login']}
-
-"""
-        
-        if data.get('body'):
-            body_preview = data['body'][:200] + "..." if len(data['body']) > 200 else data['body']
-            result += f"**Description:** {body_preview}\n\n"
-        
-        result += f"**Mergeable:** {data.get('mergeable', 'Unknown')}\n"
-        result += f"**Maintainer Can Modify:** {'Yes' if data.get('maintainer_can_modify') else 'No'}\n"
-        
-        return result
+        # Return a wrapper that includes a stable "created" marker while preserving the full API response
+        # This includes all fields: number, html_url, state, title, etc.
+        # This makes it easy for programmatic use (e.g., TypeScript code)
+        response = {
+            "success": True,
+            "created": True,
+            "pr": data
+        }
+        return json.dumps(response, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = _handle_api_error(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_get_pr_details",
@@ -4087,6 +4633,14 @@ async def github_create_release(params: CreateReleaseInput) -> str:
     This tool creates a GitHub release with a tag, title, and release notes.
     Can create draft or pre-release versions. Requires write access to the repository.
     
+    Note:
+        GitHub Apps currently cannot create releases that involve tagging commits,
+        because there is no dedicated "releases" permission scope for Apps in
+        the GitHub API. For this reason, authentication for this tool will
+        automatically fall back to Personal Access Token (PAT) when a GitHub
+        App token is not sufficient. This behavior is implemented in
+        `get_auth_token()` and `_get_auth_token_fallback()`.
+    
     Args:
         params (CreateReleaseInput): Validated input parameters containing:
             - owner (str): Repository owner
@@ -4112,7 +4666,9 @@ async def github_create_release(params: CreateReleaseInput) -> str:
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
-    # Get token (try param, then GitHub App, then PAT) - EXACTLY like github_create_issue
+    # Get token (try param, then GitHub App, then PAT with automatic PAT fallback
+    # for operations like releases where GitHub Apps lack permissions)
+    # See: auth/github_app.get_auth_token for details.
     auth_token = await _get_auth_token_fallback(params.token)
     
     # Ensure we have a valid token before proceeding
@@ -4212,30 +4768,30 @@ async def github_create_release(params: CreateReleaseInput) -> str:
             json=body_data
         )
         
-        # Format response
-        response = [
-            "✅ **Release Created Successfully!**\n",
-            f"🏷️ **Tag:** {data['tag_name']}",
-            f"📦 **Name:** {data['name']}",
-            f"🔗 **URL:** {data['html_url']}",
-            f"📅 **Created:** {_format_timestamp(data['created_at'])}",
-            f"👤 **Author:** @{data['author']['login']}",
-        ]
-        
-        if data.get('draft'):
-            response.append("📝 **Status:** Draft (not publicly visible)")
-        elif data.get('prerelease'):
-            response.append("🚧 **Status:** Pre-release")
-        else:
-            response.append("✅ **Status:** Published")
-        
-        if data.get('body'):
-            response.append(f"\n**Release Notes:**\n{data['body'][:500]}{'...' if len(data['body']) > 500 else ''}")
-        
-        return "\n".join(response)
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_update_release",
@@ -4327,29 +4883,30 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             json=body_data
         )
         
-        # Format response
-        response = [
-            "✅ **Release Updated Successfully!**\n",
-            f"🏷️ **Tag:** {data['tag_name']}",
-            f"📦 **Name:** {data['name']}",
-            f"🔗 **URL:** {data['html_url']}",
-            f"📅 **Updated:** {_format_timestamp(data.get('published_at', data['created_at']))}",
-        ]
-        
-        if data.get('draft'):
-            response.append("📝 **Status:** Draft")
-        elif data.get('prerelease'):
-            response.append("🚧 **Status:** Pre-release")
-        else:
-            response.append("✅ **Status:** Published")
-        
-        if params.body:
-            response.append(f"\n**Updated Release Notes Preview:**\n{params.body[:300]}{'...' if len(params.body) > 300 else ''}")
-        
-        return "\n".join(response)
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 # Phase 2.1: File Management Tools
 
@@ -4426,35 +4983,39 @@ async def github_create_file(params: CreateFileInput) -> str:
             json=body
         )
         
-        # Format success response
-        result = f"""✅ **File Created Successfully!**
-
-
-**Repository:** {params.owner}/{params.repo}
-**File:** {params.path}
-**Branch:** {params.branch or 'default'}
-**Commit Message:** {params.message}
-
-
-**Commit Details:**
-- SHA: {data['commit']['sha']}
-- Author: {data['commit']['author']['name']}
-- Date: {data['commit']['author']['date']}
-
-
-**File URL:** {data['content']['html_url']}
-"""
-        
-        return result
+        # Return a wrapper that includes a stable "created" marker while preserving the full API response
+        response = {
+            "success": True,
+            "created": True,
+            "file": data
+        }
+        return json.dumps(response, indent=2)
         
     except Exception as e:
-        error_msg = _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
         
-        # Add helpful context for common errors
-        if "422" in error_msg or "already exists" in error_msg.lower():
-            error_msg += "\n\n💡 Tip: This file already exists. Use 'github_update_file' to modify it, or 'github_delete_file' to remove it first."
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+            
+            # Add helpful context for common errors
+            if error_info["status_code"] == 422:
+                error_info["hint"] = "This file already exists. Use 'github_update_file' to modify it, or 'github_delete_file' to remove it first."
+        else:
+            error_info["message"] = str(e)
         
-        return error_msg
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -4531,37 +5092,36 @@ async def github_update_file(params: UpdateFileInput) -> str:
             json=body
         )
         
-        # Format success response
-        result = f"""✅ **File Updated Successfully!**
-
-
-**Repository:** {params.owner}/{params.repo}
-**File:** {params.path}
-**Branch:** {params.branch or 'default'}
-**Commit Message:** {params.message}
-
-
-**Commit Details:**
-- SHA: {data['commit']['sha']}
-- Author: {data['commit']['author']['name']}
-- Date: {data['commit']['author']['date']}
-
-
-**File URL:** {data['content']['html_url']}
-"""
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        error_msg = _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
         
-        # Add helpful context for common errors
-        if "409" in error_msg or "does not match" in error_msg.lower():
-            error_msg += "\n\n💡 Tip: The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
-        elif "404" in error_msg:
-            error_msg += "\n\n💡 Tip: File not found. Use 'github_create_file' to create it first."
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+            
+            # Add helpful context for common errors
+            if error_info["status_code"] == 409:
+                error_info["hint"] = "The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
+            elif error_info["status_code"] == 404:
+                error_info["hint"] = "File not found. Use 'github_create_file' to create it first."
+        else:
+            error_info["message"] = str(e)
         
-        return error_msg
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -4947,9 +5507,29 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
             endpoint = "user/repos"
 
         data = await _make_github_request(endpoint, method="POST", token=auth_token, json=body)
-        return f"✅ Repository created: {data['full_name']}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -4978,9 +5558,34 @@ async def github_delete_repository(params: DeleteRepositoryInput) -> str:
     
     try:
         await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
-        return f"✅ Repository deleted: {params.owner}/{params.repo}"
+        # DELETE operations return 204 No Content (empty response)
+        # Return structured success JSON
+        return json.dumps({
+            "success": True,
+            "message": f"Repository {params.owner}/{params.repo} deleted successfully",
+            "deleted": True
+        }, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5014,9 +5619,29 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
             if value is not None:
                 body[field] = value
         data = await _make_github_request(f"repos/{params.owner}/{params.repo}", method="PATCH", token=auth_token, json=body)
-        return f"✅ Repository updated: {data['full_name']}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5053,9 +5678,29 @@ async def github_transfer_repository(params: TransferRepositoryInput) -> str:
             token=auth_token,
             json=body
         )
-        return f"✅ Transfer initiated: {data['full_name']} -> {params.new_owner}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5090,10 +5735,29 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
             token=auth_token,
             json=body
         )
-        state = "archived" if data.get("archived") else "active"
-        return f"✅ Repository state updated: {data['full_name']} is now {state}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_merge_pull_request",
@@ -5166,29 +5830,30 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
             json=merge_data
         )
         
-        response = f"""✅ **Pull Request Merged Successfully!**
-
-
-📦 **Repository:** {params.owner}/{params.repo}
-🔀 **PR:** #{params.pull_number}
-✅ **Status:** {result.get('message', 'Merged')}
-
-
-**Merge Details:**
-
-- 📝 **Commit SHA:** {result.get('sha', 'N/A')}
-- 🔀 **Method:** {params.merge_method or 'squash'}
-- ✅ **Merged:** {result.get('merged', False)}
-
-
-The pull request has been successfully merged! 🎉
-
-"""
-        
-        return response
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(result, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_close_pull_request",
@@ -5256,25 +5921,30 @@ async def github_close_pull_request(params: ClosePullRequestInput) -> str:
             json={"state": "closed"}
         )
         
-        result = f"""✅ Pull Request Closed Successfully!
-
-**PR:** #{pr['number']} - {pr['title']}
-**Repository:** {params.owner}/{params.repo}
-**URL:** {pr['html_url']}
-**Status:** {pr['state']}
-**Closed:** {_format_timestamp(pr['closed_at']) if pr.get('closed_at') else 'Just now'}
-
-"""
-        
-        if params.comment:
-            result += f"**Comment Added:** {params.comment[:100]}{'...' if len(params.comment) > 100 else ''}\n\n"
-        
-        result += "Note: PR was closed without merging. The branch can still be merged later if needed.\n"
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(pr, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_create_pr_review",
@@ -5322,7 +5992,11 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
     try:
         token = await _get_auth_token_fallback(params.token)
         if not token:
-            return "Error: GitHub token required for creating PR reviews. Set GITHUB_TOKEN or configure GitHub App authentication."
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for creating PR reviews. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False
+            }, indent=2)
         
         review_data: Dict[str, Any] = {
             "event": params.event
@@ -5352,34 +6026,36 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
             json=review_data
         )
         
-        response = "# Pull Request Review Created! ✅\n\n"
-        response += f"**Repository:** {params.owner}/{params.repo}  \n"
-        response += f"**Pull Request:** #{params.pull_number}  \n"
-        response += f"**Review ID:** {review['id']}  \n"
-        response += f"**State:** {review['state']}  \n"
-        if review.get('user'):
-            response += f"**Reviewer:** {review['user']['login']}  \n"
-        if review.get('submitted_at'):
-            response += f"**Submitted:** {_format_timestamp(review['submitted_at'])}  \n\n"
-        if params.body:
-            response += f"## Review Comment:\n\n{params.body}\n\n"
-        if params.comments:
-            response += f"## Line Comments: {len(params.comments)}\n\n"
-            for comment in params.comments:
-                line_info = f"line {comment.line}" if comment.line else f"position {comment.position}"
-                response += f"- **{comment.path}** ({line_info}, {comment.side}): {comment.body[:100]}...\n"
-        if review.get('html_url'):
-            response += f"\n**View Review:** {review['html_url']}\n"
-        return response
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(review, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 # ============================================================================
 # CODE-FIRST EXECUTION TOOL (The Only Tool Exposed to Claude)
 # ============================================================================
 # This is the ONLY tool Claude Desktop sees, providing 98% token reduction
-# All 41 GitHub tools above are accessed via this tool through TypeScript code
+# All 46 GitHub tools above are accessed via this tool through TypeScript code
 # ============================================================================
 
 @mcp.tool(
@@ -5405,7 +6081,7 @@ async def execute_code(code: str) -> str:
     return tools;
     ```
     
-    This returns a structured catalog of all 41 GitHub tools including:
+    This returns a structured catalog of all 46 GitHub tools including:
     - Tool names and descriptions
     - Required/optional parameters with types
     - Return value descriptions

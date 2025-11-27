@@ -313,28 +313,40 @@ async def get_auth_token() -> Optional[str]:
     
     # If explicitly requesting App mode and App is configured, prioritize App
     if auth_mode == "app" and _has_app_config():
-        app_token = await get_installation_token_from_env()
-        if app_token:
+        try:
+            app_token = await get_installation_token_from_env()
+            if app_token:
+                if DEBUG_AUTH:
+                    token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
+                    print(f"  ✅ Using GitHub App token (GITHUB_AUTH_MODE=app, prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+                return app_token
+            # If App mode is explicitly requested but fails, fall back to PAT as safety net
             if DEBUG_AUTH:
-                token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
-                print(f"  ✅ Using GitHub App token (GITHUB_AUTH_MODE=app, prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
-            return app_token
-        # If App mode is explicitly requested but fails, don't fall back to PAT
-        if DEBUG_AUTH:
-            print("  ❌ GITHUB_AUTH_MODE=app but App token retrieval failed", file=sys.stderr)
-        return None
+                print("  ⚠️ GITHUB_AUTH_MODE=app but App token retrieval failed, falling back to PAT", file=sys.stderr)
+            # Fall through to PAT fallback below
+        except Exception as e:
+            # Even in app mode, if there's an exception, fall back to PAT as safety net
+            if DEBUG_AUTH:
+                print(f"  ⚠️ GITHUB_AUTH_MODE=app but App exception: {type(e).__name__}: {e}, falling back to PAT", file=sys.stderr)
+            # Fall through to PAT fallback below
     
     # Default behavior: Try GitHub App first if configured
     if _has_app_config():
-        app_token = await get_installation_token_from_env()
-        if app_token:
+        try:
+            app_token = await get_installation_token_from_env()
+            if app_token:
+                if DEBUG_AUTH:
+                    token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
+                    print(f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+                return app_token
+            # If App is configured but returns None, fall back to PAT
             if DEBUG_AUTH:
-                token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
-                print(f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
-            return app_token
-        # If App is configured but fails, fall back to PAT
-        if DEBUG_AUTH:
-            print("  ⚠️ App configured but token retrieval failed, falling back to PAT", file=sys.stderr)
+                print("  ⚠️ App configured but token retrieval returned None, falling back to PAT", file=sys.stderr)
+        except Exception as e:
+            # CRITICAL: Don't let any exception break the fallback chain
+            if DEBUG_AUTH:
+                print(f"  ⚠️ GitHub App exception: {type(e).__name__}: {e}, falling back to PAT", file=sys.stderr)
+            # Continue to PAT fallback
     
     # Fall back to PAT
     pat_token = os.getenv("GITHUB_TOKEN")

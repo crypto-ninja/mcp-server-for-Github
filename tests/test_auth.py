@@ -6,6 +6,7 @@ Tests GitHub App authentication, token caching, and fallback logic.
 
 import pytest
 import time
+import httpx
 from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import datetime, timedelta
 import os
@@ -17,6 +18,38 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from auth.github_app import GitHubAppAuth, get_auth_token, clear_token_cache, verify_installation_access  # noqa: E402
+
+
+def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
+    """
+    Create a properly mockable httpx response object that returns serializable values.
+    
+    This prevents MagicMock serialization errors when error responses are converted to JSON.
+    """
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.text = text
+    mock_response.headers = headers or {}
+    
+    # Make json() return actual dict, not MagicMock
+    if json_data is not None:
+        mock_response.json.return_value = json_data
+    else:
+        # Default error response structure
+        mock_response.json.return_value = {
+            "message": text or f"Error {status_code}",
+            "errors": []
+        }
+    
+    return mock_response
+
+
+def create_mock_request():
+    """Create a properly mockable httpx request object."""
+    mock_request = MagicMock()
+    mock_request.url = "https://api.github.com/test"
+    mock_request.method = "GET"
+    return mock_request
 
 
 class TestGitHubAppAuth:
@@ -404,11 +437,10 @@ class TestAppAuthErrors:
         """Test when GitHub API rejects App token."""
         mock_load_key.return_value = "-----BEGIN RSA PRIVATE KEY-----\nMOCK_KEY\n-----END RSA PRIVATE KEY-----"
         # Mock GitHub API error
-        import httpx
         mock_get_token.side_effect = httpx.HTTPStatusError(
             "Unauthorized",
-            request=MagicMock(),
-            response=MagicMock(status_code=401)
+            request=create_mock_request(),
+            response=create_mock_response(401, "Unauthorized")
         )
 
         # Should fall back to PAT if available
@@ -423,7 +455,6 @@ class TestAppAuthErrors:
     async def test_get_installation_token_api_error(self, mock_client_class):
         """Test get_installation_token when API call fails."""
         from auth.github_app import GitHubAppAuth
-        import httpx
 
         # Mock client to raise error
         mock_client = AsyncMock()
@@ -431,8 +462,8 @@ class TestAppAuthErrors:
         mock_client.__aexit__.return_value = None
         mock_client.post.side_effect = httpx.HTTPStatusError(
             "Forbidden",
-            request=MagicMock(),
-            response=MagicMock(status_code=403)
+            request=create_mock_request(),
+            response=create_mock_response(403, "Forbidden")
         )
         mock_client_class.return_value = mock_client
 

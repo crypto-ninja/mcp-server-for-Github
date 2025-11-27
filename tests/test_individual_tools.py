@@ -45,6 +45,38 @@ from github_mcp import (  # noqa: E402
 )
 
 
+def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
+    """
+    Create a properly mockable httpx response object that returns serializable values.
+    
+    This prevents MagicMock serialization errors when error responses are converted to JSON.
+    """
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_response.text = text
+    mock_response.headers = headers or {}
+    
+    # Make json() return actual dict, not MagicMock
+    if json_data is not None:
+        mock_response.json.return_value = json_data
+    else:
+        # Default error response structure
+        mock_response.json.return_value = {
+            "message": text or f"Error {status_code}",
+            "errors": []
+        }
+    
+    return mock_response
+
+
+def create_mock_request():
+    """Create a properly mockable httpx request object."""
+    mock_request = MagicMock()
+    mock_request.url = "https://api.github.com/test"
+    mock_request.method = "GET"
+    return mock_request
+
+
 class TestReadOperations:
     """Test read operations with mocked API responses."""
 
@@ -390,8 +422,8 @@ class TestErrorHandling:
         # Mock 404 error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404)
+            request=create_mock_request(),
+            response=create_mock_response(404, "Not Found")
         )
 
         # Call the tool - should handle error gracefully
@@ -413,8 +445,8 @@ class TestErrorHandling:
         # Mock 403 error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Permission denied",
-            request=MagicMock(),
-            response=MagicMock(status_code=403)
+            request=create_mock_request(),
+            response=create_mock_response(403, "Permission denied")
         )
 
         # Call the tool
@@ -437,8 +469,8 @@ class TestErrorHandling:
         # Mock 404 error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404)
+            request=create_mock_request(),
+            response=create_mock_response(404, "Not Found")
         )
 
         # Call the tool
@@ -701,8 +733,8 @@ class TestReleaseOperations:
         # 3. Tag check (404 - tag doesn't exist)
         tag_check_error = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404)
+            request=create_mock_request(),
+            response=create_mock_response(404, "Not Found")
         )
         # 4. Tag creation response
         tag_creation = {
@@ -1044,8 +1076,8 @@ class TestAdvancedErrorHandling:
         # Mock 429 rate limit error
         mock_request.side_effect = httpx.HTTPStatusError(
             "API rate limit exceeded",
-            request=MagicMock(),
-            response=MagicMock(status_code=429)
+            request=create_mock_request(),
+            response=create_mock_response(429, "API rate limit exceeded", headers={"Retry-After": "60"})
         )
 
         # Call the tool
@@ -1067,8 +1099,8 @@ class TestAdvancedErrorHandling:
         # Mock 500 server error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Internal server error",
-            request=MagicMock(),
-            response=MagicMock(status_code=500)
+            request=create_mock_request(),
+            response=create_mock_response(500, "Internal server error")
         )
 
         # Call the tool
@@ -1090,7 +1122,7 @@ class TestAdvancedErrorHandling:
         # Mock timeout error
         mock_request.side_effect = httpx.TimeoutException(
             "Request timed out",
-            request=MagicMock()
+            request=create_mock_request()
         )
 
         # Call the tool
@@ -1398,8 +1430,8 @@ class TestMoreErrorPaths:
         # Mock 401 unauthorized error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Bad credentials",
-            request=MagicMock(),
-            response=MagicMock(status_code=401)
+            request=create_mock_request(),
+            response=create_mock_response(401, "Bad credentials")
         )
 
         # Call the tool
@@ -1421,8 +1453,8 @@ class TestMoreErrorPaths:
         # Mock 409 conflict error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Conflict",
-            request=MagicMock(),
-            response=MagicMock(status_code=409)
+            request=create_mock_request(),
+            response=create_mock_response(409, "Conflict")
         )
 
         # Call the tool
@@ -1955,8 +1987,8 @@ class TestEdgeCasesAdvanced:
         # Mock abuse rate limit error
         mock_request.side_effect = httpx.HTTPStatusError(
             "You have triggered an abuse detection mechanism",
-            request=MagicMock(),
-            response=MagicMock(status_code=403)
+            request=create_mock_request(),
+            response=create_mock_response(403, "You have triggered an abuse detection mechanism")
         )
 
         # Call the tool
@@ -2258,8 +2290,8 @@ class TestMoreErrorScenarios:
         # Mock 422 validation error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Validation Failed",
-            request=MagicMock(),
-            response=MagicMock(status_code=422)
+            request=create_mock_request(),
+            response=create_mock_response(422, "Validation Failed", json_data={"message": "Validation Failed", "errors": []})
         )
 
         # Call the tool - use a valid title but mock will return 422
@@ -2283,8 +2315,8 @@ class TestMoreErrorScenarios:
         # Mock 410 Gone error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Repository access blocked",
-            request=MagicMock(),
-            response=MagicMock(status_code=410)
+            request=create_mock_request(),
+            response=create_mock_response(410, "Repository access blocked")
         )
 
         # Call the tool
@@ -2307,8 +2339,8 @@ class TestMoreErrorScenarios:
         # Mock 409 conflict error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Conflict",
-            request=MagicMock(),
-            response=MagicMock(status_code=409)
+            request=create_mock_request(),
+            response=create_mock_response(409, "Conflict")
         )
 
         # Call the tool
@@ -2334,8 +2366,8 @@ class TestMoreErrorScenarios:
         # Mock 502 server error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Bad Gateway",
-            request=MagicMock(),
-            response=MagicMock(status_code=502)
+            request=create_mock_request(),
+            response=create_mock_response(502, "Bad Gateway")
         )
 
         # Call the tool
@@ -3324,8 +3356,8 @@ class TestErrorHandlingHelpers:
         # Test HTTP status error
         error = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404, text="Repository not found")
+            request=create_mock_request(),
+            response=create_mock_response(404, "Repository not found")
         )
         result = _handle_api_error(error)
 
@@ -3348,14 +3380,11 @@ class TestErrorHandlingHelpers:
         from github_mcp import _handle_api_error
 
         # Test 429 rate limit with Retry-After header
-        mock_response = MagicMock()
-        mock_response.status_code = 429
-        mock_response.headers = {"Retry-After": "60"}
-        mock_response.text = "Rate limit exceeded"
+        mock_response = create_mock_response(429, "Rate limit exceeded", headers={"Retry-After": "60"})
         
         error = httpx.HTTPStatusError(
             "Rate limit exceeded",
-            request=MagicMock(),
+            request=create_mock_request(),
             response=mock_response
         )
         result = _handle_api_error(error)
@@ -3370,8 +3399,8 @@ class TestErrorHandlingHelpers:
         # Test 500 server error
         error = httpx.HTTPStatusError(
             "Internal Server Error",
-            request=MagicMock(),
-            response=MagicMock(status_code=500, text="Server error")
+            request=create_mock_request(),
+            response=create_mock_response(500, "Server error")
         )
         result = _handle_api_error(error)
 
@@ -3755,8 +3784,8 @@ class TestReleaseOperationsComprehensive:
         """Test getting non-existent release."""
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
-            request=MagicMock(),
-            response=MagicMock(status_code=404, text="Release not found")
+            request=create_mock_request(),
+            response=create_mock_response(404, "Release not found")
         )
 
         from github_mcp import GetReleaseInput

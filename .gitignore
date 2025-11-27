@@ -55,3 +55,6 @@ htmlcov/
 
 # OS
 Thumbs.db
+
+# Personal planning docs (keep local only)
+FEATURE_ROADMAP.md
