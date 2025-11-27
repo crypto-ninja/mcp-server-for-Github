@@ -67,8 +67,19 @@ from github_client import GhClient
 from auth.github_app import get_auth_token, clear_token_cache
 from graphql_client import GraphQLClient
 
-# Load .env file if it exists
-load_dotenv()
+# Get the directory where THIS script is located
+SCRIPT_DIR = Path(__file__).parent
+
+# Load .env file from the same directory as the script
+# This ensures .env is found regardless of where the server is started from
+env_path = SCRIPT_DIR / ".env"
+load_dotenv(env_path)
+
+# Debug: Log if token was loaded (only if DEBUG_AUTH is enabled)
+if os.getenv("GITHUB_MCP_DEBUG_AUTH", "false").lower() == "true":
+    token_loaded = os.getenv("GITHUB_TOKEN") is not None
+    print(f"[DEBUG] .env loaded from: {env_path}", file=sys.stderr)
+    print(f"[DEBUG] GITHUB_TOKEN loaded: {token_loaded}", file=sys.stderr)
 
 # Validate Deno installation at startup
 def check_deno_installed():
