@@ -2458,28 +2458,30 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             json=payload
         )
         
-        result = f"""✅ Issue Created Successfully!
-
-**Issue:** #{data['number']} - {data['title']}
-**State:** {data['state']}
-**URL:** {data['html_url']}
-**Created:** {_format_timestamp(data['created_at'])}
-**Author:** @{data['user']['login']}
-
-"""
-        
-        if data.get('labels'):
-            labels = ', '.join([f"`{label['name']}`" for label in data['labels']])
-            result += f"**Labels:** {labels}\n"
-        
-        if data.get('assignees'):
-            assignees = ', '.join([f"@{a['login']}" for a in data['assignees']])
-            result += f"**Assignees:** {assignees}\n"
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_update_issue",
@@ -3940,32 +3942,33 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             json=payload
         )
         
-        # Status emoji based on draft status
-        status_emoji = "📝" if params.draft else "🔀"
-        
-        result = f"""✅ Pull Request Created Successfully!
-
-{status_emoji} **PR:** #{data['number']} - {data['title']}
-**State:** {data['state']}
-**Draft:** {'Yes' if data['draft'] else 'No'}
-**Base:** `{data['base']['ref']}` ← **Head:** `{data['head']['ref']}`
-**URL:** {data['html_url']}
-**Created:** {_format_timestamp(data['created_at'])}
-**Author:** @{data['user']['login']}
-
-"""
-        
-        if data.get('body'):
-            body_preview = data['body'][:200] + "..." if len(data['body']) > 200 else data['body']
-            result += f"**Description:** {body_preview}\n\n"
-        
-        result += f"**Mergeable:** {data.get('mergeable', 'Unknown')}\n"
-        result += f"**Maintainer Can Modify:** {'Yes' if data.get('maintainer_can_modify') else 'No'}\n"
-        
-        return result
+        # CRITICAL: Return the FULL GitHub API response as JSON
+        # This includes all fields: number, html_url, state, title, etc.
+        # This makes it easy for programmatic use (e.g., TypeScript code)
+        # The response is the complete PR object from GitHub API
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = _handle_api_error(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_get_pr_details",
@@ -4750,30 +4753,30 @@ async def github_create_release(params: CreateReleaseInput) -> str:
             json=body_data
         )
         
-        # Format response
-        response = [
-            "✅ **Release Created Successfully!**\n",
-            f"🏷️ **Tag:** {data['tag_name']}",
-            f"📦 **Name:** {data['name']}",
-            f"🔗 **URL:** {data['html_url']}",
-            f"📅 **Created:** {_format_timestamp(data['created_at'])}",
-            f"👤 **Author:** @{data['author']['login']}",
-        ]
-        
-        if data.get('draft'):
-            response.append("📝 **Status:** Draft (not publicly visible)")
-        elif data.get('prerelease'):
-            response.append("🚧 **Status:** Pre-release")
-        else:
-            response.append("✅ **Status:** Published")
-        
-        if data.get('body'):
-            response.append(f"\n**Release Notes:**\n{data['body'][:500]}{'...' if len(data['body']) > 500 else ''}")
-        
-        return "\n".join(response)
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_update_release",
@@ -4865,29 +4868,30 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             json=body_data
         )
         
-        # Format response
-        response = [
-            "✅ **Release Updated Successfully!**\n",
-            f"🏷️ **Tag:** {data['tag_name']}",
-            f"📦 **Name:** {data['name']}",
-            f"🔗 **URL:** {data['html_url']}",
-            f"📅 **Updated:** {_format_timestamp(data.get('published_at', data['created_at']))}",
-        ]
-        
-        if data.get('draft'):
-            response.append("📝 **Status:** Draft")
-        elif data.get('prerelease'):
-            response.append("🚧 **Status:** Pre-release")
-        else:
-            response.append("✅ **Status:** Published")
-        
-        if params.body:
-            response.append(f"\n**Updated Release Notes Preview:**\n{params.body[:300]}{'...' if len(params.body) > 300 else ''}")
-        
-        return "\n".join(response)
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 # Phase 2.1: File Management Tools
 
@@ -4965,34 +4969,34 @@ async def github_create_file(params: CreateFileInput) -> str:
         )
         
         # Format success response
-        result = f"""✅ **File Created Successfully!**
-
-
-**Repository:** {params.owner}/{params.repo}
-**File:** {params.path}
-**Branch:** {params.branch or 'default'}
-**Commit Message:** {params.message}
-
-
-**Commit Details:**
-- SHA: {data['commit']['sha']}
-- Author: {data['commit']['author']['name']}
-- Date: {data['commit']['author']['date']}
-
-
-**File URL:** {data['content']['html_url']}
-"""
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        error_msg = _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
         
-        # Add helpful context for common errors
-        if "422" in error_msg or "already exists" in error_msg.lower():
-            error_msg += "\n\n💡 Tip: This file already exists. Use 'github_update_file' to modify it, or 'github_delete_file' to remove it first."
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+            
+            # Add helpful context for common errors
+            if error_info["status_code"] == 422:
+                error_info["hint"] = "This file already exists. Use 'github_update_file' to modify it, or 'github_delete_file' to remove it first."
+        else:
+            error_info["message"] = str(e)
         
-        return error_msg
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5069,37 +5073,36 @@ async def github_update_file(params: UpdateFileInput) -> str:
             json=body
         )
         
-        # Format success response
-        result = f"""✅ **File Updated Successfully!**
-
-
-**Repository:** {params.owner}/{params.repo}
-**File:** {params.path}
-**Branch:** {params.branch or 'default'}
-**Commit Message:** {params.message}
-
-
-**Commit Details:**
-- SHA: {data['commit']['sha']}
-- Author: {data['commit']['author']['name']}
-- Date: {data['commit']['author']['date']}
-
-
-**File URL:** {data['content']['html_url']}
-"""
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
         
     except Exception as e:
-        error_msg = _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
         
-        # Add helpful context for common errors
-        if "409" in error_msg or "does not match" in error_msg.lower():
-            error_msg += "\n\n💡 Tip: The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
-        elif "404" in error_msg:
-            error_msg += "\n\n💡 Tip: File not found. Use 'github_create_file' to create it first."
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+            
+            # Add helpful context for common errors
+            if error_info["status_code"] == 409:
+                error_info["hint"] = "The file SHA doesn't match. The file may have been modified. Get the current SHA with 'github_get_file_content' and try again."
+            elif error_info["status_code"] == 404:
+                error_info["hint"] = "File not found. Use 'github_create_file' to create it first."
+        else:
+            error_info["message"] = str(e)
         
-        return error_msg
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5485,9 +5488,29 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
             endpoint = "user/repos"
 
         data = await _make_github_request(endpoint, method="POST", token=auth_token, json=body)
-        return f"✅ Repository created: {data['full_name']}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5516,9 +5539,34 @@ async def github_delete_repository(params: DeleteRepositoryInput) -> str:
     
     try:
         await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
-        return f"✅ Repository deleted: {params.owner}/{params.repo}"
+        # DELETE operations return 204 No Content (empty response)
+        # Return structured success JSON
+        return json.dumps({
+            "success": True,
+            "message": f"Repository {params.owner}/{params.repo} deleted successfully",
+            "deleted": True
+        }, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5552,9 +5600,29 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
             if value is not None:
                 body[field] = value
         data = await _make_github_request(f"repos/{params.owner}/{params.repo}", method="PATCH", token=auth_token, json=body)
-        return f"✅ Repository updated: {data['full_name']}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5591,9 +5659,29 @@ async def github_transfer_repository(params: TransferRepositoryInput) -> str:
             token=auth_token,
             json=body
         )
-        return f"✅ Transfer initiated: {data['full_name']} -> {params.new_owner}\nURL: {data['html_url']}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 
 @conditional_tool(
@@ -5628,10 +5716,29 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
             token=auth_token,
             json=body
         )
-        state = "archived" if data.get("archived") else "active"
-        return f"✅ Repository state updated: {data['full_name']} is now {state}"
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(data, indent=2)
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_merge_pull_request",
@@ -5704,29 +5811,30 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
             json=merge_data
         )
         
-        response = f"""✅ **Pull Request Merged Successfully!**
-
-
-📦 **Repository:** {params.owner}/{params.repo}
-🔀 **PR:** #{params.pull_number}
-✅ **Status:** {result.get('message', 'Merged')}
-
-
-**Merge Details:**
-
-- 📝 **Commit SHA:** {result.get('sha', 'N/A')}
-- 🔀 **Method:** {params.merge_method or 'squash'}
-- ✅ **Merged:** {result.get('merged', False)}
-
-
-The pull request has been successfully merged! 🎉
-
-"""
-        
-        return response
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(result, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_close_pull_request",
@@ -5794,25 +5902,30 @@ async def github_close_pull_request(params: ClosePullRequestInput) -> str:
             json={"state": "closed"}
         )
         
-        result = f"""✅ Pull Request Closed Successfully!
-
-**PR:** #{pr['number']} - {pr['title']}
-**Repository:** {params.owner}/{params.repo}
-**URL:** {pr['html_url']}
-**Status:** {pr['state']}
-**Closed:** {_format_timestamp(pr['closed_at']) if pr.get('closed_at') else 'Just now'}
-
-"""
-        
-        if params.comment:
-            result += f"**Comment Added:** {params.comment[:100]}{'...' if len(params.comment) > 100 else ''}\n\n"
-        
-        result += "Note: PR was closed without merging. The branch can still be merged later if needed.\n"
-        
-        return result
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(pr, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 @conditional_tool(
     name="github_create_pr_review",
@@ -5860,7 +5973,11 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
     try:
         token = await _get_auth_token_fallback(params.token)
         if not token:
-            return "Error: GitHub token required for creating PR reviews. Set GITHUB_TOKEN or configure GitHub App authentication."
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for creating PR reviews. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False
+            }, indent=2)
         
         review_data: Dict[str, Any] = {
             "event": params.event
@@ -5890,28 +6007,30 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
             json=review_data
         )
         
-        response = "# Pull Request Review Created! ✅\n\n"
-        response += f"**Repository:** {params.owner}/{params.repo}  \n"
-        response += f"**Pull Request:** #{params.pull_number}  \n"
-        response += f"**Review ID:** {review['id']}  \n"
-        response += f"**State:** {review['state']}  \n"
-        if review.get('user'):
-            response += f"**Reviewer:** {review['user']['login']}  \n"
-        if review.get('submitted_at'):
-            response += f"**Submitted:** {_format_timestamp(review['submitted_at'])}  \n\n"
-        if params.body:
-            response += f"## Review Comment:\n\n{params.body}\n\n"
-        if params.comments:
-            response += f"## Line Comments: {len(params.comments)}\n\n"
-            for comment in params.comments:
-                line_info = f"line {comment.line}" if comment.line else f"position {comment.position}"
-                response += f"- **{comment.path}** ({line_info}, {comment.side}): {comment.body[:100]}...\n"
-        if review.get('html_url'):
-            response += f"\n**View Review:** {review['html_url']}\n"
-        return response
+        # Return the FULL GitHub API response as JSON
+        return json.dumps(review, indent=2)
         
     except Exception as e:
-        return _handle_api_error(e)
+        # Return structured JSON error for programmatic use
+        error_info = {
+            "success": False,
+            "error": str(e),
+            "type": type(e).__name__
+        }
+        
+        # Extract detailed error info from HTTPStatusError
+        if isinstance(e, httpx.HTTPStatusError):
+            error_info["status_code"] = e.response.status_code
+            try:
+                error_body = e.response.json()
+                error_info["message"] = error_body.get("message", "Unknown error")
+                error_info["errors"] = error_body.get("errors", [])
+            except Exception:
+                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+        else:
+            error_info["message"] = str(e)
+        
+        return json.dumps(error_info, indent=2)
 
 # ============================================================================
 # CODE-FIRST EXECUTION TOOL (The Only Tool Exposed to Claude)

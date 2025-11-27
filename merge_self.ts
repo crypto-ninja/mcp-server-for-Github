@@ -51,21 +51,33 @@ The tools are merging themselves! Infinite recursion achieved! ♾️
 **Status:** All tests passed ✅`
 });
 
-// Parse PR number from response
+// Parse PR number from response (now returns JSON)
 let prNumber;
 try {
   const prData = JSON.parse(pr);
-  prNumber = prData.number || prData.issue?.number;
-} catch {
-  // Try to extract from markdown
-  const match = pr.match(/#(\d+)/);
-  prNumber = match ? parseInt(match[1]) : null;
-}
-
-if (!prNumber) {
-  console.error("❌ Could not extract PR number from response:");
+  
+  // Check for errors first
+  if (prData.success === false || prData.error) {
+    console.error("❌ PR creation failed:");
+    console.error(JSON.stringify(prData, null, 2));
+    throw new Error(`PR creation failed: ${prData.message || prData.error}`);
+  }
+  
+  // Extract PR number from the GitHub API response
+  prNumber = prData.number;
+  
+  if (!prNumber) {
+    console.error("❌ PR created but no number in response:");
+    console.error(JSON.stringify(prData, null, 2));
+    throw new Error("Failed to get PR number from response");
+  }
+} catch (error) {
+  if (error instanceof Error && error.message.includes("PR creation failed")) {
+    throw error; // Re-throw our custom error
+  }
+  console.error("❌ Failed to parse PR response:");
   console.error(pr);
-  throw new Error("Failed to get PR number");
+  throw new Error(`Failed to parse PR response: ${error}`);
 }
 
 console.log(`✅ PR created: #${prNumber}`);

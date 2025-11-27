@@ -11,6 +11,28 @@
   - `github_delete_branch` - Delete branches with safety checks (default/protected branch protection)
   - `github_compare_branches` - Compare branches to see commits ahead/behind and files changed
 
+### Fixed
+
+- **BREAKING**: All write operations now return full GitHub API response as JSON
+  - Previously returned formatted markdown strings
+  - Now returns structured JSON for programmatic use
+  - Prevents false positives in success/failure detection
+  - Standardized error handling across all tools
+  - Affected 13 write operations:
+    - `github_create_issue`, `github_create_file`, `github_update_file`
+    - `github_create_release`, `github_update_release`
+    - `github_create_pull_request`, `github_merge_pull_request`
+    - `github_close_pull_request`, `github_create_pr_review`
+    - `github_create_repository`, `github_delete_repository`
+    - `github_update_repository`, `github_transfer_repository`
+    - `github_archive_repository`
+
+### Changed
+
+- Error responses now include HTTP status codes and detailed messages
+- All write operations return complete GitHub API response objects
+- DELETE operations return structured success JSON (204 No Content handled)
+
 ### Meta Achievement
 
 - 🤯 These tools created their own PR and merged themselves into main!
