@@ -28,7 +28,7 @@ This validates their research in a real-world production environment.
 
 As they encouraged: *"If you implement this approach, we encourage you to share your findings with the MCP community."*
 
-We shared our findings: [Link to GitHub Discussions post]
+We shared our findings: (https://github.com/orgs/modelcontextprotocol/discussions/629)
 
 Thank you to the Anthropic team for documenting this revolutionary pattern!
 
