@@ -661,17 +661,18 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_release",
     category: "Releases",
-    description: "Get details of a specific release",
+    description: "Get detailed information about a specific release or the latest release",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      tag_name: { type: "string", required: true, description: "Release tag", example: "v1.0.0" }
+      tag: { type: "string", required: false, description: "Release tag (e.g., 'v1.0.0') or 'latest' for most recent (default: 'latest')", example: "v1.0.0" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default: 'markdown')" }
     },
-    returns: "Detailed release information",
+    returns: "Detailed release information with tag, status, dates, author, and URL",
     example: `const release = await callMCPTool("github_get_release", {
   owner: "facebook",
   repo: "react",
-  tag_name: "v18.0.0"
+  tag: "v18.0.0"
 });`
   },
   {
@@ -701,21 +702,22 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_update_release",
     category: "Releases",
-    description: "Update an existing release",
+    description: "Update an existing GitHub release. Only provided fields will be updated - others remain unchanged",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      tag_name: { type: "string", required: true, description: "Release tag" },
-      name: { type: "string", required: false, description: "New title" },
-      body: { type: "string", required: false, description: "New description" },
-      draft: { type: "boolean", required: false, description: "Update draft status" },
-      prerelease: { type: "boolean", required: false, description: "Update prerelease status" }
+      release_id: { type: "string", required: true, description: "Release ID or tag name (e.g., 'v1.2.0')" },
+      tag_name: { type: "string", required: false, description: "New tag name (use carefully!)" },
+      name: { type: "string", required: false, description: "New release title" },
+      body: { type: "string", required: false, description: "New release notes/description in Markdown format" },
+      draft: { type: "boolean", required: false, description: "Set draft status" },
+      prerelease: { type: "boolean", required: false, description: "Set pre-release status" }
     },
-    returns: "Updated release details",
+    returns: "Updated release details with confirmation",
     example: `const release = await callMCPTool("github_update_release", {
   owner: "myuser",
   repo: "myrepo",
-  tag_name: "v2.0.0",
+  release_id: "v2.0.0",
   body: "Updated release notes..."
 });`
   },
@@ -787,15 +789,21 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_suggest_workflow",
     category: "Advanced",
-    description: "Get AI-powered workflow suggestions based on repository analysis",
+    description: "Recommend whether to use API tools, local git, or a hybrid approach based on operation type, file size, number of edits, and file count",
     parameters: {
-      owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      operation: { type: "string", required: true, description: "Operation type (e.g., 'update_readme', 'create_release', 'multiple_file_edits')" },
+      file_size: { type: "number", required: false, description: "Estimated file size in bytes" },
+      num_edits: { type: "number", required: false, description: "Number of separate edit operations (default: 1)" },
+      file_count: { type: "number", required: false, description: "Number of files being modified (default: 1)" },
+      description: { type: "string", required: false, description: "Additional context about the task" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default: 'markdown')" }
     },
-    returns: "Suggested workflow improvements and best practices",
-    example: `const suggestions = await callMCPTool("github_suggest_workflow", {
-  owner: "myuser",
-  repo: "myrepo"
+    returns: "Workflow recommendation (API, local, or hybrid) with rationale and token estimates",
+    example: `const suggestion = await callMCPTool("github_suggest_workflow", {
+  operation: "update_readme",
+  file_size: 5000,
+  num_edits: 1,
+  file_count: 1
 });`
   },
 

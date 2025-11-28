@@ -251,9 +251,18 @@ class TestAuthFallback:
         assert token is None
 
     @pytest.mark.asyncio
-    @patch.dict(os.environ, {"GITHUB_TOKEN": "test_pat_token"})
+    @patch.dict(os.environ, {
+        "GITHUB_TOKEN": "test_pat_token",
+        "GITHUB_APP_ID": "",
+        "GITHUB_APP_INSTALLATION_ID": "",
+        "GITHUB_APP_PRIVATE_KEY_PATH": "",
+        "GITHUB_APP_PRIVATE_KEY": ""
+    }, clear=False)
     async def test_get_auth_token_pat_fallback(self):
         """Test PAT fallback when GitHub App not configured."""
+        # Clear token cache to ensure fresh auth check
+        clear_token_cache()
+        
         token = await get_auth_token()
 
         # Should return PAT

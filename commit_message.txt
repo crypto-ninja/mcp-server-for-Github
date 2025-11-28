@@ -1,0 +1,54 @@
+fix: standardize all write operations to return JSON
+
+BREAKING CHANGE: Write operations now return JSON instead of markdown
+
+All 13 write operations now return full GitHub API response as JSON,
+enabling reliable programmatic use and preventing false positives.
+
+Changes:
+- All write operations return json.dumps(data, indent=2)
+- Standardized error handling to return structured JSON errors
+- Added HTTP status codes and detailed error messages
+- DELETE operations return structured success JSON (204 handling)
+
+Fixed Tools:
+- github_create_issue, github_create_file, github_update_file
+- github_create_release, github_update_release
+- github_create_pull_request (already fixed), github_merge_pull_request
+- github_close_pull_request, github_create_pr_review
+- github_create_repository, github_delete_repository
+- github_update_repository, github_transfer_repository
+- github_archive_repository
+
+Error Response Format:
+{
+  "success": false,
+  "error": "...",
+  "type": "...",
+  "status_code": 422,
+  "message": "...",
+  "errors": [...]
+}
+
+Success Response Format:
+Full GitHub API response object (all fields included)
+
+Benefits:
+- No more false positives (can't say success when operation failed)
+- Direct JSON parsing (no regex needed)
+- Complete API response data available
+- Consistent error handling across all tools
+- Ready for meta merge (tools can parse their own responses)
+
+Files:
+- github_mcp.py: Fixed 13 write operations
+- merge_self.ts: Updated to parse JSON responses
+- CHANGELOG.md: Added breaking change notice
+- test_write_operations.ts: Test script for verification
+- TOOL_AUDIT_RESULTS.md: Complete audit report
+- TOOL_DEBUGGING_REPORT.md: Debugging analysis
+- FIXES_COMPLETE.md: Summary document
+
+This is a breaking change for any code parsing the old markdown format,
+but fixes critical reliability issues and is necessary before v2.4.0.
+
