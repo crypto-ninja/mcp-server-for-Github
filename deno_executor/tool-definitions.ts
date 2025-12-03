@@ -380,6 +380,96 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   path: "packages"
 });`
   },
+
+  // BRANCH MANAGEMENT (5 tools)
+  {
+    name: "github_list_branches",
+    category: "Branch Management",
+    description: "List all branches in a GitHub repository with protection status and commit information",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      protected: { type: "boolean", required: false, description: "Filter by protected status" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "List of branches with names, commit SHAs, protection status, and default branch indicator",
+    example: `const branches = await callMCPTool("github_list_branches", {
+  owner: "myuser",
+  repo: "myrepo",
+  protected: false
+});`
+  },
+  {
+    name: "github_create_branch",
+    category: "Branch Management",
+    description: "Create a new branch from a specified ref (branch, tag, or commit SHA)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "New branch name" },
+      from_ref: { type: "string", required: false, description: "Branch, tag, or commit SHA to branch from (default: 'main')" }
+    },
+    returns: "Success confirmation with branch details and URL",
+    example: `const result = await callMCPTool("github_create_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "feature/new-feature",
+  from_ref: "main"
+});`
+  },
+  {
+    name: "github_get_branch",
+    category: "Branch Management",
+    description: "Get detailed information about a branch including protection status and latest commit",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "Branch name" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "Detailed branch information with commit details and protection status",
+    example: `const branch = await callMCPTool("github_get_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "feature-branch"
+});`
+  },
+  {
+    name: "github_delete_branch",
+    category: "Branch Management",
+    description: "Delete a branch from a repository. Cannot delete default or protected branches",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      branch: { type: "string", required: true, description: "Branch name to delete" }
+    },
+    returns: "Success confirmation (permanent operation)",
+    example: `const result = await callMCPTool("github_delete_branch", {
+  owner: "myuser",
+  repo: "myrepo",
+  branch: "old-feature-branch"
+});`
+  },
+  {
+    name: "github_compare_branches",
+    category: "Branch Management",
+    description: "Compare two branches to see commits ahead/behind and files changed. Useful before merging",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      base: { type: "string", required: true, description: "Base branch name (usually 'main')" },
+      head: { type: "string", required: true, description: "Head branch name to compare" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+    },
+    returns: "Comparison results with commits ahead/behind and files changed",
+    example: `const comparison = await callMCPTool("github_compare_branches", {
+  owner: "myuser",
+  repo: "myrepo",
+  base: "main",
+  head: "feature-branch"
+});`
+  },
   {
     name: "github_create_file",
     category: "File Operations",
@@ -571,17 +661,18 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_release",
     category: "Releases",
-    description: "Get details of a specific release",
+    description: "Get detailed information about a specific release or the latest release",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      tag_name: { type: "string", required: true, description: "Release tag", example: "v1.0.0" }
+      tag: { type: "string", required: false, description: "Release tag (e.g., 'v1.0.0') or 'latest' for most recent (default: 'latest')", example: "v1.0.0" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default: 'markdown')" }
     },
-    returns: "Detailed release information",
+    returns: "Detailed release information with tag, status, dates, author, and URL",
     example: `const release = await callMCPTool("github_get_release", {
   owner: "facebook",
   repo: "react",
-  tag_name: "v18.0.0"
+  tag: "v18.0.0"
 });`
   },
   {
@@ -611,21 +702,22 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_update_release",
     category: "Releases",
-    description: "Update an existing release",
+    description: "Update an existing GitHub release. Only provided fields will be updated - others remain unchanged",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      tag_name: { type: "string", required: true, description: "Release tag" },
-      name: { type: "string", required: false, description: "New title" },
-      body: { type: "string", required: false, description: "New description" },
-      draft: { type: "boolean", required: false, description: "Update draft status" },
-      prerelease: { type: "boolean", required: false, description: "Update prerelease status" }
+      release_id: { type: "string", required: true, description: "Release ID or tag name (e.g., 'v1.2.0')" },
+      tag_name: { type: "string", required: false, description: "New tag name (use carefully!)" },
+      name: { type: "string", required: false, description: "New release title" },
+      body: { type: "string", required: false, description: "New release notes/description in Markdown format" },
+      draft: { type: "boolean", required: false, description: "Set draft status" },
+      prerelease: { type: "boolean", required: false, description: "Set pre-release status" }
     },
-    returns: "Updated release details",
+    returns: "Updated release details with confirmation",
     example: `const release = await callMCPTool("github_update_release", {
   owner: "myuser",
   repo: "myrepo",
-  tag_name: "v2.0.0",
+  release_id: "v2.0.0",
   body: "Updated release notes..."
 });`
   },
@@ -697,15 +789,21 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_suggest_workflow",
     category: "Advanced",
-    description: "Get AI-powered workflow suggestions based on repository analysis",
+    description: "Recommend whether to use API tools, local git, or a hybrid approach based on operation type, file size, number of edits, and file count",
     parameters: {
-      owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      operation: { type: "string", required: true, description: "Operation type (e.g., 'update_readme', 'create_release', 'multiple_file_edits')" },
+      file_size: { type: "number", required: false, description: "Estimated file size in bytes" },
+      num_edits: { type: "number", required: false, description: "Number of separate edit operations (default: 1)" },
+      file_count: { type: "number", required: false, description: "Number of files being modified (default: 1)" },
+      description: { type: "string", required: false, description: "Additional context about the task" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default: 'markdown')" }
     },
-    returns: "Suggested workflow improvements and best practices",
-    example: `const suggestions = await callMCPTool("github_suggest_workflow", {
-  owner: "myuser",
-  repo: "myrepo"
+    returns: "Workflow recommendation (API, local, or hybrid) with rationale and token estimates",
+    example: `const suggestion = await callMCPTool("github_suggest_workflow", {
+  operation: "update_readme",
+  file_size: 5000,
+  num_edits: 1,
+  file_count: 1
 });`
   },
 

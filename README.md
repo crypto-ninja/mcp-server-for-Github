@@ -484,9 +484,9 @@ That's it! You get 98% token savings by default. 🚀
 
 ### Learn More
 
-- 📖 [Code Execution Guide](CODE_EXECUTION_GUIDE.md) - Complete documentation
-- 💡 [Examples](EXAMPLES.md) - Real-world usage examples  
-- 🚀 [Quick Start](QUICK_START_CODE_EXECUTION.md) - 5-minute setup
+- 📖 [Code Execution Guide](docs/CODE_EXECUTION_GUIDE.md) - Complete documentation
+- 💡 [Examples](docs/EXAMPLES.md) - Real-world usage examples  
+- 🚀 [Quick Start](docs/QUICK_START_CODE_EXECUTION.md) - 5-minute setup
 
 ---
 
@@ -594,29 +594,44 @@ Try GitHub App (if configured)
    └─ Fails → Return auth error ❌
 ```
 
-### Quick Start (PAT Only)
+### Quick Start Configuration
 
-For quick setup, you can start with just a PAT:
+Most users just need a Personal Access Token:
+
+**1. Create a GitHub PAT:**
+
+- Go to https://github.com/settings/tokens
+- Click \"Generate new token (classic)\"
+- Select scopes: `repo`, `workflow`, `read:org`
+- Copy the token
+
+**2. Configure your MCP client:**
+
+**Claude Desktop** (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "github-mcp": {
+    "github": {
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here"
+        "GITHUB_TOKEN": "ghp_your_token_here"
       }
     }
   }
 }
 ```
 
-**Limitations:**
+**Or using .env file:**
 
-- ⚠️ Lower rate limit (5,000 vs 15,000 requests/hour)
-- ⚠️ No team collaboration benefits
-- ✅ All operations work, including releases
+```env
+GITHUB_TOKEN=ghp_your_token_here
+```
+
+That's it! You're ready to use all 47 GitHub tools.
+
+> 💡 **Need higher rate limits?** Power users can [create their own GitHub App](docs/ADVANCED_GITHUB_APP.md) for 15,000 requests/hour instead of 5,000.
 
 ### Platform-Specific Examples
 
@@ -790,7 +805,7 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 
 [Read more about our testing philosophy →](TESTING.md)
 
-**📖 Need detailed setup instructions?** See [GitHub App Setup Guide](GITHUB_APP_SETUP.md)
+**📖 Need detailed setup instructions?** See [Advanced GitHub App Guide](docs/ADVANCED_GITHUB_APP.md)
 
 ---
 
@@ -1003,7 +1018,7 @@ We're building through dogfooding - using our own product reveals what's missing
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
-📋 **[View Detailed Roadmap →](FEATURE_ROADMAP.md)**
+📋 **[View Detailed Roadmap →](docs/FEATURE_ROADMAP.md)**
 
 ---
 

@@ -1,5 +1,12 @@
 # Quick Start: Code-First Execution
 
+(Contents moved from root QUICK_START_CODE_EXECUTION.md)
+
+See root version history for full details. This file was relocated from project root as part of cleanup.
+
+
+# Quick Start: Code-First Execution
+
 ## 5-Minute Setup
 
 ### 1. Install Deno
@@ -89,7 +96,9 @@ const results = await callMCPTool("github_search_code", {
 - [Examples](EXAMPLES.md)
 - [README](README.md)
 
+> 🧩 **Authentication:** For most users, a single `GITHUB_TOKEN` Personal Access Token is all you need.  
+> Power users who need 15,000 requests/hour can use the advanced [GitHub App guide](ADVANCED_GITHUB_APP.md).
+
 ---
 
 **You're ready to go! 🚀**
-

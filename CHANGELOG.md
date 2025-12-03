@@ -229,7 +229,7 @@ When you use this MCP server, you're using tools that have:
 - Documented authentication priority
 - Added troubleshooting guide
 - Explained user-level vs organization installations
-- Created `GITHUB_APP_SETUP.md` guide
+- Created advanced GitHub App guide (`ADVANCED_GITHUB_APP.md`)
 
 ### 🐛 Bug Fixes
 

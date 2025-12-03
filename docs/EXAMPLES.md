@@ -1,5 +1,12 @@
 # GitHub MCP Server - Code Execution Examples
 
+(Contents moved from root EXAMPLES.md)
+
+See root version history for full details. This file was relocated from project root as part of cleanup.
+
+
+# GitHub MCP Server - Code Execution Examples
+
 ## Table of Contents
 
 - [Simple Examples](#simple-examples)
@@ -289,4 +296,3 @@ return {
 ---
 
 See [CODE_EXECUTION_GUIDE.md](CODE_EXECUTION_GUIDE.md) for full documentation.
-

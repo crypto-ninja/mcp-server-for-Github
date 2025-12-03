@@ -1,5 +1,12 @@
 # Code Execution with GitHub MCP Server
 
+(Contents moved from root CODE_EXECUTION_GUIDE.md)
+
+See root version history for full details. This file was relocated from project root as part of cleanup.
+
+
+# Code Execution with GitHub MCP Server
+
 ## Overview
 
 The GitHub MCP Server uses a revolutionary **code-first architecture** that reduces token usage by **98%+** compared to traditional MCP servers.
