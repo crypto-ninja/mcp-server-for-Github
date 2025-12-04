@@ -16,7 +16,7 @@
     - `github_app.py` – GitHub App + PAT dual-auth implementation.
   - `deno_executor/` – TypeScript-based code execution engine used by the `execute_code` MCP tool.
     - `mod.ts` – Entrypoint for Deno execution; hosts the code-first execution environment.
-    - `tool-definitions.ts` – TypeScript catalog of all 47 tools (schema for AI use).
+    - `tool-definitions.ts` – TypeScript catalog of all 48 tools (schema for AI use).
   - `servers/` – Deno-side MCP client logic and lower-level GitHub client abstractions for the executor.
   - `src/github_mcp/` – CLI utilities and runtime helpers (e.g., `cli.py`, `deno_runtime.py`).
   - `tests/` – Comprehensive test suite (Python) validating tools, contracts, auth, and executor integration.
@@ -62,7 +62,7 @@
 
 - **`deno_executor/tool-definitions.ts`**
   - TypeScript `ToolDefinition` / `ToolParameter` interfaces.
-  - `GITHUB_TOOLS`: array of 47 tools, each with name, category, description, parameters, return description, and TypeScript usage example.
+  - `GITHUB_TOOLS`: array of 48 tools, each with name, category, description, parameters, return description, and TypeScript usage example.
   - Helper functions `getToolsByCategory` and `getCategories` for discovery.
   - Includes the `execute_code` tool definition itself as a first-class tool in the catalog.
 
@@ -145,11 +145,11 @@
   - This enables **multi-step workflows** in a single MCP call:
     - Example: read repo info → search issues → create a PR → update an issue → create a release.
 
-### 2.4 Relationship Between `execute_code` and the 47 Tools
+### 2.4 Relationship Between `execute_code` and the Tool Set
 
-- **Total Tools**: 47
+- **Total Tools**: 48
   - 1 exposed to MCP clients: `execute_code`.
-  - 46 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing).
+  - 47 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing).
 - **Public MCP Surface**
   - When `CODE_FIRST_MODE=true` (default), only `execute_code` is registered with MCP.
   - In **internal mode** (`CODE_FIRST_MODE=false`), all tools are registered: used by Deno and for internal tests/diagnostics.
@@ -164,7 +164,7 @@
 
 ## 3. Authentication System
 
-### 3.1 GitHub App Authentication (Primary, 15k req/hour)
+### 3.1 GitHub App Authentication (Advanced, 15k req/hour)
 
 - Implemented in `auth/github_app.py`:
   - `GitHubAppAuth` maintains:
@@ -182,21 +182,24 @@
     - Loads private key from `GITHUB_APP_PRIVATE_KEY` or `GITHUB_APP_PRIVATE_KEY_PATH`.
     - Returns an installation token or `None`.
 
-### 3.2 Personal Access Token Fallback (5k req/hour)
+### 3.2 Personal Access Token (Simple Default, 5k req/hour)
 
 - PATs are read from `GITHUB_TOKEN`.
-- Used when:
+- Recommended starting point for most users:
+  - Easiest to configure (2‑minute setup).
+  - Sufficient for personal projects and light automation.
+- Also used when:
   - GitHub App is not configured.
   - App token acquisition fails.
   - App cannot perform certain operations (notably **releases** and tagging), so the server intentionally falls back to PAT.
 
-### 3.3 Dual-Auth Resolution Logic
+### 3.3 Dual-Auth Resolution Logic (Behavior vs Recommendation)
 
 - Key functions:
   - `_has_app_config()` – checks presence of App ID, Installation ID, and at least one key source.
   - `get_auth_token()` – core resolver, with optional `GITHUB_MCP_DEBUG_AUTH` logging.
 
-- **Decision Order** (as implemented in `get_auth_token()`):
+- **Decision Order (Code Behavior)** (as implemented in `get_auth_token()`):
 
   1. **Explicit mode `GITHUB_AUTH_MODE=pat`**
      - Immediately returns `GITHUB_TOKEN` (if present).
@@ -212,7 +215,15 @@
      - Regardless, attempts PAT fallback:
        - `GITHUB_TOKEN` is returned if set.
 
-- **Usage in Tool Layer**
+### 3.4 Recommended Setup vs Runtime Behavior
+
+- For **most users**:
+  - Configure only `GITHUB_TOKEN` (PAT) to get started quickly.
+- For **power users / CI / production**:
+  - Add GitHub App configuration on top of PAT for higher rate limits.
+- Docs (README, `ADVANCED_GITHUB_APP.md`, `AUTHENTICATION.md`) present PAT as the simple default with GitHub App as an **optional** optimization, while the runtime still follows the App‑first, PAT‑fallback resolution described above.
+
+### 3.5 Usage in Tool Layer
   - `_get_auth_token_fallback(param_token)` in `github_mcp.py`:
     - If a tool receives a `token` parameter, it uses that directly.
     - Otherwise, calls `get_auth_token()` for dual-auth resolution.
@@ -512,9 +523,9 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
 ### 9.1 Version & Tool Count
 
 - **Version:** 2.3.1 (per `pyproject.toml` and README badges).
-- **Total Tools:** 47 as per README and `tool-definitions.ts`.
+- **Total Tools:** 48 as per README and `tool-definitions.ts`.
   - External MCP surface: `execute_code`.
-  - Internal tools: 46 GitHub/workspace/meta tools.
+  - Internal tools: 47 GitHub/workspace/meta tools.
 
 ### 9.2 Recent Major Changes (from README)
 
