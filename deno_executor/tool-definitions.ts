@@ -1142,6 +1142,254 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // SECURITY - DEPENDABOT (4 tools)
+  {
+    name: "github_list_dependabot_alerts",
+    category: "Security",
+    description: "List Dependabot security alerts for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
+      ecosystem: { type: "string", required: false, description: "Filter by ecosystem (e.g., 'npm', 'pip', 'maven')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of Dependabot alerts with vulnerability details",
+    example: `const alerts = await callMCPTool("github_list_dependabot_alerts", {
+  owner: "facebook",
+  repo: "react",
+  severity: "critical"
+});`
+  },
+  {
+    name: "github_get_dependabot_alert",
+    category: "Security",
+    description: "Get details about a specific Dependabot alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including vulnerability details and remediation guidance",
+    example: `const alert = await callMCPTool("github_get_dependabot_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_dependabot_alert",
+    category: "Security",
+    description: "Update a Dependabot alert (dismiss or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
+      dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'fix_started', 'inaccurate', 'no_bandwidth', 'not_used', 'tolerable_risk'" },
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_dependabot_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+  state: "dismissed",
+  dismissed_reason: "false_positive"
+});`
+  },
+  {
+    name: "github_list_org_dependabot_alerts",
+    category: "Security",
+    description: "List Dependabot alerts across an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
+      ecosystem: { type: "string", required: false, description: "Filter by ecosystem" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of organization-wide Dependabot alerts",
+    example: `const alerts = await callMCPTool("github_list_org_dependabot_alerts", {
+  org: "myorg",
+  severity: "critical"
+});`
+  },
+
+  // SECURITY - CODE SCANNING (4 tools)
+  {
+    name: "github_list_code_scanning_alerts",
+    category: "Security",
+    description: "List code scanning alerts for a repository (CodeQL, ESLint, etc.)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'" },
+      tool_name: { type: "string", required: false, description: "Filter by tool name (e.g., 'CodeQL', 'ESLint')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of code scanning alerts with details",
+    example: `const alerts = await callMCPTool("github_list_code_scanning_alerts", {
+  owner: "facebook",
+  repo: "react",
+  tool_name: "CodeQL"
+});`
+  },
+  {
+    name: "github_get_code_scanning_alert",
+    category: "Security",
+    description: "Get details about a specific code scanning alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including rule details, location, and remediation guidance",
+    example: `const alert = await callMCPTool("github_get_code_scanning_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_code_scanning_alert",
+    category: "Security",
+    description: "Update a code scanning alert (dismiss or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
+      dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'false_positive', 'wont_fix', 'used_in_tests'" },
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_code_scanning_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+  state: "dismissed",
+  dismissed_reason: "false_positive"
+});`
+  },
+  {
+    name: "github_list_code_scanning_analyses",
+    category: "Security",
+    description: "List code scanning analyses for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      tool_name: { type: "string", required: false, description: "Filter by tool name" },
+      ref: { type: "string", required: false, description: "Filter by branch/tag/commit" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of code scanning analyses with status, tool, and commit information",
+    example: `const analyses = await callMCPTool("github_list_code_scanning_analyses", {
+  owner: "facebook",
+  repo: "react",
+  tool_name: "CodeQL"
+});`
+  },
+
+  // SECURITY - SECRET SCANNING (3 tools)
+  {
+    name: "github_list_secret_scanning_alerts",
+    category: "Security",
+    description: "List secret scanning alerts for a repository (exposed API keys, tokens, etc.)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'resolved'" },
+      secret_type: { type: "string", required: false, description: "Filter by secret type (e.g., 'github_personal_access_token')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of secret scanning alerts with details",
+    example: `const alerts = await callMCPTool("github_list_secret_scanning_alerts", {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});`
+  },
+  {
+    name: "github_get_secret_scanning_alert",
+    category: "Security",
+    description: "Get details about a specific secret scanning alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including secret type, location, and resolution status",
+    example: `const alert = await callMCPTool("github_get_secret_scanning_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_secret_scanning_alert",
+    category: "Security",
+    description: "Update a secret scanning alert (resolve or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'resolved' or 'open'" },
+      resolution: { type: "string", required: false, description: "Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_secret_scanning_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+      state: "resolved",
+      resolution: "revoked"
+});`
+  },
+
+  // SECURITY - SECURITY ADVISORIES (2 tools)
+  {
+    name: "github_list_repo_security_advisories",
+    category: "Security",
+    description: "List security advisories (GHSA) for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'triage', 'draft', 'published', 'closed'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of security advisories with details",
+    example: `const advisories = await callMCPTool("github_list_repo_security_advisories", {
+  owner: "facebook",
+  repo: "react",
+  state: "published"
+});`
+  },
+  {
+    name: "github_get_security_advisory",
+    category: "Security",
+    description: "Get details about a specific security advisory (GHSA)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      ghsa_id: { type: "string", required: true, description: "GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')" }
+    },
+    returns: "Detailed advisory information including description, severity, affected versions, and remediation guidance",
+    example: `const advisory = await callMCPTool("github_get_security_advisory", {
+  owner: "facebook",
+  repo: "react",
+  ghsa_id: "GHSA-xxxx-xxxx-xxxx"
+});`
+  },
+
   // COMMITS (1 tool)
   {
     name: "github_list_commits",

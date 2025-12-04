@@ -5017,6 +5017,1103 @@ async def github_delete_artifact(params: DeleteArtifactInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
+# ============================================================================
+# Security Suite Tools (Phase 2 - Batch 2)
+# ============================================================================
+
+# Dependabot Input Models
+class ListDependabotAlertsInput(BaseModel):
+    """Input model for listing Dependabot alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'low', 'medium', 'high', 'critical'")
+    ecosystem: Optional[str] = Field(default=None, description="Filter by ecosystem (e.g., 'npm', 'pip', 'maven')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetDependabotAlertInput(BaseModel):
+    """Input model for getting a specific Dependabot alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateDependabotAlertInput(BaseModel):
+    """Input model for updating a Dependabot alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'dismissed' or 'open'")
+    dismissed_reason: Optional[str] = Field(default=None, description="Reason for dismissal: 'fix_started', 'inaccurate', 'no_bandwidth', 'not_used', 'tolerable_risk'")
+    dismissed_comment: Optional[str] = Field(default=None, max_length=280, description="Optional comment when dismissing")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+class ListOrgDependabotAlertsInput(BaseModel):
+    """Input model for listing organization Dependabot alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    org: str = Field(..., description="Organization name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'low', 'medium', 'high', 'critical'")
+    ecosystem: Optional[str] = Field(default=None, description="Filter by ecosystem")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Code Scanning Input Models
+class ListCodeScanningAlertsInput(BaseModel):
+    """Input model for listing code scanning alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'")
+    tool_name: Optional[str] = Field(default=None, description="Filter by tool name (e.g., 'CodeQL', 'ESLint')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetCodeScanningAlertInput(BaseModel):
+    """Input model for getting a specific code scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateCodeScanningAlertInput(BaseModel):
+    """Input model for updating a code scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'dismissed' or 'open'")
+    dismissed_reason: Optional[str] = Field(default=None, description="Reason for dismissal: 'false_positive', 'wont_fix', 'used_in_tests'")
+    dismissed_comment: Optional[str] = Field(default=None, max_length=280, description="Optional comment when dismissing")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+class ListCodeScanningAnalysesInput(BaseModel):
+    """Input model for listing code scanning analyses."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    tool_name: Optional[str] = Field(default=None, description="Filter by tool name")
+    ref: Optional[str] = Field(default=None, description="Filter by branch/tag/commit")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Secret Scanning Input Models
+class ListSecretScanningAlertsInput(BaseModel):
+    """Input model for listing secret scanning alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'resolved'")
+    secret_type: Optional[str] = Field(default=None, description="Filter by secret type (e.g., 'github_personal_access_token')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetSecretScanningAlertInput(BaseModel):
+    """Input model for getting a specific secret scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateSecretScanningAlertInput(BaseModel):
+    """Input model for updating a secret scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'resolved' or 'open'")
+    resolution: Optional[str] = Field(default=None, description="Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+# Security Advisories Input Models
+class ListRepoSecurityAdvisoriesInput(BaseModel):
+    """Input model for listing repository security advisories."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'triage', 'draft', 'published', 'closed'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetSecurityAdvisoryInput(BaseModel):
+    """Input model for getting a specific security advisory."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    ghsa_id: str = Field(..., description="GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')", min_length=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Dependabot Tools
+@conditional_tool(
+    name="github_list_dependabot_alerts",
+    annotations={
+        "title": "List Dependabot Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> str:
+    """
+    List Dependabot security alerts for a repository.
+    
+    Retrieves alerts about vulnerable dependencies detected by Dependabot.
+    Supports filtering by state, severity, and ecosystem.
+    
+    Args:
+        params (ListDependabotAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - ecosystem (Optional[str]): Filter by ecosystem
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of Dependabot alerts with details
+    
+    Examples:
+        - Use when: "Show me all Dependabot alerts"
+        - Use when: "List critical security vulnerabilities"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.ecosystem:
+            params_dict["ecosystem"] = params.ecosystem
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Dependabot Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No Dependabot alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
+                
+                markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['dependency']['package']['name']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Severity:** {alert['security_vulnerability']['severity']}\n"
+                markdown += f"- **Ecosystem:** {alert['dependency']['package']['ecosystem']}\n"
+                markdown += f"- **Vulnerable Version:** {alert['security_vulnerability']['vulnerable_version_range']}\n"
+                markdown += f"- **Patched Version:** {alert['security_vulnerability']['first_patched_version'].get('identifier', 'N/A')}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_dependabot_alert",
+    annotations={
+        "title": "Get Dependabot Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_dependabot_alert(params: GetDependabotAlertInput) -> str:
+    """
+    Get details about a specific Dependabot alert.
+    
+    Retrieves complete alert information including vulnerability details,
+    affected versions, and remediation guidance.
+    
+    Args:
+        params (GetDependabotAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about Dependabot alert 123"
+        - Use when: "Get information about security alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        severity_emoji = "🔴" if data['security_vulnerability']['severity'] == "critical" else "🟠" if data['security_vulnerability']['severity'] == "high" else "🟡" if data['security_vulnerability']['severity'] == "medium" else "🟢"
+        
+        markdown = f"# {severity_emoji} Dependabot Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Severity:** {data['security_vulnerability']['severity']}\n"
+        markdown += f"- **Package:** {data['dependency']['package']['name']}\n"
+        markdown += f"- **Ecosystem:** {data['dependency']['package']['ecosystem']}\n"
+        markdown += f"- **Vulnerable Version:** {data['security_vulnerability']['vulnerable_version_range']}\n"
+        markdown += f"- **Patched Version:** {data['security_vulnerability']['first_patched_version'].get('identifier', 'N/A')}\n"
+        
+        if data.get('dismissed_at'):
+            markdown += f"- **Dismissed:** {_format_timestamp(data['dismissed_at'])}\n"
+            if data.get('dismissed_reason'):
+                markdown += f"- **Dismissal Reason:** {data['dismissed_reason']}\n"
+        
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_dependabot_alert",
+    annotations={
+        "title": "Update Dependabot Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_dependabot_alert(params: UpdateDependabotAlertInput) -> str:
+    """
+    Update a Dependabot alert (dismiss or reopen).
+    
+    Allows dismissing alerts with a reason and optional comment, or
+    reopening dismissed alerts.
+    
+    Args:
+        params (UpdateDependabotAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'dismissed' or 'open'
+            - dismissed_reason (Optional[str]): Reason for dismissal
+            - dismissed_comment (Optional[str]): Optional comment
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Dismiss Dependabot alert 123 as false positive"
+        - Use when: "Reopen dismissed alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating Dependabot alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "dismissed":
+            if params.dismissed_reason:
+                payload["dismissed_reason"] = params.dismissed_reason
+            if params.dismissed_comment:
+                payload["dismissed_comment"] = params.dismissed_comment
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_org_dependabot_alerts",
+    annotations={
+        "title": "List Organization Dependabot Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_org_dependabot_alerts(params: ListOrgDependabotAlertsInput) -> str:
+    """
+    List Dependabot alerts across an organization.
+    
+    Retrieves alerts from all repositories in an organization. Requires
+    organization admin permissions.
+    
+    Args:
+        params (ListOrgDependabotAlertsInput): Validated input parameters containing:
+            - org (str): Organization name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - ecosystem (Optional[str]): Filter by ecosystem
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of organization-wide Dependabot alerts
+    
+    Examples:
+        - Use when: "Show me all critical alerts in the organization"
+        - Use when: "List all open Dependabot alerts across our repos"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.ecosystem:
+            params_dict["ecosystem"] = params.ecosystem
+        
+        data = await _make_github_request(
+            f"orgs/{params.org}/dependabot/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Dependabot Alerts for Organization: {params.org}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No Dependabot alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
+                
+                markdown += f"## {severity_emoji} {alert['repository']['full_name']} - Alert #{alert['number']}\n"
+                markdown += f"- **Package:** {alert['dependency']['package']['name']}\n"
+                markdown += f"- **Severity:** {alert['security_vulnerability']['severity']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Code Scanning Tools
+@conditional_tool(
+    name="github_list_code_scanning_alerts",
+    annotations={
+        "title": "List Code Scanning Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) -> str:
+    """
+    List code scanning alerts for a repository.
+    
+    Retrieves alerts from CodeQL and other code scanning tools. Supports
+    filtering by state, severity, and tool name.
+    
+    Args:
+        params (ListCodeScanningAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - tool_name (Optional[str]): Filter by tool name
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of code scanning alerts with details
+    
+    Examples:
+        - Use when: "Show me all CodeQL alerts"
+        - Use when: "List critical code scanning issues"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.tool_name:
+            params_dict["tool_name"] = params.tool_name
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Code Scanning Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No code scanning alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert.get('rule', {}).get('severity') == "error" else "🟠" if alert.get('rule', {}).get('severity') == "warning" else "🟡"
+                
+                markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['rule']['name']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Severity:** {alert['rule'].get('severity', 'N/A')}\n"
+                markdown += f"- **Tool:** {alert['tool']['name']}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_code_scanning_alert",
+    annotations={
+        "title": "Get Code Scanning Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_code_scanning_alert(params: GetCodeScanningAlertInput) -> str:
+    """
+    Get details about a specific code scanning alert.
+    
+    Retrieves complete alert information including rule details, location,
+    and remediation guidance.
+    
+    Args:
+        params (GetCodeScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about code scanning alert 123"
+        - Use when: "Get information about CodeQL alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        severity_emoji = "🔴" if data.get('rule', {}).get('severity') == "error" else "🟠" if data.get('rule', {}).get('severity') == "warning" else "🟡"
+        
+        markdown = f"# {severity_emoji} Code Scanning Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Rule:** {data['rule']['name']}\n"
+        markdown += f"- **Severity:** {data['rule'].get('severity', 'N/A')}\n"
+        markdown += f"- **Tool:** {data['tool']['name']}\n"
+        
+        if data.get('most_recent_instance'):
+            instance = data['most_recent_instance']
+            markdown += f"- **Location:** {instance.get('location', {}).get('path', 'N/A')}:{instance.get('location', {}).get('start_line', 'N/A')}\n"
+        
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_code_scanning_alert",
+    annotations={
+        "title": "Update Code Scanning Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_code_scanning_alert(params: UpdateCodeScanningAlertInput) -> str:
+    """
+    Update a code scanning alert (dismiss or reopen).
+    
+    Allows dismissing alerts with a reason and optional comment, or
+    reopening dismissed alerts.
+    
+    Args:
+        params (UpdateCodeScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'dismissed' or 'open'
+            - dismissed_reason (Optional[str]): Reason for dismissal
+            - dismissed_comment (Optional[str]): Optional comment
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Dismiss code scanning alert 123 as false positive"
+        - Use when: "Reopen dismissed CodeQL alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating code scanning alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "dismissed":
+            if params.dismissed_reason:
+                payload["dismissed_reason"] = params.dismissed_reason
+            if params.dismissed_comment:
+                payload["dismissed_comment"] = params.dismissed_comment
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_code_scanning_analyses",
+    annotations={
+        "title": "List Code Scanning Analyses",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_code_scanning_analyses(params: ListCodeScanningAnalysesInput) -> str:
+    """
+    List code scanning analyses for a repository.
+    
+    Retrieves analysis runs from code scanning tools, including their
+    status, tool, and commit information.
+    
+    Args:
+        params (ListCodeScanningAnalysesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - tool_name (Optional[str]): Filter by tool name
+            - ref (Optional[str]): Filter by branch/tag/commit
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of code scanning analyses
+    
+    Examples:
+        - Use when: "Show me all CodeQL analyses"
+        - Use when: "List recent code scanning runs"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.tool_name:
+            params_dict["tool_name"] = params.tool_name
+        if params.ref:
+            params_dict["ref"] = params.ref
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/analyses",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Code Scanning Analyses for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Analyses:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No code scanning analyses found.\n"
+        else:
+            for analysis in data:
+                markdown += f"## Analysis: {analysis.get('tool', {}).get('name', 'N/A')}\n"
+                markdown += f"- **Ref:** {analysis.get('ref', 'N/A')}\n"
+                markdown += f"- **Commit SHA:** {analysis.get('commit_sha', 'N/A')[:8]}\n"
+                markdown += f"- **Created:** {_format_timestamp(analysis['created_at'])}\n"
+                markdown += f"- **URL:** {analysis.get('url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Secret Scanning Tools
+@conditional_tool(
+    name="github_list_secret_scanning_alerts",
+    annotations={
+        "title": "List Secret Scanning Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_secret_scanning_alerts(params: ListSecretScanningAlertsInput) -> str:
+    """
+    List secret scanning alerts for a repository.
+    
+    Retrieves alerts about exposed secrets (API keys, tokens, etc.)
+    detected by GitHub's secret scanning.
+    
+    Args:
+        params (ListSecretScanningAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - secret_type (Optional[str]): Filter by secret type
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of secret scanning alerts with details
+    
+    Examples:
+        - Use when: "Show me all secret scanning alerts"
+        - Use when: "List exposed API keys"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.secret_type:
+            params_dict["secret_type"] = params.secret_type
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Secret Scanning Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No secret scanning alerts found.\n"
+        else:
+            for alert in data:
+                markdown += f"## 🔐 Alert #{alert['number']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Secret Type:** {alert.get('secret_type', 'N/A')}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_secret_scanning_alert",
+    annotations={
+        "title": "Get Secret Scanning Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_secret_scanning_alert(params: GetSecretScanningAlertInput) -> str:
+    """
+    Get details about a specific secret scanning alert.
+    
+    Retrieves complete alert information including secret type, location,
+    and resolution status.
+    
+    Args:
+        params (GetSecretScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about secret scanning alert 123"
+        - Use when: "Get information about exposed token alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# 🔐 Secret Scanning Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Secret Type:** {data.get('secret_type', 'N/A')}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        
+        if data.get('resolution'):
+            markdown += f"- **Resolution:** {data['resolution']}\n"
+        
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_secret_scanning_alert",
+    annotations={
+        "title": "Update Secret Scanning Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_secret_scanning_alert(params: UpdateSecretScanningAlertInput) -> str:
+    """
+    Update a secret scanning alert (resolve or reopen).
+    
+    Allows resolving alerts with a resolution reason, or reopening
+    resolved alerts.
+    
+    Args:
+        params (UpdateSecretScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'resolved' or 'open'
+            - resolution (Optional[str]): Resolution reason
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Resolve secret scanning alert 123 as revoked"
+        - Use when: "Reopen resolved alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating secret scanning alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "resolved" and params.resolution:
+            payload["resolution"] = params.resolution
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Security Advisories Tools
+@conditional_tool(
+    name="github_list_repo_security_advisories",
+    annotations={
+        "title": "List Repository Security Advisories",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_security_advisories(params: ListRepoSecurityAdvisoriesInput) -> str:
+    """
+    List security advisories for a repository.
+    
+    Retrieves published security advisories (GHSA) for vulnerabilities
+    in the repository.
+    
+    Args:
+        params (ListRepoSecurityAdvisoriesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of security advisories
+    
+    Examples:
+        - Use when: "Show me all security advisories"
+        - Use when: "List published GHSA advisories"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/security-advisories",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Security Advisories for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Advisories:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No security advisories found.\n"
+        else:
+            for advisory in data:
+                markdown += f"## {advisory.get('ghsa_id', 'N/A')}: {advisory.get('summary', 'N/A')}\n"
+                markdown += f"- **State:** {advisory.get('state', 'N/A')}\n"
+                markdown += f"- **Severity:** {advisory.get('severity', 'N/A')}\n"
+                markdown += f"- **Published:** {_format_timestamp(advisory['published_at']) if advisory.get('published_at') else 'Not published'}\n"
+                markdown += f"- **URL:** {advisory.get('html_url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_security_advisory",
+    annotations={
+        "title": "Get Security Advisory",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_security_advisory(params: GetSecurityAdvisoryInput) -> str:
+    """
+    Get details about a specific security advisory.
+    
+    Retrieves complete advisory information including description,
+    severity, affected versions, and remediation guidance.
+    
+    Args:
+        params (GetSecurityAdvisoryInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - ghsa_id (str): GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed advisory information
+    
+    Examples:
+        - Use when: "Show me details about GHSA-xxxx-xxxx-xxxx"
+        - Use when: "Get information about security advisory GHSA-1234-5678-9012"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/security-advisories/{params.ghsa_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Security Advisory: {data.get('ghsa_id', 'N/A')}\n\n"
+        markdown += f"- **Summary:** {data.get('summary', 'N/A')}\n"
+        markdown += f"- **State:** {data.get('state', 'N/A')}\n"
+        markdown += f"- **Severity:** {data.get('severity', 'N/A')}\n"
+        markdown += f"- **Published:** {_format_timestamp(data['published_at']) if data.get('published_at') else 'Not published'}\n"
+        
+        if data.get('description'):
+            markdown += f"\n### Description\n{data['description'][:500]}{'...' if len(data.get('description', '')) > 500 else ''}\n"
+        
+        markdown += f"\n- **URL:** {data.get('html_url', 'N/A')}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
 @conditional_tool(
     name="github_create_pull_request",
     annotations={
