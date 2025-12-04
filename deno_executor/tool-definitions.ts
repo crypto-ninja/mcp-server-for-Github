@@ -1597,6 +1597,142 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // NOTIFICATIONS (6 tools)
+  {
+    name: "github_list_notifications",
+    category: "Notifications",
+    description: "List notifications for the authenticated user (requires User Access Token - UAT)",
+    parameters: {
+      all: { type: "boolean", required: false, description: "Show all notifications (including read ones)" },
+      participating: { type: "boolean", required: false, description: "Show only notifications where user is participating" },
+      since: { type: "string", required: false, description: "Only show notifications updated after this time (ISO 8601)" },
+      before: { type: "string", required: false, description: "Only show notifications updated before this time (ISO 8601)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of notifications with details",
+    example: `const notifications = await callMCPTool("github_list_notifications", {
+  all: false,
+  participating: true
+});`
+  },
+  {
+    name: "github_get_thread",
+    category: "Notifications",
+    description: "Get details about a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Detailed thread information including subject, reason, and repository details",
+    example: `const thread = await callMCPTool("github_get_thread", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_mark_thread_read",
+    category: "Notifications",
+    description: "Mark a notification thread as read (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_mark_thread_read", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_mark_notifications_read",
+    category: "Notifications",
+    description: "Mark notifications as read (requires User Access Token - UAT)",
+    parameters: {
+      last_read_at: { type: "string", required: false, description: "Timestamp to mark as read up to (ISO 8601)" },
+      read: { type: "boolean", required: false, description: "Mark as read (default: true)" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_mark_notifications_read", {
+  read: true
+});`
+  },
+  {
+    name: "github_get_thread_subscription",
+    category: "Notifications",
+    description: "Get subscription status for a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Subscription status (subscribed, ignored, reason)",
+    example: `const subscription = await callMCPTool("github_get_thread_subscription", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_set_thread_subscription",
+    category: "Notifications",
+    description: "Set subscription status for a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" },
+      ignored: { type: "boolean", required: false, description: "Whether to ignore the thread (default: false)" }
+    },
+    returns: "Updated subscription status",
+    example: `const result = await callMCPTool("github_set_thread_subscription", {
+  thread_id: "123",
+  ignored: true
+});`
+  },
+
+  // COLLABORATORS & TEAMS (3 tools)
+  {
+    name: "github_list_repo_collaborators",
+    category: "Repository Management",
+    description: "List collaborators for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      affiliation: { type: "string", required: false, description: "Filter by affiliation: 'outside', 'direct', 'all' (default: 'all')" },
+      permission: { type: "string", required: false, description: "Filter by permission: 'pull', 'push', 'admin'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of collaborators with their permission levels",
+    example: `const collaborators = await callMCPTool("github_list_repo_collaborators", {
+  owner: "facebook",
+  repo: "react",
+  permission: "admin"
+});`
+  },
+  {
+    name: "github_check_collaborator",
+    category: "Repository Management",
+    description: "Check if a user is a collaborator on a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      username: { type: "string", required: true, description: "GitHub username to check" }
+    },
+    returns: "Collaborator status (is collaborator or not)",
+    example: `const status = await callMCPTool("github_check_collaborator", {
+  owner: "facebook",
+  repo: "react",
+  username: "octocat"
+});`
+  },
+  {
+    name: "github_list_repo_teams",
+    category: "Repository Management",
+    description: "List teams with access to a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of teams with their permission levels",
+    example: `const teams = await callMCPTool("github_list_repo_teams", {
+  owner: "facebook",
+  repo: "react"
+});`
+  },
+
   // COMMITS (1 tool)
   {
     name: "github_list_commits",

@@ -7115,6 +7115,726 @@ async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -
     except Exception as e:
         return _handle_api_error(e)
 
+# ============================================================================
+# Notifications Tools (Phase 2 - Batch 5)
+# ============================================================================
+
+class ListNotificationsInput(BaseModel):
+    """Input model for listing notifications."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    all: Optional[bool] = Field(default=False, description="Show all notifications (including read ones)")
+    participating: Optional[bool] = Field(default=False, description="Show only notifications where user is participating")
+    since: Optional[str] = Field(default=None, description="Only show notifications updated after this time (ISO 8601)")
+    before: Optional[str] = Field(default=None, description="Only show notifications updated before this time (ISO 8601)")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetThreadInput(BaseModel):
+    """Input model for getting a notification thread."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class MarkThreadReadInput(BaseModel):
+    """Input model for marking a thread as read."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+class MarkNotificationsReadInput(BaseModel):
+    """Input model for marking notifications as read."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    last_read_at: Optional[str] = Field(default=None, description="Timestamp to mark as read up to (ISO 8601)")
+    read: Optional[bool] = Field(default=True, description="Mark as read (default: true)")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+class GetThreadSubscriptionInput(BaseModel):
+    """Input model for getting thread subscription status."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class SetThreadSubscriptionInput(BaseModel):
+    """Input model for setting thread subscription."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    ignored: Optional[bool] = Field(default=False, description="Whether to ignore the thread")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+# Notifications Tools
+@conditional_tool(
+    name="github_list_notifications",
+    annotations={
+        "title": "List Notifications",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_list_notifications(params: ListNotificationsInput) -> str:
+    """
+    List notifications for the authenticated user.
+    
+    Retrieves all notifications for the authenticated user. Requires
+    User Access Token (UAT) - installation tokens won't work.
+    
+    Args:
+        params (ListNotificationsInput): Validated input parameters containing:
+            - all (bool): Show all notifications (including read)
+            - participating (bool): Show only participating notifications
+            - since (Optional[str]): Filter by update time
+            - before (Optional[str]): Filter by update time
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of notifications
+    
+    Examples:
+        - Use when: "Show me my notifications"
+        - Use when: "List unread notifications"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.all:
+            params_dict["all"] = "true"
+        if params.participating:
+            params_dict["participating"] = "true"
+        if params.since:
+            params_dict["since"] = params.since
+        if params.before:
+            params_dict["before"] = params.before
+        
+        data = await _make_github_request(
+            "notifications",
+            token=auth_token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = "# Notifications\n\n"
+        markdown += f"**Total Notifications:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} notifications\n\n"
+        
+        if not data:
+            markdown += "No notifications found.\n"
+        else:
+            for notification in data:
+                unread_emoji = "🔔" if notification.get('unread', False) else "✓"
+                markdown += f"## {unread_emoji} {notification.get('subject', {}).get('title', 'N/A')}\n"
+                markdown += f"- **Type:** {notification.get('subject', {}).get('type', 'N/A')}\n"
+                markdown += f"- **Repository:** {notification.get('repository', {}).get('full_name', 'N/A')}\n"
+                markdown += f"- **Unread:** {notification.get('unread', False)}\n"
+                markdown += f"- **Updated:** {_format_timestamp(notification['updated_at'])}\n"
+                markdown += f"- **URL:** {notification.get('url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_thread",
+    annotations={
+        "title": "Get Notification Thread",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_get_thread(params: GetThreadInput) -> str:
+    """
+    Get details about a notification thread.
+    
+    Retrieves complete thread information including subject, reason,
+    and repository details. Requires User Access Token (UAT).
+    
+    Args:
+        params (GetThreadInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed thread information
+    
+    Examples:
+        - Use when: "Show me details about notification thread 123"
+        - Use when: "Get information about thread 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = "# Notification Thread\n\n"
+        markdown += f"- **ID:** {data.get('id', 'N/A')}\n"
+        markdown += f"- **Unread:** {data.get('unread', False)}\n"
+        markdown += f"- **Reason:** {data.get('reason', 'N/A')}\n"
+        markdown += f"- **Repository:** {data.get('repository', {}).get('full_name', 'N/A')}\n"
+        markdown += f"- **Subject:** {data.get('subject', {}).get('title', 'N/A')}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        markdown += f"- **URL:** {data.get('url', 'N/A')}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_mark_thread_read",
+    annotations={
+        "title": "Mark Thread as Read",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_mark_thread_read(params: MarkThreadReadInput) -> str:
+    """
+    Mark a notification thread as read.
+    
+    Marks a specific thread as read. Requires User Access Token (UAT).
+    
+    Args:
+        params (MarkThreadReadInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Mark thread 123 as read"
+        - Use when: "Mark notification as read"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"notifications/threads/{params.thread_id}",
+            method="PATCH",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Thread {params.thread_id} marked as read",
+            "thread_id": params.thread_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_mark_notifications_read",
+    annotations={
+        "title": "Mark Notifications as Read",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_mark_notifications_read(params: MarkNotificationsReadInput) -> str:
+    """
+    Mark notifications as read.
+    
+    Marks all notifications or notifications up to a specific time as read.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (MarkNotificationsReadInput): Validated input parameters containing:
+            - last_read_at (Optional[str]): Timestamp to mark as read up to
+            - read (bool): Mark as read (default: true)
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Mark all notifications as read"
+        - Use when: "Mark notifications up to yesterday as read"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {}
+        if params.last_read_at:
+            payload["last_read_at"] = params.last_read_at
+        if params.read is not None:
+            payload["read"] = params.read
+        
+        await _make_github_request(
+            "notifications",
+            method="PUT",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": "Notifications marked as read"
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_thread_subscription",
+    annotations={
+        "title": "Get Thread Subscription",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_get_thread_subscription(params: GetThreadSubscriptionInput) -> str:
+    """
+    Get subscription status for a notification thread.
+    
+    Checks whether the authenticated user is subscribed to a thread.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (GetThreadSubscriptionInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Subscription status
+    
+    Examples:
+        - Use when: "Check if I'm subscribed to thread 123"
+        - Use when: "Get subscription status for this thread"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}/subscription",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = "# Thread Subscription Status\n\n"
+        markdown += f"- **Subscribed:** {data.get('subscribed', False)}\n"
+        markdown += f"- **Ignored:** {data.get('ignored', False)}\n"
+        markdown += f"- **Reason:** {data.get('reason', 'N/A')}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at']) if data.get('created_at') else 'N/A'}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_set_thread_subscription",
+    annotations={
+        "title": "Set Thread Subscription",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_set_thread_subscription(params: SetThreadSubscriptionInput) -> str:
+    """
+    Set subscription status for a notification thread.
+    
+    Subscribes or unsubscribes from a thread, or marks it as ignored.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (SetThreadSubscriptionInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - ignored (bool): Whether to ignore the thread
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Updated subscription status
+    
+    Examples:
+        - Use when: "Ignore thread 123"
+        - Use when: "Unsubscribe from this notification thread"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "ignored": params.ignored
+        }
+        
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}/subscription",
+            method="PUT",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# Collaborators & Teams Tools (Phase 2 - Batch 6)
+# ============================================================================
+
+class ListRepoCollaboratorsInput(BaseModel):
+    """Input model for listing repository collaborators."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    affiliation: Optional[str] = Field(default="all", description="Filter by affiliation: 'outside', 'direct', 'all'")
+    permission: Optional[str] = Field(default=None, description="Filter by permission: 'pull', 'push', 'admin'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class CheckCollaboratorInput(BaseModel):
+    """Input model for checking if a user is a collaborator."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    username: str = Field(..., description="GitHub username to check", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListRepoTeamsInput(BaseModel):
+    """Input model for listing repository teams."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Collaborators & Teams Tools
+@conditional_tool(
+    name="github_list_repo_collaborators",
+    annotations={
+        "title": "List Repository Collaborators",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_collaborators(params: ListRepoCollaboratorsInput) -> str:
+    """
+    List collaborators for a repository.
+    
+    Retrieves all users who have access to the repository, including
+    their permission levels. Supports filtering by affiliation and permission.
+    
+    Args:
+        params (ListRepoCollaboratorsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - affiliation (str): Filter by affiliation (default: 'all')
+            - permission (Optional[str]): Filter by permission level
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of collaborators with permissions
+    
+    Examples:
+        - Use when: "Show me all collaborators"
+        - Use when: "List users with admin access"
+    """
+    try:
+        params_dict = {
+            "affiliation": params.affiliation,
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.permission:
+            params_dict["permission"] = params.permission
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/collaborators",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Collaborators for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Collaborators:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} collaborators\n\n"
+        
+        if not data:
+            markdown += "No collaborators found.\n"
+        else:
+            for collaborator in data:
+                markdown += f"## {collaborator['login']}\n"
+                permissions = collaborator.get('permissions', {})
+                markdown += f"- **Admin:** {permissions.get('admin', False)}\n"
+                markdown += f"- **Push:** {permissions.get('push', False)}\n"
+                markdown += f"- **Pull:** {permissions.get('pull', False)}\n"
+                markdown += f"- **URL:** {collaborator['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_check_collaborator",
+    annotations={
+        "title": "Check Collaborator",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_check_collaborator(params: CheckCollaboratorInput) -> str:
+    """
+    Check if a user is a collaborator on a repository.
+    
+    Returns 204 if the user is a collaborator, 404 if not. Useful for
+    permission checks before performing operations.
+    
+    Args:
+        params (CheckCollaboratorInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - username (str): GitHub username to check
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Collaborator status (is collaborator or not)
+    
+    Examples:
+        - Use when: "Check if user123 is a collaborator"
+        - Use when: "Verify user has access to this repo"
+    """
+    try:
+        from src.github_mcp.github_client import GhClient
+        
+        auth_token = await _get_auth_token_fallback(params.token)
+        client = GhClient.instance()
+        
+        response = await client.request(
+            "GET",
+            f"repos/{params.owner}/{params.repo}/collaborators/{params.username}",
+            token=auth_token,
+            headers={"Accept": "application/vnd.github.v3+json"}
+        )
+        
+        is_collaborator = response.status_code == 204
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({
+                "is_collaborator": is_collaborator,
+                "username": params.username,
+                "repository": f"{params.owner}/{params.repo}"
+            }, indent=2)
+        
+        markdown = f"# Collaborator Check: {params.username}\n\n"
+        markdown += f"- **Repository:** {params.owner}/{params.repo}\n"
+        markdown += f"- **Is Collaborator:** {'✅ Yes' if is_collaborator else '❌ No'}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        # 404 means not a collaborator, which is valid
+        if hasattr(e, 'response') and hasattr(e.response, 'status_code') and e.response.status_code == 404:
+            if params.response_format == ResponseFormat.JSON:
+                return json.dumps({
+                    "is_collaborator": False,
+                    "username": params.username,
+                    "repository": f"{params.owner}/{params.repo}"
+                }, indent=2)
+            return f"# Collaborator Check: {params.username}\n\n- **Repository:** {params.owner}/{params.repo}\n- **Is Collaborator:** ❌ No\n"
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_repo_teams",
+    annotations={
+        "title": "List Repository Teams",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_teams(params: ListRepoTeamsInput) -> str:
+    """
+    List teams with access to a repository.
+    
+    Retrieves all teams that have been granted access to the repository,
+    including their permission levels.
+    
+    Args:
+        params (ListRepoTeamsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of teams with permissions
+    
+    Examples:
+        - Use when: "Show me all teams with access"
+        - Use when: "List teams that can access this repo"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/teams",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Teams with Access to {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Teams:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} teams\n\n"
+        
+        if not data:
+            markdown += "No teams found.\n"
+        else:
+            for team in data:
+                markdown += f"## {team['name']}\n"
+                markdown += f"- **ID:** {team['id']}\n"
+                markdown += f"- **Permission:** {team.get('permission', 'N/A')}\n"
+                markdown += f"- **Slug:** {team.get('slug', 'N/A')}\n"
+                markdown += f"- **URL:** {team['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
 @conditional_tool(
     name="github_create_pull_request",
     annotations={
