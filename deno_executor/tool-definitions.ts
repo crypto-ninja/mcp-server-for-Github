@@ -200,6 +200,92 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
   {
+    name: "github_add_issue_comment",
+    category: "Issues",
+    description: "Add a comment to an existing issue",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      issue_number: { type: "number", required: true, description: "Issue number to comment on" },
+      body: { type: "string", required: true, description: "Comment content in Markdown format" }
+    },
+    returns: "Created comment details including id, URL, author, timestamps, and body",
+    example: `const comment = await callMCPTool("github_add_issue_comment", {
+  owner: "myuser",
+  repo: "myrepo",
+  issue_number: 42,
+  body: "Thanks for reporting this! We'll look into it."
+});`
+  },
+
+  // GISTS (4 tools)
+  {
+    name: "github_list_gists",
+    category: "Gists",
+    description: "List gists for the authenticated user or a specified user",
+    parameters: {
+      username: { type: "string", required: false, description: "GitHub username (omit for authenticated user)" },
+      since: { type: "string", required: false, description: "Only gists updated after this time (ISO 8601)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of gists with id, description, visibility, files, and URLs",
+    example: `const gists = await callMCPTool("github_list_gists", {
+  username: "octocat",
+  per_page: 10
+});`
+  },
+  {
+    name: "github_get_gist",
+    category: "Gists",
+    description: "Get the full content and metadata for a specific gist",
+    parameters: {
+      gist_id: { type: "string", required: true, description: "ID of the gist to retrieve" }
+    },
+    returns: "Full gist details including files, owner, history, and URLs",
+    example: `const gist = await callMCPTool("github_get_gist", {
+  gist_id: "aa5a315d61ae9438b18d"
+});`
+  },
+  {
+    name: "github_create_gist",
+    category: "Gists",
+    description: "Create a new gist with one or more files",
+    parameters: {
+      description: { type: "string", required: false, description: "Description of the gist" },
+      public: { type: "boolean", required: false, description: "Whether the gist is public (default: false)" },
+      files: { type: "object", required: true, description: "Mapping of filename to { content }" }
+    },
+    returns: "Created gist details including id, html_url, and files",
+    example: `const gist = await callMCPTool("github_create_gist", {
+  description: "Example gist from GitHub MCP",
+  public: false,
+  files: {
+    "hello.py": { content: "print('Hello from MCP!')" },
+    "README.md": { content: "# My Gist\\nCreated via GitHub MCP Server." }
+  }
+});`
+  },
+  {
+    name: "github_update_gist",
+    category: "Gists",
+    description: "Update an existing gist's description or files. To delete a file, set its value to null in the files object",
+    parameters: {
+      gist_id: { type: "string", required: true, description: "ID of the gist to update" },
+      description: { type: "string", required: false, description: "New description" },
+      files: { type: "object", required: false, description: "Files to add/update/delete" }
+    },
+    returns: "Updated gist details including id, html_url, and files",
+    example: `const gist = await callMCPTool("github_update_gist", {
+  gist_id: "aa5a315d61ae9438b18d",
+  description: "Updated description",
+  files: {
+    "hello.py": { content: "print('Updated content')" },
+    "old.txt": null
+  }
+});`
+  },
+  {
     name: "github_search_issues",
     category: "Issues",
     description: "Search issues and pull requests across GitHub",

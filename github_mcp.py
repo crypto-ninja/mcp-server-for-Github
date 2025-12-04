@@ -455,6 +455,89 @@ class UpdateIssueInput(BaseModel):
     milestone: Optional[int] = Field(None, description="Milestone number (use null to remove milestone)")
     token: Optional[str] = Field(None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
+class AddIssueCommentInput(BaseModel):
+    """Input model for adding a comment to an existing issue."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., min_length=1, max_length=100, description="Repository owner username or organization")
+    repo: str = Field(..., min_length=1, max_length=100, description="Repository name")
+    issue_number: int = Field(..., ge=1, description="Issue number to comment on")
+    body: str = Field(..., min_length=1, max_length=65535, description="Comment content in Markdown format")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class ListGistsInput(BaseModel):
+    """Input model for listing gists for a user or the authenticated user."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    username: Optional[str] = Field(default=None, description="GitHub username to list gists for (omit for authenticated user)")
+    since: Optional[str] = Field(default=None, description="Only gists updated at or after this time (ISO 8601)")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - required when username is omitted)")
+
+
+class GetGistInput(BaseModel):
+    """Input model for retrieving a single gist by ID."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    gist_id: str = Field(..., min_length=1, max_length=200, description="ID of the gist to retrieve")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token (for private gists)")
+
+
+class CreateGistFileInput(BaseModel):
+    """Input model for a single file in a gist create/update request."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    content: str = Field(..., description="File content")
+
+
+class CreateGistInput(BaseModel):
+    """Input model for creating a new gist."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    description: Optional[str] = Field(default=None, description="Description of the gist")
+    public: Optional[bool] = Field(default=False, description="Whether the gist is public (default: false)")
+    files: Dict[str, CreateGistFileInput] = Field(..., description="Mapping of filename to file content")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class UpdateGistInput(BaseModel):
+    """Input model for updating an existing gist."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    gist_id: str = Field(..., min_length=1, max_length=200, description="ID of the gist to update")
+    description: Optional[str] = Field(default=None, description="New description for the gist")
+    files: Optional[Dict[str, Optional[CreateGistFileInput]]] = Field(
+        default=None,
+        description="Files to add/update/delete. To delete a file, set its value to null."
+    )
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
 class SearchRepositoriesInput(BaseModel):
     """Input model for searching GitHub repositories."""
     model_config = ConfigDict(
@@ -3984,6 +4067,243 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             error_info["message"] = _handle_api_error(e)
         
         return json.dumps(error_info, indent=2)
+
+
+@conditional_tool(
+    name="github_add_issue_comment",
+    annotations={
+        "title": "Add Issue Comment",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_add_issue_comment(params: AddIssueCommentInput) -> str:
+    """
+    Add a comment to an existing GitHub issue.
+    
+    This tool posts a new comment to the specified issue using the
+    authenticated user's identity.
+    
+    Args:
+        params (AddIssueCommentInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - issue_number (int): Issue number to comment on
+            - body (str): Comment content in Markdown format
+            - token (Optional[str]): GitHub token (optional - uses GITHUB_TOKEN env var if not provided)
+    
+    Returns:
+        str: JSON string with the created comment details including id, URL, and body.
+    """
+    # Get token (try param, then GitHub App, then PAT)
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for adding issue comments. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "body": params.body,
+        }
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/issues/{params.issue_number}/comments",
+            method="POST",
+            token=auth_token,
+            json=payload
+        )
+        
+        # Return the FULL GitHub API response as JSON for programmatic use
+        return json.dumps(data, indent=2)
+    
+    except Exception as e:
+        # Reuse generic error handler for consistent error surfaces
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_list_gists",
+    annotations={
+        "title": "List Gists",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_gists(params: ListGistsInput) -> str:
+    """
+    List gists for the authenticated user or a specified user.
+    
+    If a username is provided, public gists for that user are returned and
+    authentication is optional. If username is omitted, the authenticated
+    user's gists are listed and a token is required.
+    """
+    # Only require auth when listing for the authenticated user
+    auth_token: Optional[str] = None
+    if params.username is None:
+        auth_token = await _get_auth_token_fallback(params.token)
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for listing your own gists. Set GITHUB_TOKEN or pass a token parameter, or provide a username to list public gists.",
+                "success": False
+            }, indent=2)
+    else:
+        # Allow anonymous listing of another user's public gists
+        auth_token = params.token
+    
+    try:
+        query: Dict[str, Any] = {}
+        if params.since:
+            query["since"] = params.since
+        if params.per_page:
+            query["per_page"] = params.per_page
+        if params.page:
+            query["page"] = params.page
+        
+        if params.username:
+            endpoint = f"users/{params.username}/gists"
+        else:
+            endpoint = "gists"
+        
+        data = await _make_github_request(
+            endpoint,
+            token=auth_token,
+            params=query
+        )
+        
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_get_gist",
+    annotations={
+        "title": "Get Gist",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_gist(params: GetGistInput) -> str:
+    """
+    Get detailed information about a specific gist including files and metadata.
+    """
+    try:
+        data = await _make_github_request(
+            f"gists/{params.gist_id}",
+            token=params.token
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_create_gist",
+    annotations={
+        "title": "Create Gist",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_gist(params: CreateGistInput) -> str:
+    """
+    Create a new gist with one or more files.
+    
+    Requires authentication with a token that has gist scope.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating gists. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        files_payload: Dict[str, Dict[str, str]] = {}
+        for filename, file_def in params.files.items():
+            files_payload[filename] = {"content": file_def.content}
+        
+        payload: Dict[str, Any] = {
+            "files": files_payload,
+            "public": bool(params.public),
+        }
+        if params.description is not None:
+            payload["description"] = params.description
+        
+        data = await _make_github_request(
+            "gists",
+            method="POST",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_update_gist",
+    annotations={
+        "title": "Update Gist",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_gist(params: UpdateGistInput) -> str:
+    """
+    Update an existing gist's description and files.
+    
+    To delete a file, set its value to null in the files mapping.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating gists. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload: Dict[str, Any] = {}
+        if params.description is not None:
+            payload["description"] = params.description
+        
+        if params.files is not None:
+            files_payload: Dict[str, Any] = {}
+            for filename, file_def in params.files.items():
+                if file_def is None:
+                    # Delete this file from the gist
+                    files_payload[filename] = None
+                else:
+                    files_payload[filename] = {"content": file_def.content}
+            payload["files"] = files_payload
+        
+        data = await _make_github_request(
+            f"gists/{params.gist_id}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
 
 @conditional_tool(
     name="github_get_pr_details",
