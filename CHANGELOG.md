@@ -37,7 +37,7 @@
 ### Changed
 
 - Total tools: 109 (108 internal + execute_code)
-- Now EXCEEDS GitHub's official MCP server (~99 tools)
+- Comprehensive GitHub API coverage with 109 tools
 - New categories: Security, Projects, Discussions, Notifications
 - GitHub Actions category expanded: 2 → 14 tools
 - Repository Management category expanded: 7 → 10 tools (added Collaborators & Teams)

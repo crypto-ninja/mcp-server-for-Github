@@ -14,7 +14,7 @@
 
 ### 🚀 Latest: v2.5.0 - Phase 2 Full Send (December 4, 2025)
 
-**MAJOR RELEASE:** 47 new tools added (62 → 109 total tools)! Now EXCEEDS GitHub's official MCP server (~99 tools)!
+**MAJOR RELEASE:** 47 new tools added (62 → 109 total tools)! Comprehensive GitHub API coverage.
 
 **New in v2.5.0:**
 - 🚀 **GitHub Actions Expansion** (12 tools) - Complete workflow management: get/trigger workflows, manage runs/jobs, artifacts
