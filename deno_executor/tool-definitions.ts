@@ -1390,6 +1390,145 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // PROJECTS (9 tools)
+  {
+    name: "github_list_repo_projects",
+    category: "Projects",
+    description: "List projects (classic) for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of projects with details",
+    example: `const projects = await callMCPTool("github_list_repo_projects", {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});`
+  },
+  {
+    name: "github_list_org_projects",
+    category: "Projects",
+    description: "List projects (classic) for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of organization projects",
+    example: `const projects = await callMCPTool("github_list_org_projects", {
+  org: "myorg",
+  state: "open"
+});`
+  },
+  {
+    name: "github_get_project",
+    category: "Projects",
+    description: "Get details about a specific project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" }
+    },
+    returns: "Detailed project information including name, description, state, and metadata",
+    example: `const project = await callMCPTool("github_get_project", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_create_repo_project",
+    category: "Projects",
+    description: "Create a new project for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Project name" },
+      body: { type: "string", required: false, description: "Project description" }
+    },
+    returns: "Created project details",
+    example: `const project = await callMCPTool("github_create_repo_project", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "Sprint Planning",
+  body: "Project board for tracking sprint tasks"
+});`
+  },
+  {
+    name: "github_create_org_project",
+    category: "Projects",
+    description: "Create a new project for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      name: { type: "string", required: true, description: "Project name" },
+      body: { type: "string", required: false, description: "Project description" }
+    },
+    returns: "Created project details",
+    example: `const project = await callMCPTool("github_create_org_project", {
+  org: "myorg",
+  name: "Q1 Goals",
+  body: "Organization-wide project board"
+});`
+  },
+  {
+    name: "github_update_project",
+    category: "Projects",
+    description: "Update a project (name, description, state)",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      name: { type: "string", required: false, description: "New project name" },
+      body: { type: "string", required: false, description: "New project description" },
+      state: { type: "string", required: false, description: "New state: 'open' or 'closed'" }
+    },
+    returns: "Updated project details",
+    example: `const project = await callMCPTool("github_update_project", {
+  project_id: 12345,
+  name: "Updated Name",
+  state: "closed"
+});`
+  },
+  {
+    name: "github_delete_project",
+    category: "Projects",
+    description: "Delete a project (permanent, cannot be undone)",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_delete_project", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_list_project_columns",
+    category: "Projects",
+    description: "List columns in a project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of project columns (e.g., 'To Do', 'In Progress', 'Done')",
+    example: `const columns = await callMCPTool("github_list_project_columns", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_create_project_column",
+    category: "Projects",
+    description: "Create a new column in a project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      name: { type: "string", required: true, description: "Column name" }
+    },
+    returns: "Created column details",
+    example: `const column = await callMCPTool("github_create_project_column", {
+  project_id: 12345,
+  name: "Review"
+});`
+  },
+
   // COMMITS (1 tool)
   {
     name: "github_list_commits",
