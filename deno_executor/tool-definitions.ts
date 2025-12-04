@@ -1529,6 +1529,74 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // DISCUSSIONS (4 tools)
+  {
+    name: "github_list_discussions",
+    category: "Discussions",
+    description: "List discussions for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      category: { type: "string", required: false, description: "Filter by category slug" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of discussions with details",
+    example: `const discussions = await callMCPTool("github_list_discussions", {
+  owner: "facebook",
+  repo: "react",
+  category: "general"
+});`
+  },
+  {
+    name: "github_get_discussion",
+    category: "Discussions",
+    description: "Get details about a specific discussion",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" }
+    },
+    returns: "Detailed discussion information including title, body, category, author, and comments count",
+    example: `const discussion = await callMCPTool("github_get_discussion", {
+  owner: "facebook",
+  repo: "react",
+  discussion_number: 123
+});`
+  },
+  {
+    name: "github_list_discussion_categories",
+    category: "Discussions",
+    description: "List discussion categories for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "List of discussion categories (e.g., 'General', 'Q&A', 'Ideas', 'Announcements')",
+    example: `const categories = await callMCPTool("github_list_discussion_categories", {
+  owner: "facebook",
+  repo: "react"
+});`
+  },
+  {
+    name: "github_list_discussion_comments",
+    category: "Discussions",
+    description: "List comments in a discussion",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of discussion comments including replies and reactions",
+    example: `const comments = await callMCPTool("github_list_discussion_comments", {
+  owner: "facebook",
+  repo: "react",
+  discussion_number: 123
+});`
+  },
+
   // COMMITS (1 tool)
   {
     name: "github_list_commits",
