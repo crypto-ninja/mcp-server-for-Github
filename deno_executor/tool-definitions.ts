@@ -968,6 +968,19 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     example: `const me = await callMCPTool("github_get_authenticated_user", {});`
   },
   {
+    name: "github_get_user_info",
+    category: "Users",
+    description: "Get public information about any GitHub user by username",
+    parameters: {
+      username: { type: "string", required: true, description: "GitHub username to look up" },
+      response_format: { type: "string", required: false, description: "Response format: 'json' or 'markdown' (default: 'json')" }
+    },
+    returns: "User profile information including name, bio, company, location, public repos count, followers, following, and profile URL",
+    example: `const user = await callMCPTool("github_get_user_info", {
+  username: "torvalds"
+});`
+  },
+  {
     name: "github_list_user_repos",
     category: "Users",
     description: "List repositories for a user or for the authenticated user",

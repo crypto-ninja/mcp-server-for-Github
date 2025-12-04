@@ -2,7 +2,7 @@
 
 ## What You Have
 
-**48 GitHub tools** accessed through a single `execute_code` tool.
+**62 GitHub tools** accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
 ## Tool Discovery
@@ -58,19 +58,19 @@ const display = await callMCPTool("github_list_branches", {
 });
 ```
 
-## Tool Categories (48 total)
+## Tool Categories (62 total)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|
 | Repository Management | 7 | get_repo_info, create_repository, search_repositories |
 | Branch Management | 5 | list/create/get/delete/compare_branches |
-| Issues | 4 | list/create/update_issue, search_issues |
+| Issues | 5 | list/create/update_issue, add_issue_comment, search_issues |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, create_pr_review |
 | File Operations | 10 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
 | Releases | 4 | list/get/create/update_release |
 | Search | 1 | search_code |
 | Commits | 1 | list_commits |
-| Users | 1 | get_user_info |
+| Users | 5 | get_authenticated_user, get_user_info, list_user_repos, list_org_repos, search_users |
 | GitHub Actions | 2 | list_workflows, get_workflow_runs |
 | Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |
 | Licensing | 1 | license_info |

@@ -2,7 +2,7 @@
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
 **Version:** 2.3.1  
-**Tools:** 47 total (1 exposed MCP tool, 46 internal GitHub/workspace tools)
+**Tools:** 62 total (1 exposed MCP tool, 61 internal GitHub/workspace tools)
 
 ---
 
@@ -16,7 +16,7 @@
     - `github_app.py` – GitHub App + PAT dual-auth implementation.
   - `deno_executor/` – TypeScript-based code execution engine used by the `execute_code` MCP tool.
     - `mod.ts` – Entrypoint for Deno execution; hosts the code-first execution environment.
-    - `tool-definitions.ts` – TypeScript catalog of all 48 tools (schema for AI use).
+    - `tool-definitions.ts` – TypeScript catalog of all 62 tools (schema for AI use).
   - `servers/` – Deno-side MCP client logic and lower-level GitHub client abstractions for the executor.
   - `src/github_mcp/` – CLI utilities and runtime helpers (e.g., `cli.py`, `deno_runtime.py`).
   - `tests/` – Comprehensive test suite (Python) validating tools, contracts, auth, and executor integration.
@@ -62,7 +62,7 @@
 
 - **`deno_executor/tool-definitions.ts`**
   - TypeScript `ToolDefinition` / `ToolParameter` interfaces.
-  - `GITHUB_TOOLS`: array of 48 tools, each with name, category, description, parameters, return description, and TypeScript usage example.
+  - `GITHUB_TOOLS`: array of 61 tools, each with name, category, description, parameters, return description, and TypeScript usage example.
   - Helper functions `getToolsByCategory` and `getCategories` for discovery.
   - Includes the `execute_code` tool definition itself as a first-class tool in the catalog.
 
@@ -147,9 +147,9 @@
 
 ### 2.4 Relationship Between `execute_code` and the Tool Set
 
-- **Total Tools**: 48
+- **Total Tools**: 62
   - 1 exposed to MCP clients: `execute_code`.
-  - 47 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing).
+  - 61 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing, gists, labels, stargazers, user context).
 - **Public MCP Surface**
   - When `CODE_FIRST_MODE=true` (default), only `execute_code` is registered with MCP.
   - In **internal mode** (`CODE_FIRST_MODE=false`), all tools are registered: used by Deno and for internal tests/diagnostics.
@@ -523,9 +523,9 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
 ### 9.1 Version & Tool Count
 
 - **Version:** 2.3.1 (per `pyproject.toml` and README badges).
-- **Total Tools:** 48 as per README and `tool-definitions.ts`.
+- **Total Tools:** 62 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
   - External MCP surface: `execute_code`.
-  - Internal tools: 47 GitHub/workspace/meta tools.
+  - Internal tools: 61 GitHub/workspace/meta tools.
 
 ### 9.2 Recent Major Changes (from README)
 
