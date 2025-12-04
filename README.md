@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-47-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-48-brightgreen.svg)](#-available-tools)
 [![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.3.1)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
@@ -56,7 +56,7 @@
 **New in v2.1.0:**
 
 🔍 **Tool Discovery Functions**
-- **listAvailableTools()** - Discover all 47 tools on-demand
+- **listAvailableTools()** - Discover all tools on-demand
 - **searchTools(query)** - Find relevant tools by keyword
 - **getToolInfo(name)** - Get complete schemas with examples
 - **Discovery in code** - No extra tokens loaded into Claude's context!
@@ -80,7 +80,7 @@
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
 **Total Tools:** 1 tool exposed to MCP clients (`execute_code`) 🚀  
-**Internal Tools:** 46 GitHub tools available via `execute_code`  
+**Internal Tools:** 47 GitHub tools available via `execute_code`  
 **Token Efficiency:** 98% reduction vs traditional MCP
 
 ---
@@ -273,8 +273,8 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 ┌─────────────────────────────────┐
 │   Deno Runtime                  │
 │   Executes your code securely   │
-│   Access to all 47 tools via    │
-│   callMCPTool()                 │
+│   Access to all internal tools  │
+│   via callMCPTool()             │
 └─────────────────────────────────┘
 ```
 
@@ -282,7 +282,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 | Aspect | Traditional MCP | Code-First MCP (Us) |
 |--------|----------------|---------------------|
-| Tools exposed | 47 tools | 1 tool |
+| Tools exposed | 48 tools | 1 tool |
 | Token cost | ~70,000 | ~800 |
 | Reduction | - | **98%** |
 | Functionality | Same | Same |
@@ -422,7 +422,7 @@ const result = await callMCPTool(info.name, {
 
 | Function | Purpose | Returns |
 |----------|---------|---------|
-| `listAvailableTools()` | Get all 47 tools organized by category | Full tool catalog |
+| `listAvailableTools()` | Get all tools organized by category | Full tool catalog |
 | `searchTools(keyword)` | Find tools by keyword | Relevance-sorted matches |
 | `getToolInfo(toolName)` | Get complete tool details | Full tool information |
 | `callMCPTool(name, params)` | Execute a tool | Tool result |
@@ -515,7 +515,7 @@ Thank you to the Anthropic team for pioneering this approach! 🎉
 
 ### Dual Authentication Strategy (Recommended)
 
-For maximum functionality and rate limits, configure **both** authentication methods:
+For maximum functionality and rate limits, you can configure **both** authentication methods, but most users only need a PAT to start:
 
 ```json
 {
@@ -524,13 +524,13 @@ For maximum functionality and rate limits, configure **both** authentication met
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        // === GitHub App Authentication (Primary) ===
+        // === Personal Access Token (Simple default - REQUIRED for releases) ===
+        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
+        
+        // === Optional: GitHub App Authentication (Advanced) ===
         "GITHUB_APP_ID": "123456",
         "GITHUB_APP_INSTALLATION_ID": "12345678",
         "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/private-key.pem",
-        
-        // === Personal Access Token (Fallback - REQUIRED for releases) ===
-        "GITHUB_TOKEN": "ghp_your_personal_access_token_here",
         
         // === Optional: Workspace for local file operations ===
         "MCP_WORKSPACE_ROOT": "/path/to/your/project"
@@ -542,7 +542,7 @@ For maximum functionality and rate limits, configure **both** authentication met
 
 ### Why Both Authentication Methods?
 
-#### 🏆 GitHub App Authentication (Primary)
+#### 🏆 GitHub App Authentication (Advanced)
 
 - **Rate Limit:** 15,000 requests/hour (3x better than PAT)
 - **Best For:** Most operations, team collaboration, production use
@@ -1014,7 +1014,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.3.1 with 47 tools (Code-first architecture with 98% token reduction!)  
+**Current:** v2.3.1 with 48 tools (Code-first architecture with 98% token reduction!)  
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

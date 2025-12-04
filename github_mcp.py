@@ -132,7 +132,7 @@ if CODE_FIRST_MODE:
     print(">> Token usage: ~800 tokens (98% savings!)")
     print(f">> Deno: {deno_info}")
 else:
-    print(">> GitHub MCP Server v2.3.1 - Internal Mode (all 47 tools)")
+    print(">> GitHub MCP Server v2.3.1 - Internal Mode (all internal tools)")
     print(">> Used by Deno runtime for tool execution")
     print(f">> Deno: {deno_info}")
 
