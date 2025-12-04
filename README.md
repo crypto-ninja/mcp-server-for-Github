@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-48-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-62-brightgreen.svg)](#-available-tools)
 [![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.3.1)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
@@ -80,7 +80,7 @@
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
 **Total Tools:** 1 tool exposed to MCP clients (`execute_code`) 🚀  
-**Internal Tools:** 47 GitHub tools available via `execute_code`  
+**Internal Tools:** 61 GitHub tools available via `execute_code`  
 **Token Efficiency:** 98% reduction vs traditional MCP
 
 ---
@@ -1014,7 +1014,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.3.1 with 48 tools (Code-first architecture with 98% token reduction!)  
+**Current:** v2.3.1 with 62 tools (Code-first architecture with 98% token reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

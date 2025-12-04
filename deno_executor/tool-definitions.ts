@@ -140,6 +140,107 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // STARGAZERS (3 tools)
+  {
+    name: "github_list_stargazers",
+    category: "Stargazers",
+    description: "List users who have starred a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of users who starred the repository, including login and profile URLs",
+    example: `const stargazers = await callMCPTool("github_list_stargazers", {
+  owner: "facebook",
+  repo: "react",
+  per_page: 10
+});`
+  },
+  {
+    name: "github_star_repository",
+    category: "Stargazers",
+    description: "Star a repository for the authenticated user",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "Success confirmation that the repository was starred",
+    example: `const result = await callMCPTool("github_star_repository", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+  {
+    name: "github_unstar_repository",
+    category: "Stargazers",
+    description: "Unstar a repository for the authenticated user",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "Success confirmation that the repository was unstarred",
+    example: `const result = await callMCPTool("github_unstar_repository", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+
+  // LABELS (3 tools)
+  {
+    name: "github_list_labels",
+    category: "Labels",
+    description: "List all labels in a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of labels including name, color, and description",
+    example: `const labels = await callMCPTool("github_list_labels", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+  {
+    name: "github_create_label",
+    category: "Labels",
+    description: "Create a new label in a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Label name" },
+      color: { type: "string", required: true, description: "6-character hex color code without '#'", example: "ff0000" },
+      description: { type: "string", required: false, description: "Label description" }
+    },
+    returns: "Created label details including name, color, and description",
+    example: `const label = await callMCPTool("github_create_label", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "bug",
+  color: "d73a4a",
+  description: "Something isn't working"
+});`
+  },
+  {
+    name: "github_delete_label",
+    category: "Labels",
+    description: "Delete a label from a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Label name to delete" }
+    },
+    returns: "Success confirmation message",
+    example: `const result = await callMCPTool("github_delete_label", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "old-label"
+});`
+  },
+
   // ISSUES (4 tools)
   {
     name: "github_list_issues",
@@ -197,6 +298,92 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   issue_number: 42,
   state: "closed",
   labels: ["bug", "fixed"]
+});`
+  },
+  {
+    name: "github_add_issue_comment",
+    category: "Issues",
+    description: "Add a comment to an existing issue",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      issue_number: { type: "number", required: true, description: "Issue number to comment on" },
+      body: { type: "string", required: true, description: "Comment content in Markdown format" }
+    },
+    returns: "Created comment details including id, URL, author, timestamps, and body",
+    example: `const comment = await callMCPTool("github_add_issue_comment", {
+  owner: "myuser",
+  repo: "myrepo",
+  issue_number: 42,
+  body: "Thanks for reporting this! We'll look into it."
+});`
+  },
+
+  // GISTS (4 tools)
+  {
+    name: "github_list_gists",
+    category: "Gists",
+    description: "List gists for the authenticated user or a specified user",
+    parameters: {
+      username: { type: "string", required: false, description: "GitHub username (omit for authenticated user)" },
+      since: { type: "string", required: false, description: "Only gists updated after this time (ISO 8601)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of gists with id, description, visibility, files, and URLs",
+    example: `const gists = await callMCPTool("github_list_gists", {
+  username: "octocat",
+  per_page: 10
+});`
+  },
+  {
+    name: "github_get_gist",
+    category: "Gists",
+    description: "Get the full content and metadata for a specific gist",
+    parameters: {
+      gist_id: { type: "string", required: true, description: "ID of the gist to retrieve" }
+    },
+    returns: "Full gist details including files, owner, history, and URLs",
+    example: `const gist = await callMCPTool("github_get_gist", {
+  gist_id: "aa5a315d61ae9438b18d"
+});`
+  },
+  {
+    name: "github_create_gist",
+    category: "Gists",
+    description: "Create a new gist with one or more files",
+    parameters: {
+      description: { type: "string", required: false, description: "Description of the gist" },
+      public: { type: "boolean", required: false, description: "Whether the gist is public (default: false)" },
+      files: { type: "object", required: true, description: "Mapping of filename to { content }" }
+    },
+    returns: "Created gist details including id, html_url, and files",
+    example: `const gist = await callMCPTool("github_create_gist", {
+  description: "Example gist from GitHub MCP",
+  public: false,
+  files: {
+    "hello.py": { content: "print('Hello from MCP!')" },
+    "README.md": { content: "# My Gist\\nCreated via GitHub MCP Server." }
+  }
+});`
+  },
+  {
+    name: "github_update_gist",
+    category: "Gists",
+    description: "Update an existing gist's description or files. To delete a file, set its value to null in the files object",
+    parameters: {
+      gist_id: { type: "string", required: true, description: "ID of the gist to update" },
+      description: { type: "string", required: false, description: "New description" },
+      files: { type: "object", required: false, description: "Files to add/update/delete" }
+    },
+    returns: "Updated gist details including id, html_url, and files",
+    example: `const gist = await callMCPTool("github_update_gist", {
+  gist_id: "aa5a315d61ae9438b18d",
+  description: "Updated description",
+  files: {
+    "hello.py": { content: "print('Updated content')" },
+    "old.txt": null
+  }
 });`
   },
   {
@@ -773,15 +960,76 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 
   // USERS (1 tool)
   {
+    name: "github_get_authenticated_user",
+    category: "Users",
+    description: "Get the authenticated user's profile (the 'me' endpoint)",
+    parameters: {},
+    returns: "Authenticated user profile information including login, name, email, bio, and stats",
+    example: `const me = await callMCPTool("github_get_authenticated_user", {});`
+  },
+  {
     name: "github_get_user_info",
     category: "Users",
-    description: "Get information about a GitHub user or organization",
+    description: "Get public information about any GitHub user by username",
     parameters: {
-      username: { type: "string", required: true, description: "GitHub username or organization name" }
+      username: { type: "string", required: true, description: "GitHub username to look up" },
+      response_format: { type: "string", required: false, description: "Response format: 'json' or 'markdown' (default: 'json')" }
     },
-    returns: "User profile information",
+    returns: "User profile information including name, bio, company, location, public repos count, followers, following, and profile URL",
     example: `const user = await callMCPTool("github_get_user_info", {
   username: "torvalds"
+});`
+  },
+  {
+    name: "github_list_user_repos",
+    category: "Users",
+    description: "List repositories for a user or for the authenticated user",
+    parameters: {
+      username: { type: "string", required: false, description: "GitHub username (omit for authenticated user)" },
+      type: { type: "string", required: false, description: "Repo type: 'all', 'owner', 'member' (default: 'owner')" },
+      sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
+      direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of repositories with names, visibility, fork status, language, stars, and URLs",
+    example: `const repos = await callMCPTool("github_list_user_repos", {
+  username: "octocat",
+  per_page: 20
+});`
+  },
+  {
+    name: "github_list_org_repos",
+    category: "Users",
+    description: "List repositories for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      type: { type: "string", required: false, description: "Repo type: 'all', 'public', 'private', 'forks', 'sources', 'member'" },
+      sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
+      direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of organization repositories with names, visibility, fork status, language, stars, and URLs",
+    example: `const repos = await callMCPTool("github_list_org_repos", {
+  org: "github"
+});`
+  },
+  {
+    name: "github_search_users",
+    category: "Users",
+    description: "Search for GitHub users using the public search API",
+    parameters: {
+      query: { type: "string", required: true, description: "Search query (supports qualifiers like 'location:', 'language:', 'followers:>100')" },
+      sort: { type: "string", required: false, description: "Sort field: 'followers', 'repositories', or 'joined'" },
+      order: { type: "string", required: false, description: "Sort order: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "Search results including total count and matching user profiles",
+    example: `const users = await callMCPTool("github_search_users", {
+  query: "location:London followers:>100",
+  per_page: 10
 });`
   },
 

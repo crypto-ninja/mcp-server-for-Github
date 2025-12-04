@@ -41,8 +41,8 @@
 
 ### Tool Count
 
-- Total tools: 48 (47 internal + execute_code)
-- New tools (since previous release): +5 branch management tools, plus additional release and file tooling aligned with TypeScript definitions
+- Total tools: 62 (61 internal + execute_code)
+- New tools (since previous release): +5 branch management tools, plus additional release, file, gist, label, stargazer, and user-context tooling aligned with TypeScript definitions
 
 ---
 
