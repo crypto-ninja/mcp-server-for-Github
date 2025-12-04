@@ -912,6 +912,67 @@ class UnstarRepositoryInput(BaseModel):
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 
+class GetAuthenticatedUserInput(BaseModel):
+    """Input model for getting the authenticated user's profile."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class ListUserReposInput(BaseModel):
+    """Input model for listing repositories for a user."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    username: Optional[str] = Field(default=None, description="GitHub username to list repositories for (omit for authenticated user)")
+    type: Optional[str] = Field(default="owner", description="Repository type: 'all', 'owner', 'member' (default: 'owner')")
+    sort: Optional[str] = Field(default="full_name", description="Sort field: 'created', 'updated', 'pushed', 'full_name' (default: 'full_name')")
+    direction: Optional[str] = Field(default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class ListOrgReposInput(BaseModel):
+    """Input model for listing repositories for an organization."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    org: str = Field(..., description="Organization name", min_length=1, max_length=100)
+    type: Optional[str] = Field(default="all", description="Repository type: 'all', 'public', 'private', 'forks', 'sources', 'member'")
+    sort: Optional[str] = Field(default="full_name", description="Sort field: 'created', 'updated', 'pushed', 'full_name' (default: 'full_name')")
+    direction: Optional[str] = Field(default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class SearchUsersInput(BaseModel):
+    """Input model for searching GitHub users."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    query: str = Field(..., min_length=1, max_length=256, description="Search query (supports qualifiers like 'location:', 'language:', 'followers:>100')")
+    sort: Optional[str] = Field(default=None, description="Sort field: 'followers', 'repositories', or 'joined'")
+    order: Optional[SortOrder] = Field(default=SortOrder.DESC, description="Sort order: 'asc' or 'desc'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
 class GetReleaseInput(BaseModel):
     """Input model for getting a specific release or latest release."""
     model_config = ConfigDict(
@@ -4600,6 +4661,165 @@ async def github_unstar_repository(params: UnstarRepositoryInput) -> str:
             "success": True,
             "message": f"Repository {params.owner}/{params.repo} has been unstarred."
         }, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_get_authenticated_user",
+    annotations={
+        "title": "Get Authenticated User",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_authenticated_user(params: GetAuthenticatedUserInput) -> str:
+    """
+    Get the authenticated user's profile (the 'me' endpoint).
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for retrieving the authenticated user. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        data = await _make_github_request(
+            "user",
+            token=auth_token
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_list_user_repos",
+    annotations={
+        "title": "List User Repositories",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_user_repos(params: ListUserReposInput) -> str:
+    """
+    List repositories for the authenticated user or a specified user.
+    """
+    # When username is omitted, we must use the authenticated endpoint and require auth
+    auth_token: Optional[str] = None
+    if params.username is None:
+        auth_token = await _get_auth_token_fallback(params.token)
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for listing your own repositories. Set GITHUB_TOKEN or pass a token, or provide a username to list public repos.",
+                "success": False
+            }, indent=2)
+    else:
+        auth_token = params.token
+    
+    try:
+        query: Dict[str, Any] = {}
+        if params.type:
+            query["type"] = params.type
+        if params.sort:
+            query["sort"] = params.sort
+        if params.direction:
+            query["direction"] = params.direction
+        if params.per_page:
+            query["per_page"] = params.per_page
+        if params.page:
+            query["page"] = params.page
+        
+        if params.username:
+            endpoint = f"users/{params.username}/repos"
+        else:
+            endpoint = "user/repos"
+        
+        data = await _make_github_request(
+            endpoint,
+            token=auth_token,
+            params=query
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_list_org_repos",
+    annotations={
+        "title": "List Organization Repositories",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_org_repos(params: ListOrgReposInput) -> str:
+    """
+    List repositories for an organization.
+    """
+    try:
+        query: Dict[str, Any] = {}
+        if params.type:
+            query["type"] = params.type
+        if params.sort:
+            query["sort"] = params.sort
+        if params.direction:
+            query["direction"] = params.direction
+        if params.per_page:
+            query["per_page"] = params.per_page
+        if params.page:
+            query["page"] = params.page
+        
+        data = await _make_github_request(
+            f"orgs/{params.org}/repos",
+            token=params.token,
+            params=query
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_search_users",
+    annotations={
+        "title": "Search Users",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_search_users(params: SearchUsersInput) -> str:
+    """
+    Search for GitHub users using the public search API.
+    """
+    try:
+        query_params: Dict[str, Any] = {
+            "q": params.query,
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.sort:
+            query_params["sort"] = params.sort
+        if params.order:
+            query_params["order"] = params.order.value if isinstance(params.order, Enum) else params.order
+        
+        data = await _make_github_request(
+            "search/users",
+            token=params.token,
+            params=query_params
+        )
+        return json.dumps(data, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 

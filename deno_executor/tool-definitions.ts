@@ -960,15 +960,63 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 
   // USERS (1 tool)
   {
-    name: "github_get_user_info",
+    name: "github_get_authenticated_user",
     category: "Users",
-    description: "Get information about a GitHub user or organization",
+    description: "Get the authenticated user's profile (the 'me' endpoint)",
+    parameters: {},
+    returns: "Authenticated user profile information including login, name, email, bio, and stats",
+    example: `const me = await callMCPTool("github_get_authenticated_user", {});`
+  },
+  {
+    name: "github_list_user_repos",
+    category: "Users",
+    description: "List repositories for a user or for the authenticated user",
     parameters: {
-      username: { type: "string", required: true, description: "GitHub username or organization name" }
+      username: { type: "string", required: false, description: "GitHub username (omit for authenticated user)" },
+      type: { type: "string", required: false, description: "Repo type: 'all', 'owner', 'member' (default: 'owner')" },
+      sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
+      direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
     },
-    returns: "User profile information",
-    example: `const user = await callMCPTool("github_get_user_info", {
-  username: "torvalds"
+    returns: "List of repositories with names, visibility, fork status, language, stars, and URLs",
+    example: `const repos = await callMCPTool("github_list_user_repos", {
+  username: "octocat",
+  per_page: 20
+});`
+  },
+  {
+    name: "github_list_org_repos",
+    category: "Users",
+    description: "List repositories for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      type: { type: "string", required: false, description: "Repo type: 'all', 'public', 'private', 'forks', 'sources', 'member'" },
+      sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
+      direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of organization repositories with names, visibility, fork status, language, stars, and URLs",
+    example: `const repos = await callMCPTool("github_list_org_repos", {
+  org: "github"
+});`
+  },
+  {
+    name: "github_search_users",
+    category: "Users",
+    description: "Search for GitHub users using the public search API",
+    parameters: {
+      query: { type: "string", required: true, description: "Search query (supports qualifiers like 'location:', 'language:', 'followers:>100')" },
+      sort: { type: "string", required: false, description: "Sort field: 'followers', 'repositories', or 'joined'" },
+      order: { type: "string", required: false, description: "Sort order: 'asc' or 'desc'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "Search results including total count and matching user profiles",
+    example: `const users = await callMCPTool("github_search_users", {
+  query: "location:London followers:>100",
+  per_page: 10
 });`
   },
 
