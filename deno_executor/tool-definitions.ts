@@ -939,6 +939,208 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   repo: "react"
 });`
   },
+  {
+    name: "github_get_workflow",
+    category: "GitHub Actions",
+    description: "Get details about a specific GitHub Actions workflow",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" }
+    },
+    returns: "Workflow details including configuration and status",
+    example: `const workflow = await callMCPTool("github_get_workflow", {
+  owner: "facebook",
+  repo: "react",
+  workflow_id: "ci.yml"
+});`
+  },
+  {
+    name: "github_trigger_workflow",
+    category: "GitHub Actions",
+    description: "Trigger a workflow dispatch event (manually run a workflow)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      workflow_id: { type: "string", required: true, description: "Workflow ID or file name" },
+      ref: { type: "string", required: true, description: "Branch, tag, or commit SHA to trigger workflow on" },
+      inputs: { type: "object", required: false, description: "Input parameters for workflow (key-value pairs)" }
+    },
+    returns: "Success confirmation (202 Accepted)",
+    example: `const result = await callMCPTool("github_trigger_workflow", {
+  owner: "myuser",
+  repo: "myrepo",
+  workflow_id: "deploy.yml",
+  ref: "main",
+  inputs: { environment: "production" }
+});`
+  },
+  {
+    name: "github_get_workflow_run",
+    category: "GitHub Actions",
+    description: "Get detailed information about a specific workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Detailed workflow run information including status, conclusion, timing, and jobs",
+    example: `const run = await callMCPTool("github_get_workflow_run", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_list_workflow_run_jobs",
+    category: "GitHub Actions",
+    description: "List all jobs in a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      filter: { type: "string", required: false, description: "Filter jobs: 'latest' or 'all'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of jobs with status, conclusion, steps, and timing",
+    example: `const jobs = await callMCPTool("github_list_workflow_run_jobs", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345,
+  filter: "latest"
+});`
+  },
+  {
+    name: "github_get_job",
+    category: "GitHub Actions",
+    description: "Get detailed information about a specific job",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      job_id: { type: "number", required: true, description: "Job ID" }
+    },
+    returns: "Detailed job information including status, conclusion, steps, and runner",
+    example: `const job = await callMCPTool("github_get_job", {
+  owner: "facebook",
+  repo: "react",
+  job_id: 67890
+});`
+  },
+  {
+    name: "github_get_job_logs",
+    category: "GitHub Actions",
+    description: "Get logs for a specific job",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      job_id: { type: "number", required: true, description: "Job ID" }
+    },
+    returns: "Job logs as plain text (may be truncated if very large)",
+    example: `const logs = await callMCPTool("github_get_job_logs", {
+  owner: "facebook",
+  repo: "react",
+  job_id: 67890
+});`
+  },
+  {
+    name: "github_rerun_workflow",
+    category: "GitHub Actions",
+    description: "Rerun a workflow run (re-runs all jobs)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_rerun_workflow", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_rerun_failed_jobs",
+    category: "GitHub Actions",
+    description: "Rerun only the failed jobs in a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_rerun_failed_jobs", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_cancel_workflow_run",
+    category: "GitHub Actions",
+    description: "Cancel a workflow run (in-progress or queued)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_cancel_workflow_run", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_list_workflow_run_artifacts",
+    category: "GitHub Actions",
+    description: "List artifacts from a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of artifacts with names, sizes, and download URLs",
+    example: `const artifacts = await callMCPTool("github_list_workflow_run_artifacts", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_get_artifact",
+    category: "GitHub Actions",
+    description: "Get details about a specific artifact",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+    },
+    returns: "Artifact details including name, size, creation date, expiration, and download URL",
+    example: `const artifact = await callMCPTool("github_get_artifact", {
+  owner: "facebook",
+  repo: "react",
+  artifact_id: 12345
+});`
+  },
+  {
+    name: "github_delete_artifact",
+    category: "GitHub Actions",
+    description: "Delete an artifact (permanent, cannot be undone)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_delete_artifact", {
+  owner: "myuser",
+  repo: "myrepo",
+  artifact_id: 12345
+});`
+  },
 
   // COMMITS (1 tool)
   {
