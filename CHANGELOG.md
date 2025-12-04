@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.5.0] - 2025-12-04
+
+### Added
+
+- **Phase 2 Full Send: 47 new tools (62 → 109 total)**
+
+#### GitHub Actions Expansion (12 tools)
+- `github_get_workflow`, `github_trigger_workflow`, `github_get_workflow_run`
+- `github_list_workflow_run_jobs`, `github_get_job`, `github_get_job_logs`
+- `github_rerun_workflow`, `github_rerun_failed_jobs`, `github_cancel_workflow_run`
+- `github_list_workflow_run_artifacts`, `github_get_artifact`, `github_delete_artifact`
+
+#### Security Suite (13 tools)
+- Dependabot: `github_list_dependabot_alerts`, `github_get_dependabot_alert`, `github_update_dependabot_alert`, `github_list_org_dependabot_alerts`
+- Code Scanning: `github_list_code_scanning_alerts`, `github_get_code_scanning_alert`, `github_update_code_scanning_alert`, `github_list_code_scanning_analyses`
+- Secret Scanning: `github_list_secret_scanning_alerts`, `github_get_secret_scanning_alert`, `github_update_secret_scanning_alert`
+- Security Advisories: `github_list_repo_security_advisories`, `github_get_security_advisory`
+
+#### Projects (9 tools)
+- `github_list_repo_projects`, `github_list_org_projects`, `github_get_project`
+- `github_create_repo_project`, `github_create_org_project`, `github_update_project`, `github_delete_project`
+- `github_list_project_columns`, `github_create_project_column`
+
+#### Discussions (4 tools)
+- `github_list_discussions`, `github_get_discussion`
+- `github_list_discussion_categories`, `github_list_discussion_comments`
+
+#### Notifications (6 tools)
+- `github_list_notifications`, `github_get_thread`, `github_mark_thread_read`
+- `github_mark_notifications_read`, `github_get_thread_subscription`, `github_set_thread_subscription`
+
+#### Collaborators & Teams (3 tools)
+- `github_list_repo_collaborators`, `github_check_collaborator`, `github_list_repo_teams`
+
+### Changed
+
+- Total tools: 109 (108 internal + execute_code)
+- Now EXCEEDS GitHub's official MCP server (~99 tools)
+- New categories: Security, Projects, Discussions, Notifications
+- GitHub Actions category expanded: 2 → 14 tools
+- Repository Management category expanded: 7 → 10 tools (added Collaborators & Teams)
+
+---
+
 ## [2.4.0] - 2025-12-04
 
 ### Added
@@ -16,7 +60,7 @@
 
 - Total tools: 62 (61 internal + execute_code)
 - New categories: Gists, Labels, Stargazers
-- Updated all documentation to reflect 62 tools
+- Updated all documentation to reflect 62 tools (historical - now 109 in v2.5.0)
 
 ---
 

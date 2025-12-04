@@ -34,7 +34,7 @@ Before starting, ensure you have:
 
 ## Required Permissions
 
-For all **62 tools** to work with GitHub App authentication, configure these repository permissions:
+For all **109 tools** to work with GitHub App authentication, configure these repository permissions:
 
 ### Repository Permissions
 

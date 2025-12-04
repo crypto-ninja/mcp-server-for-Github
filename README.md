@@ -3,8 +3,8 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-62-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.4.0)
+[![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.5.0)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,9 +12,21 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.4.0 - Phase 1 Tool Expansion (December 4, 2025)
+### 🚀 Latest: v2.5.0 - Phase 2 Full Send (December 4, 2025)
 
-**MAJOR RELEASE:** 15 new tools added (48 → 62 total tools)!
+**MAJOR RELEASE:** 47 new tools added (62 → 109 total tools)! Now EXCEEDS GitHub's official MCP server (~99 tools)!
+
+**New in v2.5.0:**
+- 🚀 **GitHub Actions Expansion** (12 tools) - Complete workflow management: get/trigger workflows, manage runs/jobs, artifacts
+- 🔒 **Security Suite** (13 tools) - Dependabot, Code Scanning, Secret Scanning, Security Advisories
+- 📋 **Projects** (9 tools) - Classic project boards: list/create/update projects, manage columns
+- 💬 **Discussions** (4 tools) - Community discussions: list/get discussions, categories, comments
+- 🔔 **Notifications** (6 tools) - User notifications: list/manage threads, subscriptions
+- 👥 **Collaborators & Teams** (3 tools) - Repository access management
+
+**Previous: v2.4.0 - Phase 1 Tool Expansion (December 4, 2025)**
+
+**15 new tools added (48 → 62 total tools)!**
 
 **New in v2.4.0:**
 - 🎯 **Issue Comments** - `github_add_issue_comment` for commenting on issues
@@ -290,7 +302,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 | Aspect | Traditional MCP | Code-First MCP (Us) |
 |--------|----------------|---------------------|
-| Tools exposed | 62 tools | 1 tool |
+| Tools exposed | 109 tools | 1 tool |
 | Token cost | ~70,000 | ~800 |
 | Reduction | - | **98%** |
 | Functionality | Same | Same |
@@ -1022,7 +1034,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.4.0 with 62 tools (Code-first architecture with 98% token reduction!)
+**Current:** v2.5.0 with 109 tools (Code-first architecture with 98% token reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

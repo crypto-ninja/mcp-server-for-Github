@@ -128,11 +128,11 @@ mcp = FastMCP("github_mcp")
 
 # Print startup message based on mode
 if CODE_FIRST_MODE:
-    print(">> GitHub MCP Server v2.4.0 - Code-First Mode (execute_code only)")
+    print(">> GitHub MCP Server v2.5.0 - Code-First Mode (execute_code only)")
     print(">> Token usage: ~800 tokens (98% savings!)")
     print(f">> Deno: {deno_info}")
 else:
-    print(">> GitHub MCP Server v2.4.0 - Internal Mode (all internal tools)")
+    print(">> GitHub MCP Server v2.5.0 - Internal Mode (all internal tools)")
     print(">> Used by Deno runtime for tool execution")
     print(f">> Deno: {deno_info}")
 
@@ -10773,7 +10773,7 @@ async def health_check() -> str:
         
         health_data = {
             "status": "healthy",
-            "version": "2.4.0",
+            "version": "2.5.0",
             "mode": "code_first" if CODE_FIRST_MODE else "internal",
             "authentication": {
                 "status": auth_status,
@@ -10793,7 +10793,7 @@ async def health_check() -> str:
     except Exception as e:
         error_data = {
             "status": "error",
-            "version": "2.4.0",
+            "version": "2.5.0",
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }

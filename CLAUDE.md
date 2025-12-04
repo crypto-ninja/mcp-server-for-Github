@@ -2,7 +2,7 @@
 
 ## What You Have
 
-**62 GitHub tools** accessed through a single `execute_code` tool.
+**109 GitHub tools** accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
 ## Tool Discovery
@@ -58,11 +58,11 @@ const display = await callMCPTool("github_list_branches", {
 });
 ```
 
-## Tool Categories (62 total)
+## Tool Categories (109 total)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|
-| Repository Management | 7 | get_repo_info, create_repository, search_repositories |
+| Repository Management | 10 | get_repo_info, create_repository, search_repositories, list_collaborators, check_collaborator, list_teams |
 | Branch Management | 5 | list/create/get/delete/compare_branches |
 | Issues | 5 | list/create/update_issue, add_issue_comment, search_issues |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, create_pr_review |
@@ -71,7 +71,14 @@ const display = await callMCPTool("github_list_branches", {
 | Search | 1 | search_code |
 | Commits | 1 | list_commits |
 | Users | 5 | get_authenticated_user, get_user_info, list_user_repos, list_org_repos, search_users |
-| GitHub Actions | 2 | list_workflows, get_workflow_runs |
+| GitHub Actions | 14 | list_workflows, get_workflow_runs, get_workflow, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact |
+| Security | 13 | list_dependabot_alerts, get_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
+| Projects | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
+| Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |
+| Notifications | 6 | list_notifications, get_thread, mark_thread_read, mark_notifications_read, get_subscription, set_subscription |
+| Gists | 4 | list_gists, get_gist, create_gist, update_gist |
+| Labels | 3 | list_labels, create_label, delete_label |
+| Stargazers | 3 | list_stargazers, star_repository, unstar_repository |
 | Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |
 | Licensing | 1 | license_info |
 | Advanced | 1 | suggest_workflow |

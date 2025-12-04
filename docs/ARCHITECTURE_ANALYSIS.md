@@ -1,8 +1,8 @@
-## GitHub MCP Server Architecture Analysis (v2.4.0)
+## GitHub MCP Server Architecture Analysis (v2.5.0)
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
-**Version:** 2.4.0  
-**Tools:** 62 total (1 exposed MCP tool, 61 internal GitHub/workspace tools)
+**Version:** 2.5.0  
+**Tools:** 109 total (1 exposed MCP tool, 108 internal GitHub/workspace tools)
 
 ---
 
@@ -16,7 +16,7 @@
     - `github_app.py` – GitHub App + PAT dual-auth implementation.
   - `deno_executor/` – TypeScript-based code execution engine used by the `execute_code` MCP tool.
     - `mod.ts` – Entrypoint for Deno execution; hosts the code-first execution environment.
-    - `tool-definitions.ts` – TypeScript catalog of all 62 tools (schema for AI use).
+    - `tool-definitions.ts` – TypeScript catalog of all 109 tools (schema for AI use).
   - `servers/` – Deno-side MCP client logic and lower-level GitHub client abstractions for the executor.
   - `src/github_mcp/` – CLI utilities and runtime helpers (e.g., `cli.py`, `deno_runtime.py`).
   - `tests/` – Comprehensive test suite (Python) validating tools, contracts, auth, and executor integration.
@@ -149,7 +149,7 @@
 
 - **Total Tools**: 62
   - 1 exposed to MCP clients: `execute_code`.
-  - 61 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing, gists, labels, stargazers, user context).
+  - 108 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing, gists, labels, stargazers, user context, security, projects, discussions, notifications).
 - **Public MCP Surface**
   - When `CODE_FIRST_MODE=true` (default), only `execute_code` is registered with MCP.
   - In **internal mode** (`CODE_FIRST_MODE=false`), all tools are registered: used by Deno and for internal tests/diagnostics.
@@ -522,13 +522,14 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
 
 ### 9.1 Version & Tool Count
 
-- **Version:** 2.4.0 (per `pyproject.toml` and README badges).
+- **Version:** 2.5.0 (per `pyproject.toml` and README badges).
 - **Total Tools:** 62 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
   - External MCP surface: `execute_code`.
   - Internal tools: 61 GitHub/workspace/meta tools.
 
 ### 9.2 Recent Major Changes (from README)
 
+- **v2.5.0** – Phase 2 Full Send (62 → 109 tools).
 - **v2.4.0** – Phase 1 tool expansion (48 → 62 tools).
 - **v2.3.1** – Code-first mode enforced by default.
   - `MCP_CODE_FIRST_MODE` is defaulted to `true`, fully aligning runtime with documented architecture.
