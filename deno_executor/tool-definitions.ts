@@ -939,6 +939,799 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   repo: "react"
 });`
   },
+  {
+    name: "github_get_workflow",
+    category: "GitHub Actions",
+    description: "Get details about a specific GitHub Actions workflow",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" }
+    },
+    returns: "Workflow details including configuration and status",
+    example: `const workflow = await callMCPTool("github_get_workflow", {
+  owner: "facebook",
+  repo: "react",
+  workflow_id: "ci.yml"
+});`
+  },
+  {
+    name: "github_trigger_workflow",
+    category: "GitHub Actions",
+    description: "Trigger a workflow dispatch event (manually run a workflow)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      workflow_id: { type: "string", required: true, description: "Workflow ID or file name" },
+      ref: { type: "string", required: true, description: "Branch, tag, or commit SHA to trigger workflow on" },
+      inputs: { type: "object", required: false, description: "Input parameters for workflow (key-value pairs)" }
+    },
+    returns: "Success confirmation (202 Accepted)",
+    example: `const result = await callMCPTool("github_trigger_workflow", {
+  owner: "myuser",
+  repo: "myrepo",
+  workflow_id: "deploy.yml",
+  ref: "main",
+  inputs: { environment: "production" }
+});`
+  },
+  {
+    name: "github_get_workflow_run",
+    category: "GitHub Actions",
+    description: "Get detailed information about a specific workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Detailed workflow run information including status, conclusion, timing, and jobs",
+    example: `const run = await callMCPTool("github_get_workflow_run", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_list_workflow_run_jobs",
+    category: "GitHub Actions",
+    description: "List all jobs in a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      filter: { type: "string", required: false, description: "Filter jobs: 'latest' or 'all'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of jobs with status, conclusion, steps, and timing",
+    example: `const jobs = await callMCPTool("github_list_workflow_run_jobs", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345,
+  filter: "latest"
+});`
+  },
+  {
+    name: "github_get_job",
+    category: "GitHub Actions",
+    description: "Get detailed information about a specific job",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      job_id: { type: "number", required: true, description: "Job ID" }
+    },
+    returns: "Detailed job information including status, conclusion, steps, and runner",
+    example: `const job = await callMCPTool("github_get_job", {
+  owner: "facebook",
+  repo: "react",
+  job_id: 67890
+});`
+  },
+  {
+    name: "github_get_job_logs",
+    category: "GitHub Actions",
+    description: "Get logs for a specific job",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      job_id: { type: "number", required: true, description: "Job ID" }
+    },
+    returns: "Job logs as plain text (may be truncated if very large)",
+    example: `const logs = await callMCPTool("github_get_job_logs", {
+  owner: "facebook",
+  repo: "react",
+  job_id: 67890
+});`
+  },
+  {
+    name: "github_rerun_workflow",
+    category: "GitHub Actions",
+    description: "Rerun a workflow run (re-runs all jobs)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_rerun_workflow", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_rerun_failed_jobs",
+    category: "GitHub Actions",
+    description: "Rerun only the failed jobs in a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_rerun_failed_jobs", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_cancel_workflow_run",
+    category: "GitHub Actions",
+    description: "Cancel a workflow run (in-progress or queued)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_cancel_workflow_run", {
+  owner: "myuser",
+  repo: "myrepo",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_list_workflow_run_artifacts",
+    category: "GitHub Actions",
+    description: "List artifacts from a workflow run",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of artifacts with names, sizes, and download URLs",
+    example: `const artifacts = await callMCPTool("github_list_workflow_run_artifacts", {
+  owner: "facebook",
+  repo: "react",
+  run_id: 12345
+});`
+  },
+  {
+    name: "github_get_artifact",
+    category: "GitHub Actions",
+    description: "Get details about a specific artifact",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+    },
+    returns: "Artifact details including name, size, creation date, expiration, and download URL",
+    example: `const artifact = await callMCPTool("github_get_artifact", {
+  owner: "facebook",
+  repo: "react",
+  artifact_id: 12345
+});`
+  },
+  {
+    name: "github_delete_artifact",
+    category: "GitHub Actions",
+    description: "Delete an artifact (permanent, cannot be undone)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_delete_artifact", {
+  owner: "myuser",
+  repo: "myrepo",
+  artifact_id: 12345
+});`
+  },
+
+  // SECURITY - DEPENDABOT (4 tools)
+  {
+    name: "github_list_dependabot_alerts",
+    category: "Security",
+    description: "List Dependabot security alerts for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
+      ecosystem: { type: "string", required: false, description: "Filter by ecosystem (e.g., 'npm', 'pip', 'maven')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of Dependabot alerts with vulnerability details",
+    example: `const alerts = await callMCPTool("github_list_dependabot_alerts", {
+  owner: "facebook",
+  repo: "react",
+  severity: "critical"
+});`
+  },
+  {
+    name: "github_get_dependabot_alert",
+    category: "Security",
+    description: "Get details about a specific Dependabot alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including vulnerability details and remediation guidance",
+    example: `const alert = await callMCPTool("github_get_dependabot_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_dependabot_alert",
+    category: "Security",
+    description: "Update a Dependabot alert (dismiss or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
+      dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'fix_started', 'inaccurate', 'no_bandwidth', 'not_used', 'tolerable_risk'" },
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_dependabot_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+  state: "dismissed",
+  dismissed_reason: "false_positive"
+});`
+  },
+  {
+    name: "github_list_org_dependabot_alerts",
+    category: "Security",
+    description: "List Dependabot alerts across an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
+      ecosystem: { type: "string", required: false, description: "Filter by ecosystem" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of organization-wide Dependabot alerts",
+    example: `const alerts = await callMCPTool("github_list_org_dependabot_alerts", {
+  org: "myorg",
+  severity: "critical"
+});`
+  },
+
+  // SECURITY - CODE SCANNING (4 tools)
+  {
+    name: "github_list_code_scanning_alerts",
+    category: "Security",
+    description: "List code scanning alerts for a repository (CodeQL, ESLint, etc.)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
+      severity: { type: "string", required: false, description: "Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'" },
+      tool_name: { type: "string", required: false, description: "Filter by tool name (e.g., 'CodeQL', 'ESLint')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of code scanning alerts with details",
+    example: `const alerts = await callMCPTool("github_list_code_scanning_alerts", {
+  owner: "facebook",
+  repo: "react",
+  tool_name: "CodeQL"
+});`
+  },
+  {
+    name: "github_get_code_scanning_alert",
+    category: "Security",
+    description: "Get details about a specific code scanning alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including rule details, location, and remediation guidance",
+    example: `const alert = await callMCPTool("github_get_code_scanning_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_code_scanning_alert",
+    category: "Security",
+    description: "Update a code scanning alert (dismiss or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
+      dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'false_positive', 'wont_fix', 'used_in_tests'" },
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_code_scanning_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+  state: "dismissed",
+  dismissed_reason: "false_positive"
+});`
+  },
+  {
+    name: "github_list_code_scanning_analyses",
+    category: "Security",
+    description: "List code scanning analyses for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      tool_name: { type: "string", required: false, description: "Filter by tool name" },
+      ref: { type: "string", required: false, description: "Filter by branch/tag/commit" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of code scanning analyses with status, tool, and commit information",
+    example: `const analyses = await callMCPTool("github_list_code_scanning_analyses", {
+  owner: "facebook",
+  repo: "react",
+  tool_name: "CodeQL"
+});`
+  },
+
+  // SECURITY - SECRET SCANNING (3 tools)
+  {
+    name: "github_list_secret_scanning_alerts",
+    category: "Security",
+    description: "List secret scanning alerts for a repository (exposed API keys, tokens, etc.)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'resolved'" },
+      secret_type: { type: "string", required: false, description: "Filter by secret type (e.g., 'github_personal_access_token')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of secret scanning alerts with details",
+    example: `const alerts = await callMCPTool("github_list_secret_scanning_alerts", {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});`
+  },
+  {
+    name: "github_get_secret_scanning_alert",
+    category: "Security",
+    description: "Get details about a specific secret scanning alert",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" }
+    },
+    returns: "Detailed alert information including secret type, location, and resolution status",
+    example: `const alert = await callMCPTool("github_get_secret_scanning_alert", {
+  owner: "facebook",
+  repo: "react",
+  alert_number: 123
+});`
+  },
+  {
+    name: "github_update_secret_scanning_alert",
+    category: "Security",
+    description: "Update a secret scanning alert (resolve or reopen)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      state: { type: "string", required: true, description: "New state: 'resolved' or 'open'" },
+      resolution: { type: "string", required: false, description: "Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'" }
+    },
+    returns: "Updated alert details",
+    example: `const result = await callMCPTool("github_update_secret_scanning_alert", {
+  owner: "myuser",
+  repo: "myrepo",
+  alert_number: 123,
+      state: "resolved",
+      resolution: "revoked"
+});`
+  },
+
+  // SECURITY - SECURITY ADVISORIES (2 tools)
+  {
+    name: "github_list_repo_security_advisories",
+    category: "Security",
+    description: "List security advisories (GHSA) for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'triage', 'draft', 'published', 'closed'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of security advisories with details",
+    example: `const advisories = await callMCPTool("github_list_repo_security_advisories", {
+  owner: "facebook",
+  repo: "react",
+  state: "published"
+});`
+  },
+  {
+    name: "github_get_security_advisory",
+    category: "Security",
+    description: "Get details about a specific security advisory (GHSA)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      ghsa_id: { type: "string", required: true, description: "GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')" }
+    },
+    returns: "Detailed advisory information including description, severity, affected versions, and remediation guidance",
+    example: `const advisory = await callMCPTool("github_get_security_advisory", {
+  owner: "facebook",
+  repo: "react",
+  ghsa_id: "GHSA-xxxx-xxxx-xxxx"
+});`
+  },
+
+  // PROJECTS (9 tools)
+  {
+    name: "github_list_repo_projects",
+    category: "Projects",
+    description: "List projects (classic) for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of projects with details",
+    example: `const projects = await callMCPTool("github_list_repo_projects", {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});`
+  },
+  {
+    name: "github_list_org_projects",
+    category: "Projects",
+    description: "List projects (classic) for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of organization projects",
+    example: `const projects = await callMCPTool("github_list_org_projects", {
+  org: "myorg",
+  state: "open"
+});`
+  },
+  {
+    name: "github_get_project",
+    category: "Projects",
+    description: "Get details about a specific project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" }
+    },
+    returns: "Detailed project information including name, description, state, and metadata",
+    example: `const project = await callMCPTool("github_get_project", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_create_repo_project",
+    category: "Projects",
+    description: "Create a new project for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Project name" },
+      body: { type: "string", required: false, description: "Project description" }
+    },
+    returns: "Created project details",
+    example: `const project = await callMCPTool("github_create_repo_project", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "Sprint Planning",
+  body: "Project board for tracking sprint tasks"
+});`
+  },
+  {
+    name: "github_create_org_project",
+    category: "Projects",
+    description: "Create a new project for an organization",
+    parameters: {
+      org: { type: "string", required: true, description: "Organization name" },
+      name: { type: "string", required: true, description: "Project name" },
+      body: { type: "string", required: false, description: "Project description" }
+    },
+    returns: "Created project details",
+    example: `const project = await callMCPTool("github_create_org_project", {
+  org: "myorg",
+  name: "Q1 Goals",
+  body: "Organization-wide project board"
+});`
+  },
+  {
+    name: "github_update_project",
+    category: "Projects",
+    description: "Update a project (name, description, state)",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      name: { type: "string", required: false, description: "New project name" },
+      body: { type: "string", required: false, description: "New project description" },
+      state: { type: "string", required: false, description: "New state: 'open' or 'closed'" }
+    },
+    returns: "Updated project details",
+    example: `const project = await callMCPTool("github_update_project", {
+  project_id: 12345,
+  name: "Updated Name",
+  state: "closed"
+});`
+  },
+  {
+    name: "github_delete_project",
+    category: "Projects",
+    description: "Delete a project (permanent, cannot be undone)",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_delete_project", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_list_project_columns",
+    category: "Projects",
+    description: "List columns in a project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of project columns (e.g., 'To Do', 'In Progress', 'Done')",
+    example: `const columns = await callMCPTool("github_list_project_columns", {
+  project_id: 12345
+});`
+  },
+  {
+    name: "github_create_project_column",
+    category: "Projects",
+    description: "Create a new column in a project",
+    parameters: {
+      project_id: { type: "number", required: true, description: "Project ID" },
+      name: { type: "string", required: true, description: "Column name" }
+    },
+    returns: "Created column details",
+    example: `const column = await callMCPTool("github_create_project_column", {
+  project_id: 12345,
+  name: "Review"
+});`
+  },
+
+  // DISCUSSIONS (4 tools)
+  {
+    name: "github_list_discussions",
+    category: "Discussions",
+    description: "List discussions for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      category: { type: "string", required: false, description: "Filter by category slug" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of discussions with details",
+    example: `const discussions = await callMCPTool("github_list_discussions", {
+  owner: "facebook",
+  repo: "react",
+  category: "general"
+});`
+  },
+  {
+    name: "github_get_discussion",
+    category: "Discussions",
+    description: "Get details about a specific discussion",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" }
+    },
+    returns: "Detailed discussion information including title, body, category, author, and comments count",
+    example: `const discussion = await callMCPTool("github_get_discussion", {
+  owner: "facebook",
+  repo: "react",
+  discussion_number: 123
+});`
+  },
+  {
+    name: "github_list_discussion_categories",
+    category: "Discussions",
+    description: "List discussion categories for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "List of discussion categories (e.g., 'General', 'Q&A', 'Ideas', 'Announcements')",
+    example: `const categories = await callMCPTool("github_list_discussion_categories", {
+  owner: "facebook",
+  repo: "react"
+});`
+  },
+  {
+    name: "github_list_discussion_comments",
+    category: "Discussions",
+    description: "List comments in a discussion",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of discussion comments including replies and reactions",
+    example: `const comments = await callMCPTool("github_list_discussion_comments", {
+  owner: "facebook",
+  repo: "react",
+  discussion_number: 123
+});`
+  },
+
+  // NOTIFICATIONS (6 tools)
+  {
+    name: "github_list_notifications",
+    category: "Notifications",
+    description: "List notifications for the authenticated user (requires User Access Token - UAT)",
+    parameters: {
+      all: { type: "boolean", required: false, description: "Show all notifications (including read ones)" },
+      participating: { type: "boolean", required: false, description: "Show only notifications where user is participating" },
+      since: { type: "string", required: false, description: "Only show notifications updated after this time (ISO 8601)" },
+      before: { type: "string", required: false, description: "Only show notifications updated before this time (ISO 8601)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of notifications with details",
+    example: `const notifications = await callMCPTool("github_list_notifications", {
+  all: false,
+  participating: true
+});`
+  },
+  {
+    name: "github_get_thread",
+    category: "Notifications",
+    description: "Get details about a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Detailed thread information including subject, reason, and repository details",
+    example: `const thread = await callMCPTool("github_get_thread", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_mark_thread_read",
+    category: "Notifications",
+    description: "Mark a notification thread as read (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_mark_thread_read", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_mark_notifications_read",
+    category: "Notifications",
+    description: "Mark notifications as read (requires User Access Token - UAT)",
+    parameters: {
+      last_read_at: { type: "string", required: false, description: "Timestamp to mark as read up to (ISO 8601)" },
+      read: { type: "boolean", required: false, description: "Mark as read (default: true)" }
+    },
+    returns: "Success confirmation",
+    example: `const result = await callMCPTool("github_mark_notifications_read", {
+  read: true
+});`
+  },
+  {
+    name: "github_get_thread_subscription",
+    category: "Notifications",
+    description: "Get subscription status for a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" }
+    },
+    returns: "Subscription status (subscribed, ignored, reason)",
+    example: `const subscription = await callMCPTool("github_get_thread_subscription", {
+  thread_id: "123"
+});`
+  },
+  {
+    name: "github_set_thread_subscription",
+    category: "Notifications",
+    description: "Set subscription status for a notification thread (requires User Access Token - UAT)",
+    parameters: {
+      thread_id: { type: "string", required: true, description: "Thread ID" },
+      ignored: { type: "boolean", required: false, description: "Whether to ignore the thread (default: false)" }
+    },
+    returns: "Updated subscription status",
+    example: `const result = await callMCPTool("github_set_thread_subscription", {
+  thread_id: "123",
+  ignored: true
+});`
+  },
+
+  // COLLABORATORS & TEAMS (3 tools)
+  {
+    name: "github_list_repo_collaborators",
+    category: "Repository Management",
+    description: "List collaborators for a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      affiliation: { type: "string", required: false, description: "Filter by affiliation: 'outside', 'direct', 'all' (default: 'all')" },
+      permission: { type: "string", required: false, description: "Filter by permission: 'pull', 'push', 'admin'" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of collaborators with their permission levels",
+    example: `const collaborators = await callMCPTool("github_list_repo_collaborators", {
+  owner: "facebook",
+  repo: "react",
+  permission: "admin"
+});`
+  },
+  {
+    name: "github_check_collaborator",
+    category: "Repository Management",
+    description: "Check if a user is a collaborator on a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      username: { type: "string", required: true, description: "GitHub username to check" }
+    },
+    returns: "Collaborator status (is collaborator or not)",
+    example: `const status = await callMCPTool("github_check_collaborator", {
+  owner: "facebook",
+  repo: "react",
+  username: "octocat"
+});`
+  },
+  {
+    name: "github_list_repo_teams",
+    category: "Repository Management",
+    description: "List teams with access to a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number" }
+    },
+    returns: "List of teams with their permission levels",
+    example: `const teams = await callMCPTool("github_list_repo_teams", {
+  owner: "facebook",
+  repo: "react"
+});`
+  },
 
   // COMMITS (1 tool)
   {

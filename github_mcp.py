@@ -4110,6 +4110,3731 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
     except Exception as e:
         return _handle_api_error(e)
 
+# ============================================================================
+# GitHub Actions Expansion Tools (Phase 2 - Batch 1)
+# ============================================================================
+
+class GetWorkflowInput(BaseModel):
+    """Input model for getting a specific workflow."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    workflow_id: str = Field(..., description="Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')", min_length=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class TriggerWorkflowInput(BaseModel):
+    """Input model for triggering a workflow dispatch."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    workflow_id: str = Field(..., description="Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')", min_length=1)
+    ref: str = Field(..., description="Branch, tag, or commit SHA to trigger workflow on", min_length=1)
+    inputs: Optional[Dict[str, str]] = Field(default=None, description="Input parameters for workflow (key-value pairs)")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for triggering workflows)")
+
+class GetWorkflowRunInput(BaseModel):
+    """Input model for getting a specific workflow run."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListWorkflowRunJobsInput(BaseModel):
+    """Input model for listing jobs in a workflow run."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    filter: Optional[str] = Field(default=None, description="Filter jobs: 'latest' or 'all'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetJobInput(BaseModel):
+    """Input model for getting a specific job."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    job_id: int = Field(..., description="Job ID", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetJobLogsInput(BaseModel):
+    """Input model for getting job logs."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    job_id: int = Field(..., description="Job ID", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+class RerunWorkflowInput(BaseModel):
+    """Input model for rerunning a workflow."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for rerunning workflows)")
+
+class RerunFailedJobsInput(BaseModel):
+    """Input model for rerunning failed jobs in a workflow run."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for rerunning workflows)")
+
+class CancelWorkflowRunInput(BaseModel):
+    """Input model for canceling a workflow run."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for canceling workflows)")
+
+class ListWorkflowRunArtifactsInput(BaseModel):
+    """Input model for listing artifacts from a workflow run."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    run_id: int = Field(..., description="Workflow run ID", ge=1)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetArtifactInput(BaseModel):
+    """Input model for getting artifact details."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    artifact_id: int = Field(..., description="Artifact ID", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class DeleteArtifactInput(BaseModel):
+    """Input model for deleting an artifact."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    artifact_id: int = Field(..., description="Artifact ID", ge=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for deleting artifacts)")
+
+@conditional_tool(
+    name="github_get_workflow",
+    annotations={
+        "title": "Get GitHub Actions Workflow",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_workflow(params: GetWorkflowInput) -> str:
+    """
+    Get details about a specific GitHub Actions workflow.
+    
+    Retrieves workflow configuration, state, and metadata including path,
+    created/updated timestamps, and current status.
+    
+    Args:
+        params (GetWorkflowInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - workflow_id (str): Workflow ID (numeric) or workflow file name
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Workflow details including configuration and status
+    
+    Examples:
+        - Use when: "Show me the CI workflow details"
+        - Use when: "Get information about workflow 12345"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/workflows/{params.workflow_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Workflow: {data['name']}\n\n"
+        markdown += f"- **ID:** {data['id']}\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Path:** `{data['path']}`\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_trigger_workflow",
+    annotations={
+        "title": "Trigger GitHub Actions Workflow",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_trigger_workflow(params: TriggerWorkflowInput) -> str:
+    """
+    Trigger a workflow dispatch event (manually run a workflow).
+    
+    Triggers a workflow that has workflow_dispatch enabled. Can pass
+    input parameters to the workflow.
+    
+    Args:
+        params (TriggerWorkflowInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - workflow_id (str): Workflow ID or file name
+            - ref (str): Branch, tag, or commit SHA
+            - inputs (Optional[Dict[str, str]]): Input parameters
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation (202 Accepted)
+    
+    Examples:
+        - Use when: "Trigger the deployment workflow on main branch"
+        - Use when: "Run the CI workflow with custom inputs"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for triggering workflows.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "ref": params.ref
+        }
+        if params.inputs:
+            payload["inputs"] = params.inputs
+        
+        # 202 Accepted is expected for workflow dispatch
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/workflows/{params.workflow_id}/dispatches",
+            method="POST",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Workflow {params.workflow_id} triggered successfully on {params.ref}",
+            "workflow_id": params.workflow_id,
+            "ref": params.ref
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_workflow_run",
+    annotations={
+        "title": "Get GitHub Actions Workflow Run",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_workflow_run(params: GetWorkflowRunInput) -> str:
+    """
+    Get detailed information about a specific workflow run.
+    
+    Retrieves complete run details including status, conclusion, timing,
+    triggering actor, branch, commit, and jobs.
+    
+    Args:
+        params (GetWorkflowRunInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed workflow run information
+    
+    Examples:
+        - Use when: "Show me details about run 12345"
+        - Use when: "Check the status of workflow run 67890"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        status_emoji = "🔄" if data['status'] == "in_progress" else "✅" if data['conclusion'] == "success" else "❌" if data['conclusion'] == "failure" else "⏸️" if data['status'] == "queued" else "⚠️"
+        
+        markdown = f"# {status_emoji} Workflow Run #{data['run_number']}: {data['name']}\n\n"
+        markdown += f"- **Status:** {data['status']}\n"
+        markdown += f"- **Conclusion:** {data['conclusion'] or 'N/A'}\n"
+        markdown += f"- **Triggered By:** {data['triggering_actor']['login']}\n"
+        markdown += f"- **Branch:** `{data['head_branch']}`\n"
+        markdown += f"- **Commit:** {data['head_sha'][:8]} - {data['head_commit']['message'][:60]}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        
+        if data.get('run_started_at'):
+            markdown += f"- **Started:** {_format_timestamp(data['run_started_at'])}\n"
+        if data.get('run_attempt'):
+            markdown += f"- **Attempt:** {data['run_attempt']}\n"
+        
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_workflow_run_jobs",
+    annotations={
+        "title": "List GitHub Actions Workflow Run Jobs",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_workflow_run_jobs(params: ListWorkflowRunJobsInput) -> str:
+    """
+    List all jobs in a workflow run.
+    
+    Retrieves jobs with their status, conclusion, steps, and timing.
+    Supports filtering by latest or all jobs.
+    
+    Args:
+        params (ListWorkflowRunJobsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - filter (Optional[str]): 'latest' or 'all'
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of jobs with status and details
+    
+    Examples:
+        - Use when: "Show me all jobs in run 12345"
+        - Use when: "List the latest jobs for this workflow run"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.filter:
+            params_dict["filter"] = params.filter
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/jobs",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        markdown = f"# Jobs for Workflow Run #{params.run_id}\n\n"
+        markdown += f"**Total Jobs:** {data['total_count']}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['jobs'])} jobs\n\n"
+        
+        if not data['jobs']:
+            markdown += "No jobs found.\n"
+        else:
+            for job in data['jobs']:
+                status_emoji = "🔄" if job['status'] == "in_progress" else "✅" if job['conclusion'] == "success" else "❌" if job['conclusion'] == "failure" else "⏸️" if job['status'] == "queued" else "⚠️"
+                
+                markdown += f"## {status_emoji} {job['name']}\n"
+                markdown += f"- **ID:** {job['id']}\n"
+                markdown += f"- **Status:** {job['status']}\n"
+                markdown += f"- **Conclusion:** {job['conclusion'] or 'N/A'}\n"
+                markdown += f"- **Runner:** {job.get('runner_name', 'N/A')}\n"
+                markdown += f"- **Started:** {_format_timestamp(job['started_at']) if job.get('started_at') else 'N/A'}\n"
+                markdown += f"- **Completed:** {_format_timestamp(job['completed_at']) if job.get('completed_at') else 'N/A'}\n"
+                markdown += f"- **URL:** {job['html_url']}\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_job",
+    annotations={
+        "title": "Get GitHub Actions Job",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_job(params: GetJobInput) -> str:
+    """
+    Get detailed information about a specific job.
+    
+    Retrieves job details including status, conclusion, steps, logs URL,
+    and runner information.
+    
+    Args:
+        params (GetJobInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - job_id (int): Job ID
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed job information
+    
+    Examples:
+        - Use when: "Show me details about job 12345"
+        - Use when: "Check the status of job 67890"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/jobs/{params.job_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        status_emoji = "🔄" if data['status'] == "in_progress" else "✅" if data['conclusion'] == "success" else "❌" if data['conclusion'] == "failure" else "⏸️" if data['status'] == "queued" else "⚠️"
+        
+        markdown = f"# {status_emoji} Job: {data['name']}\n\n"
+        markdown += f"- **ID:** {data['id']}\n"
+        markdown += f"- **Status:** {data['status']}\n"
+        markdown += f"- **Conclusion:** {data['conclusion'] or 'N/A'}\n"
+        markdown += f"- **Runner:** {data.get('runner_name', 'N/A')}\n"
+        markdown += f"- **Workflow:** {data.get('workflow_name', 'N/A')}\n"
+        markdown += f"- **Started:** {_format_timestamp(data['started_at']) if data.get('started_at') else 'N/A'}\n"
+        markdown += f"- **Completed:** {_format_timestamp(data['completed_at']) if data.get('completed_at') else 'N/A'}\n"
+        
+        if data.get('steps'):
+            markdown += f"\n### Steps ({len(data['steps'])}):\n"
+            for step in data['steps']:
+                step_emoji = "✅" if step['conclusion'] == "success" else "❌" if step['conclusion'] == "failure" else "🔄" if step['status'] == "in_progress" else "⏸️"
+                markdown += f"- {step_emoji} {step['name']}: {step['status']} / {step['conclusion'] or 'N/A'}\n"
+        
+        markdown += f"\n- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_job_logs",
+    annotations={
+        "title": "Get GitHub Actions Job Logs",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_job_logs(params: GetJobLogsInput) -> str:
+    """
+    Get logs for a specific job.
+    
+    Retrieves the raw log output from a job execution. Logs are returned
+    as plain text and may be large for long-running jobs.
+    
+    Args:
+        params (GetJobLogsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - job_id (int): Job ID
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Job logs as plain text
+    
+    Examples:
+        - Use when: "Show me the logs for job 12345"
+        - Use when: "Get the error output from failed job 67890"
+    """
+    try:
+        # Job logs endpoint returns plain text, not JSON
+        from src.github_mcp.github_client import GhClient
+        
+        auth_token = await _get_auth_token_fallback(params.token)
+        if not auth_token:
+            return json.dumps({
+                "error": "Authentication required",
+                "message": "GitHub token required for accessing job logs.",
+                "success": False
+            }, indent=2)
+        
+        client = GhClient.instance()
+        response = await client.request(
+            "GET",
+            f"repos/{params.owner}/{params.repo}/actions/jobs/{params.job_id}/logs",
+            token=auth_token,
+            headers={"Accept": "application/vnd.github.v3+json"}
+        )
+        
+        # Logs are returned as plain text
+        logs_text = response.text if hasattr(response, 'text') else str(response)
+        
+        # Truncate if too long (GitHub API may return very large logs)
+        max_length = 50000  # ~50KB
+        if len(logs_text) > max_length:
+            truncated = logs_text[:max_length]
+            return f"# Job Logs (Truncated - showing first {max_length} characters)\n\n```\n{truncated}\n...\n```\n\n*Logs truncated. Full logs available at job URL.*"
+        
+        return f"# Job Logs\n\n```\n{logs_text}\n```"
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_rerun_workflow",
+    annotations={
+        "title": "Rerun GitHub Actions Workflow",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_rerun_workflow(params: RerunWorkflowInput) -> str:
+    """
+    Rerun a workflow run.
+    
+    Re-runs all jobs in a workflow run. Useful for retrying failed or
+    cancelled workflows.
+    
+    Args:
+        params (RerunWorkflowInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Rerun workflow run 12345"
+        - Use when: "Retry the failed workflow"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for rerunning workflows.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/rerun",
+            method="POST",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Workflow run {params.run_id} rerun initiated",
+            "run_id": params.run_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_rerun_failed_jobs",
+    annotations={
+        "title": "Rerun Failed Jobs in Workflow",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_rerun_failed_jobs(params: RerunFailedJobsInput) -> str:
+    """
+    Rerun only the failed jobs in a workflow run.
+    
+    Re-runs only jobs that failed, skipping successful ones. More efficient
+    than rerunning the entire workflow.
+    
+    Args:
+        params (RerunFailedJobsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Rerun only the failed jobs in run 12345"
+        - Use when: "Retry failed tests without rerunning successful ones"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for rerunning workflows.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/rerun-failed-jobs",
+            method="POST",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Failed jobs in workflow run {params.run_id} rerun initiated",
+            "run_id": params.run_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_cancel_workflow_run",
+    annotations={
+        "title": "Cancel GitHub Actions Workflow Run",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_cancel_workflow_run(params: CancelWorkflowRunInput) -> str:
+    """
+    Cancel a workflow run.
+    
+    Cancels an in-progress or queued workflow run. Cannot cancel completed runs.
+    
+    Args:
+        params (CancelWorkflowRunInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Cancel workflow run 12345"
+        - Use when: "Stop the running deployment workflow"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for canceling workflows.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/cancel",
+            method="POST",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Workflow run {params.run_id} cancellation requested",
+            "run_id": params.run_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_workflow_run_artifacts",
+    annotations={
+        "title": "List GitHub Actions Workflow Run Artifacts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_workflow_run_artifacts(params: ListWorkflowRunArtifactsInput) -> str:
+    """
+    List artifacts from a workflow run.
+    
+    Retrieves all artifacts produced by a workflow run, including their
+    names, sizes, and download URLs.
+    
+    Args:
+        params (ListWorkflowRunArtifactsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - run_id (int): Workflow run ID
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of artifacts with details
+    
+    Examples:
+        - Use when: "Show me artifacts from run 12345"
+        - Use when: "List all build artifacts for this workflow"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/artifacts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, data['total_count'])
+        
+        markdown = f"# Artifacts for Workflow Run #{params.run_id}\n\n"
+        markdown += f"**Total Artifacts:** {data['total_count']}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data['artifacts'])} artifacts\n\n"
+        
+        if not data['artifacts']:
+            markdown += "No artifacts found.\n"
+        else:
+            for artifact in data['artifacts']:
+                size_mb = artifact['size_in_bytes'] / (1024 * 1024)
+                markdown += f"## {artifact['name']}\n"
+                markdown += f"- **ID:** {artifact['id']}\n"
+                markdown += f"- **Size:** {size_mb:.2f} MB ({artifact['size_in_bytes']:,} bytes)\n"
+                markdown += f"- **Created:** {_format_timestamp(artifact['created_at'])}\n"
+                markdown += f"- **Expires:** {_format_timestamp(artifact['expires_at'])}\n"
+                markdown += f"- **URL:** {artifact['archive_download_url']}\n\n"
+        
+        return _truncate_response(markdown, data['total_count'])
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_artifact",
+    annotations={
+        "title": "Get GitHub Actions Artifact",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_artifact(params: GetArtifactInput) -> str:
+    """
+    Get details about a specific artifact.
+    
+    Retrieves artifact metadata including name, size, creation date,
+    expiration date, and download URL.
+    
+    Args:
+        params (GetArtifactInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - artifact_id (int): Artifact ID
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Artifact details
+    
+    Examples:
+        - Use when: "Show me details about artifact 12345"
+        - Use when: "Get information about build artifact 67890"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/artifacts/{params.artifact_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        size_mb = data['size_in_bytes'] / (1024 * 1024)
+        markdown = f"# Artifact: {data['name']}\n\n"
+        markdown += f"- **ID:** {data['id']}\n"
+        markdown += f"- **Size:** {size_mb:.2f} MB ({data['size_in_bytes']:,} bytes)\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Expires:** {_format_timestamp(data['expires_at'])}\n"
+        markdown += f"- **Download URL:** {data['archive_download_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_delete_artifact",
+    annotations={
+        "title": "Delete GitHub Actions Artifact",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_delete_artifact(params: DeleteArtifactInput) -> str:
+    """
+    Delete an artifact.
+    
+    Permanently deletes an artifact. This action cannot be undone.
+    
+    Args:
+        params (DeleteArtifactInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - artifact_id (int): Artifact ID
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Delete artifact 12345"
+        - Use when: "Remove old build artifacts"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting artifacts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/actions/artifacts/{params.artifact_id}",
+            method="DELETE",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Artifact {params.artifact_id} deleted successfully",
+            "artifact_id": params.artifact_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# Security Suite Tools (Phase 2 - Batch 2)
+# ============================================================================
+
+# Dependabot Input Models
+class ListDependabotAlertsInput(BaseModel):
+    """Input model for listing Dependabot alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'low', 'medium', 'high', 'critical'")
+    ecosystem: Optional[str] = Field(default=None, description="Filter by ecosystem (e.g., 'npm', 'pip', 'maven')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetDependabotAlertInput(BaseModel):
+    """Input model for getting a specific Dependabot alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateDependabotAlertInput(BaseModel):
+    """Input model for updating a Dependabot alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'dismissed' or 'open'")
+    dismissed_reason: Optional[str] = Field(default=None, description="Reason for dismissal: 'fix_started', 'inaccurate', 'no_bandwidth', 'not_used', 'tolerable_risk'")
+    dismissed_comment: Optional[str] = Field(default=None, max_length=280, description="Optional comment when dismissing")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+class ListOrgDependabotAlertsInput(BaseModel):
+    """Input model for listing organization Dependabot alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    org: str = Field(..., description="Organization name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'low', 'medium', 'high', 'critical'")
+    ecosystem: Optional[str] = Field(default=None, description="Filter by ecosystem")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Code Scanning Input Models
+class ListCodeScanningAlertsInput(BaseModel):
+    """Input model for listing code scanning alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'dismissed', 'fixed'")
+    severity: Optional[str] = Field(default=None, description="Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'")
+    tool_name: Optional[str] = Field(default=None, description="Filter by tool name (e.g., 'CodeQL', 'ESLint')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetCodeScanningAlertInput(BaseModel):
+    """Input model for getting a specific code scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateCodeScanningAlertInput(BaseModel):
+    """Input model for updating a code scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'dismissed' or 'open'")
+    dismissed_reason: Optional[str] = Field(default=None, description="Reason for dismissal: 'false_positive', 'wont_fix', 'used_in_tests'")
+    dismissed_comment: Optional[str] = Field(default=None, max_length=280, description="Optional comment when dismissing")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+class ListCodeScanningAnalysesInput(BaseModel):
+    """Input model for listing code scanning analyses."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    tool_name: Optional[str] = Field(default=None, description="Filter by tool name")
+    ref: Optional[str] = Field(default=None, description="Filter by branch/tag/commit")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Secret Scanning Input Models
+class ListSecretScanningAlertsInput(BaseModel):
+    """Input model for listing secret scanning alerts."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'open', 'resolved'")
+    secret_type: Optional[str] = Field(default=None, description="Filter by secret type (e.g., 'github_personal_access_token')")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetSecretScanningAlertInput(BaseModel):
+    """Input model for getting a specific secret scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class UpdateSecretScanningAlertInput(BaseModel):
+    """Input model for updating a secret scanning alert."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    alert_number: int = Field(..., description="Alert number", ge=1)
+    state: str = Field(..., description="New state: 'resolved' or 'open'")
+    resolution: Optional[str] = Field(default=None, description="Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating alerts)")
+
+# Security Advisories Input Models
+class ListRepoSecurityAdvisoriesInput(BaseModel):
+    """Input model for listing repository security advisories."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default=None, description="Filter by state: 'triage', 'draft', 'published', 'closed'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetSecurityAdvisoryInput(BaseModel):
+    """Input model for getting a specific security advisory."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    ghsa_id: str = Field(..., description="GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')", min_length=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Dependabot Tools
+@conditional_tool(
+    name="github_list_dependabot_alerts",
+    annotations={
+        "title": "List Dependabot Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> str:
+    """
+    List Dependabot security alerts for a repository.
+    
+    Retrieves alerts about vulnerable dependencies detected by Dependabot.
+    Supports filtering by state, severity, and ecosystem.
+    
+    Args:
+        params (ListDependabotAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - ecosystem (Optional[str]): Filter by ecosystem
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of Dependabot alerts with details
+    
+    Examples:
+        - Use when: "Show me all Dependabot alerts"
+        - Use when: "List critical security vulnerabilities"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.ecosystem:
+            params_dict["ecosystem"] = params.ecosystem
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Dependabot Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No Dependabot alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
+                
+                markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['dependency']['package']['name']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Severity:** {alert['security_vulnerability']['severity']}\n"
+                markdown += f"- **Ecosystem:** {alert['dependency']['package']['ecosystem']}\n"
+                markdown += f"- **Vulnerable Version:** {alert['security_vulnerability']['vulnerable_version_range']}\n"
+                markdown += f"- **Patched Version:** {alert['security_vulnerability']['first_patched_version'].get('identifier', 'N/A')}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_dependabot_alert",
+    annotations={
+        "title": "Get Dependabot Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_dependabot_alert(params: GetDependabotAlertInput) -> str:
+    """
+    Get details about a specific Dependabot alert.
+    
+    Retrieves complete alert information including vulnerability details,
+    affected versions, and remediation guidance.
+    
+    Args:
+        params (GetDependabotAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about Dependabot alert 123"
+        - Use when: "Get information about security alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        severity_emoji = "🔴" if data['security_vulnerability']['severity'] == "critical" else "🟠" if data['security_vulnerability']['severity'] == "high" else "🟡" if data['security_vulnerability']['severity'] == "medium" else "🟢"
+        
+        markdown = f"# {severity_emoji} Dependabot Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Severity:** {data['security_vulnerability']['severity']}\n"
+        markdown += f"- **Package:** {data['dependency']['package']['name']}\n"
+        markdown += f"- **Ecosystem:** {data['dependency']['package']['ecosystem']}\n"
+        markdown += f"- **Vulnerable Version:** {data['security_vulnerability']['vulnerable_version_range']}\n"
+        markdown += f"- **Patched Version:** {data['security_vulnerability']['first_patched_version'].get('identifier', 'N/A')}\n"
+        
+        if data.get('dismissed_at'):
+            markdown += f"- **Dismissed:** {_format_timestamp(data['dismissed_at'])}\n"
+            if data.get('dismissed_reason'):
+                markdown += f"- **Dismissal Reason:** {data['dismissed_reason']}\n"
+        
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_dependabot_alert",
+    annotations={
+        "title": "Update Dependabot Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_dependabot_alert(params: UpdateDependabotAlertInput) -> str:
+    """
+    Update a Dependabot alert (dismiss or reopen).
+    
+    Allows dismissing alerts with a reason and optional comment, or
+    reopening dismissed alerts.
+    
+    Args:
+        params (UpdateDependabotAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'dismissed' or 'open'
+            - dismissed_reason (Optional[str]): Reason for dismissal
+            - dismissed_comment (Optional[str]): Optional comment
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Dismiss Dependabot alert 123 as false positive"
+        - Use when: "Reopen dismissed alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating Dependabot alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "dismissed":
+            if params.dismissed_reason:
+                payload["dismissed_reason"] = params.dismissed_reason
+            if params.dismissed_comment:
+                payload["dismissed_comment"] = params.dismissed_comment
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/dependabot/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_org_dependabot_alerts",
+    annotations={
+        "title": "List Organization Dependabot Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_org_dependabot_alerts(params: ListOrgDependabotAlertsInput) -> str:
+    """
+    List Dependabot alerts across an organization.
+    
+    Retrieves alerts from all repositories in an organization. Requires
+    organization admin permissions.
+    
+    Args:
+        params (ListOrgDependabotAlertsInput): Validated input parameters containing:
+            - org (str): Organization name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - ecosystem (Optional[str]): Filter by ecosystem
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of organization-wide Dependabot alerts
+    
+    Examples:
+        - Use when: "Show me all critical alerts in the organization"
+        - Use when: "List all open Dependabot alerts across our repos"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.ecosystem:
+            params_dict["ecosystem"] = params.ecosystem
+        
+        data = await _make_github_request(
+            f"orgs/{params.org}/dependabot/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Dependabot Alerts for Organization: {params.org}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No Dependabot alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
+                
+                markdown += f"## {severity_emoji} {alert['repository']['full_name']} - Alert #{alert['number']}\n"
+                markdown += f"- **Package:** {alert['dependency']['package']['name']}\n"
+                markdown += f"- **Severity:** {alert['security_vulnerability']['severity']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Code Scanning Tools
+@conditional_tool(
+    name="github_list_code_scanning_alerts",
+    annotations={
+        "title": "List Code Scanning Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) -> str:
+    """
+    List code scanning alerts for a repository.
+    
+    Retrieves alerts from CodeQL and other code scanning tools. Supports
+    filtering by state, severity, and tool name.
+    
+    Args:
+        params (ListCodeScanningAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - severity (Optional[str]): Filter by severity
+            - tool_name (Optional[str]): Filter by tool name
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of code scanning alerts with details
+    
+    Examples:
+        - Use when: "Show me all CodeQL alerts"
+        - Use when: "List critical code scanning issues"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.severity:
+            params_dict["severity"] = params.severity
+        if params.tool_name:
+            params_dict["tool_name"] = params.tool_name
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Code Scanning Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No code scanning alerts found.\n"
+        else:
+            for alert in data:
+                severity_emoji = "🔴" if alert.get('rule', {}).get('severity') == "error" else "🟠" if alert.get('rule', {}).get('severity') == "warning" else "🟡"
+                
+                markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['rule']['name']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Severity:** {alert['rule'].get('severity', 'N/A')}\n"
+                markdown += f"- **Tool:** {alert['tool']['name']}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_code_scanning_alert",
+    annotations={
+        "title": "Get Code Scanning Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_code_scanning_alert(params: GetCodeScanningAlertInput) -> str:
+    """
+    Get details about a specific code scanning alert.
+    
+    Retrieves complete alert information including rule details, location,
+    and remediation guidance.
+    
+    Args:
+        params (GetCodeScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about code scanning alert 123"
+        - Use when: "Get information about CodeQL alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        severity_emoji = "🔴" if data.get('rule', {}).get('severity') == "error" else "🟠" if data.get('rule', {}).get('severity') == "warning" else "🟡"
+        
+        markdown = f"# {severity_emoji} Code Scanning Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Rule:** {data['rule']['name']}\n"
+        markdown += f"- **Severity:** {data['rule'].get('severity', 'N/A')}\n"
+        markdown += f"- **Tool:** {data['tool']['name']}\n"
+        
+        if data.get('most_recent_instance'):
+            instance = data['most_recent_instance']
+            markdown += f"- **Location:** {instance.get('location', {}).get('path', 'N/A')}:{instance.get('location', {}).get('start_line', 'N/A')}\n"
+        
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_code_scanning_alert",
+    annotations={
+        "title": "Update Code Scanning Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_code_scanning_alert(params: UpdateCodeScanningAlertInput) -> str:
+    """
+    Update a code scanning alert (dismiss or reopen).
+    
+    Allows dismissing alerts with a reason and optional comment, or
+    reopening dismissed alerts.
+    
+    Args:
+        params (UpdateCodeScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'dismissed' or 'open'
+            - dismissed_reason (Optional[str]): Reason for dismissal
+            - dismissed_comment (Optional[str]): Optional comment
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Dismiss code scanning alert 123 as false positive"
+        - Use when: "Reopen dismissed CodeQL alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating code scanning alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "dismissed":
+            if params.dismissed_reason:
+                payload["dismissed_reason"] = params.dismissed_reason
+            if params.dismissed_comment:
+                payload["dismissed_comment"] = params.dismissed_comment
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_code_scanning_analyses",
+    annotations={
+        "title": "List Code Scanning Analyses",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_code_scanning_analyses(params: ListCodeScanningAnalysesInput) -> str:
+    """
+    List code scanning analyses for a repository.
+    
+    Retrieves analysis runs from code scanning tools, including their
+    status, tool, and commit information.
+    
+    Args:
+        params (ListCodeScanningAnalysesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - tool_name (Optional[str]): Filter by tool name
+            - ref (Optional[str]): Filter by branch/tag/commit
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of code scanning analyses
+    
+    Examples:
+        - Use when: "Show me all CodeQL analyses"
+        - Use when: "List recent code scanning runs"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.tool_name:
+            params_dict["tool_name"] = params.tool_name
+        if params.ref:
+            params_dict["ref"] = params.ref
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/code-scanning/analyses",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Code Scanning Analyses for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Analyses:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No code scanning analyses found.\n"
+        else:
+            for analysis in data:
+                markdown += f"## Analysis: {analysis.get('tool', {}).get('name', 'N/A')}\n"
+                markdown += f"- **Ref:** {analysis.get('ref', 'N/A')}\n"
+                markdown += f"- **Commit SHA:** {analysis.get('commit_sha', 'N/A')[:8]}\n"
+                markdown += f"- **Created:** {_format_timestamp(analysis['created_at'])}\n"
+                markdown += f"- **URL:** {analysis.get('url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Secret Scanning Tools
+@conditional_tool(
+    name="github_list_secret_scanning_alerts",
+    annotations={
+        "title": "List Secret Scanning Alerts",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_secret_scanning_alerts(params: ListSecretScanningAlertsInput) -> str:
+    """
+    List secret scanning alerts for a repository.
+    
+    Retrieves alerts about exposed secrets (API keys, tokens, etc.)
+    detected by GitHub's secret scanning.
+    
+    Args:
+        params (ListSecretScanningAlertsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - secret_type (Optional[str]): Filter by secret type
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of secret scanning alerts with details
+    
+    Examples:
+        - Use when: "Show me all secret scanning alerts"
+        - Use when: "List exposed API keys"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        if params.secret_type:
+            params_dict["secret_type"] = params.secret_type
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Secret Scanning Alerts for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No secret scanning alerts found.\n"
+        else:
+            for alert in data:
+                markdown += f"## 🔐 Alert #{alert['number']}\n"
+                markdown += f"- **State:** {alert['state']}\n"
+                markdown += f"- **Secret Type:** {alert.get('secret_type', 'N/A')}\n"
+                markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
+                markdown += f"- **URL:** {alert['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_secret_scanning_alert",
+    annotations={
+        "title": "Get Secret Scanning Alert",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_secret_scanning_alert(params: GetSecretScanningAlertInput) -> str:
+    """
+    Get details about a specific secret scanning alert.
+    
+    Retrieves complete alert information including secret type, location,
+    and resolution status.
+    
+    Args:
+        params (GetSecretScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed alert information
+    
+    Examples:
+        - Use when: "Show me details about secret scanning alert 123"
+        - Use when: "Get information about exposed token alert 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts/{params.alert_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# 🔐 Secret Scanning Alert #{data['number']}\n\n"
+        markdown += f"- **State:** {data['state']}\n"
+        markdown += f"- **Secret Type:** {data.get('secret_type', 'N/A')}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        
+        if data.get('resolution'):
+            markdown += f"- **Resolution:** {data['resolution']}\n"
+        
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_secret_scanning_alert",
+    annotations={
+        "title": "Update Secret Scanning Alert",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_secret_scanning_alert(params: UpdateSecretScanningAlertInput) -> str:
+    """
+    Update a secret scanning alert (resolve or reopen).
+    
+    Allows resolving alerts with a resolution reason, or reopening
+    resolved alerts.
+    
+    Args:
+        params (UpdateSecretScanningAlertInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - alert_number (int): Alert number
+            - state (str): 'resolved' or 'open'
+            - resolution (Optional[str]): Resolution reason
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated alert details
+    
+    Examples:
+        - Use when: "Resolve secret scanning alert 123 as revoked"
+        - Use when: "Reopen resolved alert 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating secret scanning alerts.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "state": params.state
+        }
+        if params.state == "resolved" and params.resolution:
+            payload["resolution"] = params.resolution
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/secret-scanning/alerts/{params.alert_number}",
+            method="PATCH",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# Security Advisories Tools
+@conditional_tool(
+    name="github_list_repo_security_advisories",
+    annotations={
+        "title": "List Repository Security Advisories",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_security_advisories(params: ListRepoSecurityAdvisoriesInput) -> str:
+    """
+    List security advisories for a repository.
+    
+    Retrieves published security advisories (GHSA) for vulnerabilities
+    in the repository.
+    
+    Args:
+        params (ListRepoSecurityAdvisoriesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (Optional[str]): Filter by state
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of security advisories
+    
+    Examples:
+        - Use when: "Show me all security advisories"
+        - Use when: "List published GHSA advisories"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.state:
+            params_dict["state"] = params.state
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/security-advisories",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Security Advisories for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Advisories:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No security advisories found.\n"
+        else:
+            for advisory in data:
+                markdown += f"## {advisory.get('ghsa_id', 'N/A')}: {advisory.get('summary', 'N/A')}\n"
+                markdown += f"- **State:** {advisory.get('state', 'N/A')}\n"
+                markdown += f"- **Severity:** {advisory.get('severity', 'N/A')}\n"
+                markdown += f"- **Published:** {_format_timestamp(advisory['published_at']) if advisory.get('published_at') else 'Not published'}\n"
+                markdown += f"- **URL:** {advisory.get('html_url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_security_advisory",
+    annotations={
+        "title": "Get Security Advisory",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_security_advisory(params: GetSecurityAdvisoryInput) -> str:
+    """
+    Get details about a specific security advisory.
+    
+    Retrieves complete advisory information including description,
+    severity, affected versions, and remediation guidance.
+    
+    Args:
+        params (GetSecurityAdvisoryInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - ghsa_id (str): GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed advisory information
+    
+    Examples:
+        - Use when: "Show me details about GHSA-xxxx-xxxx-xxxx"
+        - Use when: "Get information about security advisory GHSA-1234-5678-9012"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/security-advisories/{params.ghsa_id}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Security Advisory: {data.get('ghsa_id', 'N/A')}\n\n"
+        markdown += f"- **Summary:** {data.get('summary', 'N/A')}\n"
+        markdown += f"- **State:** {data.get('state', 'N/A')}\n"
+        markdown += f"- **Severity:** {data.get('severity', 'N/A')}\n"
+        markdown += f"- **Published:** {_format_timestamp(data['published_at']) if data.get('published_at') else 'Not published'}\n"
+        
+        if data.get('description'):
+            markdown += f"\n### Description\n{data['description'][:500]}{'...' if len(data.get('description', '')) > 500 else ''}\n"
+        
+        markdown += f"\n- **URL:** {data.get('html_url', 'N/A')}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# GitHub Projects Tools (Phase 2 - Batch 3)
+# ============================================================================
+
+class ListRepoProjectsInput(BaseModel):
+    """Input model for listing repository projects."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default="open", description="Filter by state: 'open', 'closed', 'all'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListOrgProjectsInput(BaseModel):
+    """Input model for listing organization projects."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    org: str = Field(..., description="Organization name", min_length=1, max_length=100)
+    state: Optional[str] = Field(default="open", description="Filter by state: 'open', 'closed', 'all'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetProjectInput(BaseModel):
+    """Input model for getting a specific project."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    project_id: int = Field(..., description="Project ID", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class CreateRepoProjectInput(BaseModel):
+    """Input model for creating a repository project."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    name: str = Field(..., description="Project name", min_length=1, max_length=100)
+    body: Optional[str] = Field(default=None, description="Project description")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for creating projects)")
+
+class CreateOrgProjectInput(BaseModel):
+    """Input model for creating an organization project."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    org: str = Field(..., description="Organization name", min_length=1, max_length=100)
+    name: str = Field(..., description="Project name", min_length=1, max_length=100)
+    body: Optional[str] = Field(default=None, description="Project description")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for creating projects)")
+
+class UpdateProjectInput(BaseModel):
+    """Input model for updating a project."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    project_id: int = Field(..., description="Project ID", ge=1)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100, description="New project name")
+    body: Optional[str] = Field(default=None, description="New project description")
+    state: Optional[str] = Field(default=None, description="New state: 'open' or 'closed'")
+    token: Optional[str] = Field(default=None, description="GitHub token (required for updating projects)")
+
+class DeleteProjectInput(BaseModel):
+    """Input model for deleting a project."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    project_id: int = Field(..., description="Project ID", ge=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for deleting projects)")
+
+class ListProjectColumnsInput(BaseModel):
+    """Input model for listing project columns."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    project_id: int = Field(..., description="Project ID", ge=1)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class CreateProjectColumnInput(BaseModel):
+    """Input model for creating a project column."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    project_id: int = Field(..., description="Project ID", ge=1)
+    name: str = Field(..., description="Column name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="GitHub token (required for creating columns)")
+
+# Projects Tools
+@conditional_tool(
+    name="github_list_repo_projects",
+    annotations={
+        "title": "List Repository Projects",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_projects(params: ListRepoProjectsInput) -> str:
+    """
+    List projects for a repository.
+    
+    Retrieves all projects (classic) associated with a repository.
+    Supports filtering by state (open/closed/all).
+    
+    Args:
+        params (ListRepoProjectsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - state (str): Filter by state (default: 'open')
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of projects with details
+    
+    Examples:
+        - Use when: "Show me all projects for this repo"
+        - Use when: "List open projects"
+    """
+    try:
+        params_dict = {
+            "state": params.state,
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        # Projects API requires preview header
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/projects",
+            token=params.token,
+            params=params_dict,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Projects for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Projects:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No projects found.\n"
+        else:
+            for project in data:
+                markdown += f"## {project['name']}\n"
+                markdown += f"- **ID:** {project['id']}\n"
+                markdown += f"- **State:** {project['state']}\n"
+                if project.get('body'):
+                    markdown += f"- **Description:** {project['body'][:100]}{'...' if len(project.get('body', '')) > 100 else ''}\n"
+                markdown += f"- **Created:** {_format_timestamp(project['created_at'])}\n"
+                markdown += f"- **Updated:** {_format_timestamp(project['updated_at'])}\n"
+                markdown += f"- **URL:** {project['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_org_projects",
+    annotations={
+        "title": "List Organization Projects",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_org_projects(params: ListOrgProjectsInput) -> str:
+    """
+    List projects for an organization.
+    
+    Retrieves all projects (classic) associated with an organization.
+    Requires organization read access.
+    
+    Args:
+        params (ListOrgProjectsInput): Validated input parameters containing:
+            - org (str): Organization name
+            - state (str): Filter by state (default: 'open')
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of organization projects
+    
+    Examples:
+        - Use when: "Show me all organization projects"
+        - Use when: "List open projects for myorg"
+    """
+    try:
+        params_dict = {
+            "state": params.state,
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"orgs/{params.org}/projects",
+            token=params.token,
+            params=params_dict,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Projects for Organization: {params.org}\n\n"
+        markdown += f"**Total Projects:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No projects found.\n"
+        else:
+            for project in data:
+                markdown += f"## {project['name']}\n"
+                markdown += f"- **ID:** {project['id']}\n"
+                markdown += f"- **State:** {project['state']}\n"
+                if project.get('body'):
+                    markdown += f"- **Description:** {project['body'][:100]}{'...' if len(project.get('body', '')) > 100 else ''}\n"
+                markdown += f"- **URL:** {project['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_project",
+    annotations={
+        "title": "Get Project",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_project(params: GetProjectInput) -> str:
+    """
+    Get details about a specific project.
+    
+    Retrieves complete project information including name, description,
+    state, and metadata.
+    
+    Args:
+        params (GetProjectInput): Validated input parameters containing:
+            - project_id (int): Project ID
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed project information
+    
+    Examples:
+        - Use when: "Show me details about project 12345"
+        - Use when: "Get information about project 67890"
+    """
+    try:
+        data = await _make_github_request(
+            f"projects/{params.project_id}",
+            token=params.token,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Project: {data['name']}\n\n"
+        markdown += f"- **ID:** {data['id']}\n"
+        markdown += f"- **State:** {data['state']}\n"
+        if data.get('body'):
+            markdown += f"- **Description:** {data['body']}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        markdown += f"- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_create_repo_project",
+    annotations={
+        "title": "Create Repository Project",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_repo_project(params: CreateRepoProjectInput) -> str:
+    """
+    Create a new project for a repository.
+    
+    Creates a classic project board for organizing issues and pull requests.
+    
+    Args:
+        params (CreateRepoProjectInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - name (str): Project name
+            - body (Optional[str]): Project description
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Created project details
+    
+    Examples:
+        - Use when: "Create a new project called 'Sprint Planning'"
+        - Use when: "Add a project board for this repo"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating projects.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "name": params.name
+        }
+        if params.body:
+            payload["body"] = params.body
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/projects",
+            method="POST",
+            token=auth_token,
+            json=payload,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_create_org_project",
+    annotations={
+        "title": "Create Organization Project",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_org_project(params: CreateOrgProjectInput) -> str:
+    """
+    Create a new project for an organization.
+    
+    Creates a classic project board at the organization level.
+    Requires organization admin permissions.
+    
+    Args:
+        params (CreateOrgProjectInput): Validated input parameters containing:
+            - org (str): Organization name
+            - name (str): Project name
+            - body (Optional[str]): Project description
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Created project details
+    
+    Examples:
+        - Use when: "Create an organization project called 'Q1 Goals'"
+        - Use when: "Add a project board for the org"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating projects.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "name": params.name
+        }
+        if params.body:
+            payload["body"] = params.body
+        
+        data = await _make_github_request(
+            f"orgs/{params.org}/projects",
+            method="POST",
+            token=auth_token,
+            json=payload,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_update_project",
+    annotations={
+        "title": "Update Project",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_update_project(params: UpdateProjectInput) -> str:
+    """
+    Update a project.
+    
+    Allows updating project name, description, and state (open/closed).
+    
+    Args:
+        params (UpdateProjectInput): Validated input parameters containing:
+            - project_id (int): Project ID
+            - name (Optional[str]): New project name
+            - body (Optional[str]): New project description
+            - state (Optional[str]): New state ('open' or 'closed')
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Updated project details
+    
+    Examples:
+        - Use when: "Rename project 12345 to 'New Name'"
+        - Use when: "Close project 67890"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for updating projects.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {}
+        if params.name:
+            payload["name"] = params.name
+        if params.body is not None:
+            payload["body"] = params.body
+        if params.state:
+            payload["state"] = params.state
+        
+        data = await _make_github_request(
+            f"projects/{params.project_id}",
+            method="PATCH",
+            token=auth_token,
+            json=payload,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_delete_project",
+    annotations={
+        "title": "Delete Project",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_delete_project(params: DeleteProjectInput) -> str:
+    """
+    Delete a project.
+    
+    Permanently deletes a project. This action cannot be undone.
+    
+    Args:
+        params (DeleteProjectInput): Validated input parameters containing:
+            - project_id (int): Project ID
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Delete project 12345"
+        - Use when: "Remove the old project board"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting projects.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"projects/{params.project_id}",
+            method="DELETE",
+            token=auth_token,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Project {params.project_id} deleted successfully",
+            "project_id": params.project_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_project_columns",
+    annotations={
+        "title": "List Project Columns",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_project_columns(params: ListProjectColumnsInput) -> str:
+    """
+    List columns in a project.
+    
+    Retrieves all columns (e.g., "To Do", "In Progress", "Done") in a project board.
+    
+    Args:
+        params (ListProjectColumnsInput): Validated input parameters containing:
+            - project_id (int): Project ID
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of project columns
+    
+    Examples:
+        - Use when: "Show me all columns in project 12345"
+        - Use when: "List the project board columns"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"projects/{params.project_id}/columns",
+            token=params.token,
+            params=params_dict,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Columns for Project #{params.project_id}\n\n"
+        markdown += f"**Total Columns:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No columns found.\n"
+        else:
+            for column in data:
+                markdown += f"## {column['name']}\n"
+                markdown += f"- **ID:** {column['id']}\n"
+                markdown += f"- **Created:** {_format_timestamp(column['created_at'])}\n"
+                markdown += f"- **Updated:** {_format_timestamp(column['updated_at'])}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_create_project_column",
+    annotations={
+        "title": "Create Project Column",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_project_column(params: CreateProjectColumnInput) -> str:
+    """
+    Create a new column in a project.
+    
+    Adds a new column (e.g., "Review", "Testing") to a project board.
+    
+    Args:
+        params (CreateProjectColumnInput): Validated input parameters containing:
+            - project_id (int): Project ID
+            - name (str): Column name
+            - token (Optional[str]): GitHub token (required)
+    
+    Returns:
+        str: Created column details
+    
+    Examples:
+        - Use when: "Add a 'Review' column to project 12345"
+        - Use when: "Create a new column called 'Testing'"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating project columns.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "name": params.name
+        }
+        
+        data = await _make_github_request(
+            f"projects/{params.project_id}/columns",
+            method="POST",
+            token=auth_token,
+            json=payload,
+            headers={"Accept": "application/vnd.github.inertia-preview+json"}
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# GitHub Discussions Tools (Phase 2 - Batch 4)
+# ============================================================================
+
+class ListDiscussionsInput(BaseModel):
+    """Input model for listing discussions."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    category: Optional[str] = Field(default=None, description="Filter by category slug")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetDiscussionInput(BaseModel):
+    """Input model for getting a specific discussion."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    discussion_number: int = Field(..., description="Discussion number", ge=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListDiscussionCategoriesInput(BaseModel):
+    """Input model for listing discussion categories."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListDiscussionCommentsInput(BaseModel):
+    """Input model for listing discussion comments."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    discussion_number: int = Field(..., description="Discussion number", ge=1)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Discussions Tools
+@conditional_tool(
+    name="github_list_discussions",
+    annotations={
+        "title": "List Discussions",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_discussions(params: ListDiscussionsInput) -> str:
+    """
+    List discussions for a repository.
+    
+    Retrieves all discussions in a repository. Supports filtering by category.
+    Discussions are community conversations separate from issues.
+    
+    Args:
+        params (ListDiscussionsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - category (Optional[str]): Filter by category slug
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of discussions with details
+    
+    Examples:
+        - Use when: "Show me all discussions"
+        - Use when: "List discussions in the Q&A category"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.category:
+            params_dict["category"] = params.category
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/discussions",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Discussions for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Discussions:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No discussions found.\n"
+        else:
+            for discussion in data:
+                markdown += f"## {discussion['title']}\n"
+                markdown += f"- **Number:** {discussion['number']}\n"
+                markdown += f"- **Category:** {discussion.get('category', {}).get('name', 'N/A')}\n"
+                markdown += f"- **Author:** {discussion['user']['login']}\n"
+                markdown += f"- **State:** {discussion.get('state', 'N/A')}\n"
+                markdown += f"- **Created:** {_format_timestamp(discussion['created_at'])}\n"
+                markdown += f"- **URL:** {discussion['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_discussion",
+    annotations={
+        "title": "Get Discussion",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_get_discussion(params: GetDiscussionInput) -> str:
+    """
+    Get details about a specific discussion.
+    
+    Retrieves complete discussion information including title, body,
+    category, author, and comments count.
+    
+    Args:
+        params (GetDiscussionInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - discussion_number (int): Discussion number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed discussion information
+    
+    Examples:
+        - Use when: "Show me details about discussion 123"
+        - Use when: "Get information about discussion 456"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/discussions/{params.discussion_number}",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Discussion: {data['title']}\n\n"
+        markdown += f"- **Number:** {data['number']}\n"
+        markdown += f"- **Category:** {data.get('category', {}).get('name', 'N/A')}\n"
+        markdown += f"- **Author:** {data['user']['login']}\n"
+        markdown += f"- **State:** {data.get('state', 'N/A')}\n"
+        markdown += f"- **Comments:** {data.get('comments', 0)}\n"
+        markdown += f"- **Upvotes:** {data.get('upvote_count', 0)}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at'])}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        
+        if data.get('body'):
+            markdown += f"\n### Content\n{data['body'][:500]}{'...' if len(data.get('body', '')) > 500 else ''}\n"
+        
+        markdown += f"\n- **URL:** {data['html_url']}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_discussion_categories",
+    annotations={
+        "title": "List Discussion Categories",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_discussion_categories(params: ListDiscussionCategoriesInput) -> str:
+    """
+    List discussion categories for a repository.
+    
+    Retrieves all available discussion categories (e.g., "General", "Q&A",
+    "Ideas", "Announcements") configured for the repository.
+    
+    Args:
+        params (ListDiscussionCategoriesInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of discussion categories
+    
+    Examples:
+        - Use when: "Show me all discussion categories"
+        - Use when: "List available discussion types"
+    """
+    try:
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/discussions/categories",
+            token=params.token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = f"# Discussion Categories for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Categories:** {len(data)}\n\n"
+        
+        if not data:
+            markdown += "No discussion categories found.\n"
+        else:
+            for category in data:
+                markdown += f"## {category['name']}\n"
+                markdown += f"- **Slug:** {category.get('slug', 'N/A')}\n"
+                markdown += f"- **Description:** {category.get('description', 'N/A')}\n"
+                markdown += f"- **Emoji:** {category.get('emoji', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_discussion_comments",
+    annotations={
+        "title": "List Discussion Comments",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -> str:
+    """
+    List comments in a discussion.
+    
+    Retrieves all comments for a specific discussion, including replies
+    and reactions.
+    
+    Args:
+        params (ListDiscussionCommentsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - discussion_number (int): Discussion number
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of discussion comments
+    
+    Examples:
+        - Use when: "Show me all comments in discussion 123"
+        - Use when: "List replies to this discussion"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/discussions/{params.discussion_number}/comments",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Comments for Discussion #{params.discussion_number}\n\n"
+        markdown += f"**Total Comments:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} comments\n\n"
+        
+        if not data:
+            markdown += "No comments found.\n"
+        else:
+            for comment in data:
+                markdown += f"## Comment by {comment['user']['login']}\n"
+                markdown += f"- **ID:** {comment['id']}\n"
+                markdown += f"- **Created:** {_format_timestamp(comment['created_at'])}\n"
+                markdown += f"- **Updated:** {_format_timestamp(comment['updated_at'])}\n"
+                if comment.get('body'):
+                    markdown += f"- **Content:** {comment['body'][:200]}{'...' if len(comment.get('body', '')) > 200 else ''}\n"
+                markdown += f"- **URL:** {comment['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# Notifications Tools (Phase 2 - Batch 5)
+# ============================================================================
+
+class ListNotificationsInput(BaseModel):
+    """Input model for listing notifications."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    all: Optional[bool] = Field(default=False, description="Show all notifications (including read ones)")
+    participating: Optional[bool] = Field(default=False, description="Show only notifications where user is participating")
+    since: Optional[str] = Field(default=None, description="Only show notifications updated after this time (ISO 8601)")
+    before: Optional[str] = Field(default=None, description="Only show notifications updated before this time (ISO 8601)")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class GetThreadInput(BaseModel):
+    """Input model for getting a notification thread."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class MarkThreadReadInput(BaseModel):
+    """Input model for marking a thread as read."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+class MarkNotificationsReadInput(BaseModel):
+    """Input model for marking notifications as read."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    last_read_at: Optional[str] = Field(default=None, description="Timestamp to mark as read up to (ISO 8601)")
+    read: Optional[bool] = Field(default=True, description="Mark as read (default: true)")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+class GetThreadSubscriptionInput(BaseModel):
+    """Input model for getting thread subscription status."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class SetThreadSubscriptionInput(BaseModel):
+    """Input model for setting thread subscription."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    thread_id: str = Field(..., description="Thread ID", min_length=1)
+    ignored: Optional[bool] = Field(default=False, description="Whether to ignore the thread")
+    token: Optional[str] = Field(default=None, description="GitHub token (required - UAT only)")
+
+# Notifications Tools
+@conditional_tool(
+    name="github_list_notifications",
+    annotations={
+        "title": "List Notifications",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_list_notifications(params: ListNotificationsInput) -> str:
+    """
+    List notifications for the authenticated user.
+    
+    Retrieves all notifications for the authenticated user. Requires
+    User Access Token (UAT) - installation tokens won't work.
+    
+    Args:
+        params (ListNotificationsInput): Validated input parameters containing:
+            - all (bool): Show all notifications (including read)
+            - participating (bool): Show only participating notifications
+            - since (Optional[str]): Filter by update time
+            - before (Optional[str]): Filter by update time
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of notifications
+    
+    Examples:
+        - Use when: "Show me my notifications"
+        - Use when: "List unread notifications"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.all:
+            params_dict["all"] = "true"
+        if params.participating:
+            params_dict["participating"] = "true"
+        if params.since:
+            params_dict["since"] = params.since
+        if params.before:
+            params_dict["before"] = params.before
+        
+        data = await _make_github_request(
+            "notifications",
+            token=auth_token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = "# Notifications\n\n"
+        markdown += f"**Total Notifications:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} notifications\n\n"
+        
+        if not data:
+            markdown += "No notifications found.\n"
+        else:
+            for notification in data:
+                unread_emoji = "🔔" if notification.get('unread', False) else "✓"
+                markdown += f"## {unread_emoji} {notification.get('subject', {}).get('title', 'N/A')}\n"
+                markdown += f"- **Type:** {notification.get('subject', {}).get('type', 'N/A')}\n"
+                markdown += f"- **Repository:** {notification.get('repository', {}).get('full_name', 'N/A')}\n"
+                markdown += f"- **Unread:** {notification.get('unread', False)}\n"
+                markdown += f"- **Updated:** {_format_timestamp(notification['updated_at'])}\n"
+                markdown += f"- **URL:** {notification.get('url', 'N/A')}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_thread",
+    annotations={
+        "title": "Get Notification Thread",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_get_thread(params: GetThreadInput) -> str:
+    """
+    Get details about a notification thread.
+    
+    Retrieves complete thread information including subject, reason,
+    and repository details. Requires User Access Token (UAT).
+    
+    Args:
+        params (GetThreadInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Detailed thread information
+    
+    Examples:
+        - Use when: "Show me details about notification thread 123"
+        - Use when: "Get information about thread 456"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = "# Notification Thread\n\n"
+        markdown += f"- **ID:** {data.get('id', 'N/A')}\n"
+        markdown += f"- **Unread:** {data.get('unread', False)}\n"
+        markdown += f"- **Reason:** {data.get('reason', 'N/A')}\n"
+        markdown += f"- **Repository:** {data.get('repository', {}).get('full_name', 'N/A')}\n"
+        markdown += f"- **Subject:** {data.get('subject', {}).get('title', 'N/A')}\n"
+        markdown += f"- **Updated:** {_format_timestamp(data['updated_at'])}\n"
+        markdown += f"- **URL:** {data.get('url', 'N/A')}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_mark_thread_read",
+    annotations={
+        "title": "Mark Thread as Read",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_mark_thread_read(params: MarkThreadReadInput) -> str:
+    """
+    Mark a notification thread as read.
+    
+    Marks a specific thread as read. Requires User Access Token (UAT).
+    
+    Args:
+        params (MarkThreadReadInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Mark thread 123 as read"
+        - Use when: "Mark notification as read"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"notifications/threads/{params.thread_id}",
+            method="PATCH",
+            token=auth_token
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": f"Thread {params.thread_id} marked as read",
+            "thread_id": params.thread_id
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_mark_notifications_read",
+    annotations={
+        "title": "Mark Notifications as Read",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_mark_notifications_read(params: MarkNotificationsReadInput) -> str:
+    """
+    Mark notifications as read.
+    
+    Marks all notifications or notifications up to a specific time as read.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (MarkNotificationsReadInput): Validated input parameters containing:
+            - last_read_at (Optional[str]): Timestamp to mark as read up to
+            - read (bool): Mark as read (default: true)
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Success confirmation
+    
+    Examples:
+        - Use when: "Mark all notifications as read"
+        - Use when: "Mark notifications up to yesterday as read"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {}
+        if params.last_read_at:
+            payload["last_read_at"] = params.last_read_at
+        if params.read is not None:
+            payload["read"] = params.read
+        
+        await _make_github_request(
+            "notifications",
+            method="PUT",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps({
+            "success": True,
+            "message": "Notifications marked as read"
+        }, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_get_thread_subscription",
+    annotations={
+        "title": "Get Thread Subscription",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False
+    }
+)
+async def github_get_thread_subscription(params: GetThreadSubscriptionInput) -> str:
+    """
+    Get subscription status for a notification thread.
+    
+    Checks whether the authenticated user is subscribed to a thread.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (GetThreadSubscriptionInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - token (Optional[str]): GitHub token (required - UAT only)
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Subscription status
+    
+    Examples:
+        - Use when: "Check if I'm subscribed to thread 123"
+        - Use when: "Get subscription status for this thread"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}/subscription",
+            token=auth_token
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps(data, indent=2)
+        
+        markdown = "# Thread Subscription Status\n\n"
+        markdown += f"- **Subscribed:** {data.get('subscribed', False)}\n"
+        markdown += f"- **Ignored:** {data.get('ignored', False)}\n"
+        markdown += f"- **Reason:** {data.get('reason', 'N/A')}\n"
+        markdown += f"- **Created:** {_format_timestamp(data['created_at']) if data.get('created_at') else 'N/A'}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_set_thread_subscription",
+    annotations={
+        "title": "Set Thread Subscription",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False
+    }
+)
+async def github_set_thread_subscription(params: SetThreadSubscriptionInput) -> str:
+    """
+    Set subscription status for a notification thread.
+    
+    Subscribes or unsubscribes from a thread, or marks it as ignored.
+    Requires User Access Token (UAT).
+    
+    Args:
+        params (SetThreadSubscriptionInput): Validated input parameters containing:
+            - thread_id (str): Thread ID
+            - ignored (bool): Whether to ignore the thread
+            - token (Optional[str]): GitHub token (required - UAT only)
+    
+    Returns:
+        str: Updated subscription status
+    
+    Examples:
+        - Use when: "Ignore thread 123"
+        - Use when: "Unsubscribe from this notification thread"
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub User Access Token (UAT) required for notifications. Installation tokens won't work.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload = {
+            "ignored": params.ignored
+        }
+        
+        data = await _make_github_request(
+            f"notifications/threads/{params.thread_id}/subscription",
+            method="PUT",
+            token=auth_token,
+            json=payload
+        )
+        
+        return json.dumps(data, indent=2)
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+# ============================================================================
+# Collaborators & Teams Tools (Phase 2 - Batch 6)
+# ============================================================================
+
+class ListRepoCollaboratorsInput(BaseModel):
+    """Input model for listing repository collaborators."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    affiliation: Optional[str] = Field(default="all", description="Filter by affiliation: 'outside', 'direct', 'all'")
+    permission: Optional[str] = Field(default=None, description="Filter by permission: 'pull', 'push', 'admin'")
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class CheckCollaboratorInput(BaseModel):
+    """Input model for checking if a user is a collaborator."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    username: str = Field(..., description="GitHub username to check", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+class ListRepoTeamsInput(BaseModel):
+    """Input model for listing repository teams."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
+
+# Collaborators & Teams Tools
+@conditional_tool(
+    name="github_list_repo_collaborators",
+    annotations={
+        "title": "List Repository Collaborators",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_collaborators(params: ListRepoCollaboratorsInput) -> str:
+    """
+    List collaborators for a repository.
+    
+    Retrieves all users who have access to the repository, including
+    their permission levels. Supports filtering by affiliation and permission.
+    
+    Args:
+        params (ListRepoCollaboratorsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - affiliation (str): Filter by affiliation (default: 'all')
+            - permission (Optional[str]): Filter by permission level
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of collaborators with permissions
+    
+    Examples:
+        - Use when: "Show me all collaborators"
+        - Use when: "List users with admin access"
+    """
+    try:
+        params_dict = {
+            "affiliation": params.affiliation,
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        if params.permission:
+            params_dict["permission"] = params.permission
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/collaborators",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Collaborators for {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Collaborators:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} collaborators\n\n"
+        
+        if not data:
+            markdown += "No collaborators found.\n"
+        else:
+            for collaborator in data:
+                markdown += f"## {collaborator['login']}\n"
+                permissions = collaborator.get('permissions', {})
+                markdown += f"- **Admin:** {permissions.get('admin', False)}\n"
+                markdown += f"- **Push:** {permissions.get('push', False)}\n"
+                markdown += f"- **Pull:** {permissions.get('pull', False)}\n"
+                markdown += f"- **URL:** {collaborator['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_check_collaborator",
+    annotations={
+        "title": "Check Collaborator",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_check_collaborator(params: CheckCollaboratorInput) -> str:
+    """
+    Check if a user is a collaborator on a repository.
+    
+    Returns 204 if the user is a collaborator, 404 if not. Useful for
+    permission checks before performing operations.
+    
+    Args:
+        params (CheckCollaboratorInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - username (str): GitHub username to check
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: Collaborator status (is collaborator or not)
+    
+    Examples:
+        - Use when: "Check if user123 is a collaborator"
+        - Use when: "Verify user has access to this repo"
+    """
+    try:
+        from src.github_mcp.github_client import GhClient
+        
+        auth_token = await _get_auth_token_fallback(params.token)
+        client = GhClient.instance()
+        
+        response = await client.request(
+            "GET",
+            f"repos/{params.owner}/{params.repo}/collaborators/{params.username}",
+            token=auth_token,
+            headers={"Accept": "application/vnd.github.v3+json"}
+        )
+        
+        is_collaborator = response.status_code == 204
+        
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({
+                "is_collaborator": is_collaborator,
+                "username": params.username,
+                "repository": f"{params.owner}/{params.repo}"
+            }, indent=2)
+        
+        markdown = f"# Collaborator Check: {params.username}\n\n"
+        markdown += f"- **Repository:** {params.owner}/{params.repo}\n"
+        markdown += f"- **Is Collaborator:** {'✅ Yes' if is_collaborator else '❌ No'}\n"
+        
+        return markdown
+        
+    except Exception as e:
+        # 404 means not a collaborator, which is valid
+        if hasattr(e, 'response') and hasattr(e.response, 'status_code') and e.response.status_code == 404:
+            if params.response_format == ResponseFormat.JSON:
+                return json.dumps({
+                    "is_collaborator": False,
+                    "username": params.username,
+                    "repository": f"{params.owner}/{params.repo}"
+                }, indent=2)
+            return f"# Collaborator Check: {params.username}\n\n- **Repository:** {params.owner}/{params.repo}\n- **Is Collaborator:** ❌ No\n"
+        return _handle_api_error(e)
+
+@conditional_tool(
+    name="github_list_repo_teams",
+    annotations={
+        "title": "List Repository Teams",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_repo_teams(params: ListRepoTeamsInput) -> str:
+    """
+    List teams with access to a repository.
+    
+    Retrieves all teams that have been granted access to the repository,
+    including their permission levels.
+    
+    Args:
+        params (ListRepoTeamsInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - per_page (int): Results per page
+            - page (int): Page number
+            - token (Optional[str]): GitHub token
+            - response_format (ResponseFormat): Output format
+    
+    Returns:
+        str: List of teams with permissions
+    
+    Examples:
+        - Use when: "Show me all teams with access"
+        - Use when: "List teams that can access this repo"
+    """
+    try:
+        params_dict = {
+            "per_page": params.per_page,
+            "page": params.page
+        }
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/teams",
+            token=params.token,
+            params=params_dict
+        )
+        
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+        
+        markdown = f"# Teams with Access to {params.owner}/{params.repo}\n\n"
+        markdown += f"**Total Teams:** {len(data)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} teams\n\n"
+        
+        if not data:
+            markdown += "No teams found.\n"
+        else:
+            for team in data:
+                markdown += f"## {team['name']}\n"
+                markdown += f"- **ID:** {team['id']}\n"
+                markdown += f"- **Permission:** {team.get('permission', 'N/A')}\n"
+                markdown += f"- **Slug:** {team.get('slug', 'N/A')}\n"
+                markdown += f"- **URL:** {team['html_url']}\n\n"
+        
+        return _truncate_response(markdown, len(data))
+        
+    except Exception as e:
+        return _handle_api_error(e)
+
 @conditional_tool(
     name="github_create_pull_request",
     annotations={
