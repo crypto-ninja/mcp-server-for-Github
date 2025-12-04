@@ -66,7 +66,7 @@ const display = await callMCPTool("github_list_branches", {
 | Branch Management | 5 | list/create/get/delete/compare_branches |
 | Issues | 5 | list/create/update_issue, add_issue_comment, search_issues |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, create_pr_review |
-| File Operations | 10 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
+| File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
 | Releases | 4 | list/get/create/update_release |
 | Search | 1 | search_code |
 | Commits | 1 | list_commits |

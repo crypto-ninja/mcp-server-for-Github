@@ -279,7 +279,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 - **One tool:** `execute_code`
 - **Token cost:** ~800 tokens
-- **All functionality:** Access to 47 GitHub operations
+- **All functionality:** Access to 109 GitHub tools
 
 #### What Happens Under The Hood
 
@@ -313,7 +313,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 - **Massive token savings:** 98% reduction means faster responses and lower costs
 - **Complex workflows:** Combine multiple operations in single execution
 - **Conditional logic:** Use if/else, loops, and full programming capability
-- **Same functionality:** All 47 GitHub operations still available
+- **Same functionality:** All 109 GitHub tools still available
 
 This architecture validates Anthropic's research predictions about code-first MCP.
 
@@ -649,7 +649,7 @@ Most users just need a Personal Access Token:
 GITHUB_TOKEN=ghp_your_token_here
 ```
 
-That's it! You're ready to use all 47 GitHub tools.
+That's it! You're ready to use all 109 GitHub tools.
 
 > 💡 **Need higher rate limits?** Power users can [create their own GitHub App](docs/ADVANCED_GITHUB_APP.md) for 15,000 requests/hour instead of 5,000.
 
@@ -940,7 +940,7 @@ Profile and organization data retrieval.
 
 ### "Why do I only see one tool in my MCP client?"
 
-This is correct! The code-first architecture exposes only `execute_code` to maximize token efficiency. All 47 GitHub operations are available inside your code via `callMCPTool()`.
+This is correct! The code-first architecture exposes only `execute_code` to maximize token efficiency. All 109 GitHub tools are available inside your code via `callMCPTool()`.
 
 ### "How do I use the GitHub operations?"
 
