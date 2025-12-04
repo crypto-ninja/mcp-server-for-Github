@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.5.0)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.0)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -970,7 +970,7 @@ const issue = await callMCPTool("github_create_issue", {...});
 
 await callMCPTool("github_update_issue", {
   owner: "crypto-ninja",
-  repo: "github-mcp-server",
+  repo: "mcp-server-for-Github",
   issue_number: issue.number ?? 1,
   labels: ["bug", "documentation"]
 });
@@ -1023,9 +1023,9 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 ## 📚 Documentation
 
-- **📖 Full Documentation:** [Complete README](https://github.com/crypto-ninja/github-mcp-server)
-- **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
-- **💡 Discussions:** [GitHub Discussions](https://github.com/crypto-ninja/github-mcp-server/discussions)
+- **📖 Full Documentation:** [Complete README](https://github.com/crypto-ninja/mcp-server-for-Github)
+- **🐛 Bug Reports:** [GitHub Issues](https://github.com/crypto-ninja/mcp-server-for-Github/issues)
+- **💡 Discussions:** [GitHub Discussions](https://github.com/crypto-ninja/mcp-server-for-Github/discussions)
 - **📧 Licensing:** [licensing@mcplabs.co.uk](mailto:licensing@mcplabs.co.uk)
 
 ---

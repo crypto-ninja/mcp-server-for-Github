@@ -18,7 +18,7 @@ setup(
     description="A comprehensive Model Context Protocol server for GitHub integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/crypto-ninja/github-mcp-server",
+    url="https://github.com/crypto-ninja/mcp-server-for-Github",
     py_modules=["github_mcp"],
     python_requires=">=3.10",
     install_requires=[
@@ -39,11 +39,11 @@ setup(
     ],
     keywords="mcp model-context-protocol github api ai assistant claude",
     project_urls={
-        "Bug Reports": "https://github.com/crypto-ninja/github-mcp-server/issues",
-        "Source": "https://github.com/crypto-ninja/github-mcp-server",
-        "Documentation": "https://github.com/crypto-ninja/github-mcp-server/blob/main/README.md",
+        "Bug Reports": "https://github.com/crypto-ninja/mcp-server-for-Github/issues",
+        "Source": "https://github.com/crypto-ninja/mcp-server-for-Github",
+        "Documentation": "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/README.md",
         "Website": "https://mcplabs.co.uk",
-        "Licensing": "https://github.com/crypto-ninja/github-mcp-server/blob/main/LICENSING.md",
+        "Licensing": "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/LICENSING.md",
     },
     entry_points={
         "console_scripts": [

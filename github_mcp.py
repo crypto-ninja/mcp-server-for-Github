@@ -3,7 +3,7 @@
 GitHub MCP Server - A comprehensive Model Context Protocol server for GitHub integration.
 
 Copyright (C) 2025 MCP Labs
-https://github.com/crypto-ninja/github-mcp-server
+https://github.com/crypto-ninja/mcp-server-for-Github
 
 This software is available under a dual licensing model:
 
@@ -27,7 +27,7 @@ a commercial license is required.
 For licensing inquiries:
 Email: licensing@mcplabs.co.uk
 Website: https://mcplabs.co.uk
-GitHub: https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry
+GitHub: https://github.com/crypto-ninja/mcp-server-for-Github/issues/new?title=Commercial+License+Inquiry
 
 ---
 
@@ -2528,7 +2528,7 @@ async def github_license_info() -> str:
 
 
 **Options:**
-1. Get free AGPL license: https://github.com/crypto-ninja/github-mcp-server
+1. Get free AGPL license: https://github.com/crypto-ninja/mcp-server-for-Github
 2. Purchase commercial license: https://mcplabs.co.uk/pricing
 3. Contact support: licensing@mcplabs.co.uk
 '''
@@ -10684,7 +10684,7 @@ async def execute_code(code: str) -> str:
     - Workflows (2 tools): github_list_workflows, github_get_workflow_runs
     - And 9 more categories...
     
-    📖 Full documentation: https://github.com/crypto-ninja/github-mcp-server#tools
+    📖 Full documentation: https://github.com/crypto-ninja/mcp-server-for-Github#tools
     
     All tools are called via: await callMCPTool(toolName, parameters)
     

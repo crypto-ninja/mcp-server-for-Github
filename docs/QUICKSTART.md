@@ -16,7 +16,7 @@ If you're developing or want the latest code:
 
 ```bash
 # Clone the repository
-git clone https://github.com/crypto-ninja/github-mcp-server.git
+git clone https://github.com/crypto-ninja/mcp-server-for-Github.git
 cd github-mcp-server
 
 # Install in development mode

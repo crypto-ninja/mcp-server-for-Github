@@ -21,11 +21,11 @@ dependencies = [
 ]
 
 [project.urls]
-"Bug Reports" = "https://github.com/crypto-ninja/github-mcp-server/issues"
-"Source" = "https://github.com/crypto-ninja/github-mcp-server"
-"Documentation" = "https://github.com/crypto-ninja/github-mcp-server/blob/main/README.md"
+"Bug Reports" = "https://github.com/crypto-ninja/mcp-server-for-Github/issues"
+"Source" = "https://github.com/crypto-ninja/mcp-server-for-Github"
+"Documentation" = "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/README.md"
 "Website" = "https://mcplabs.co.uk"
-"Licensing" = "https://github.com/crypto-ninja/github-mcp-server/blob/main/LICENSING.md"
+"Licensing" = "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/LICENSING.md"
 
 [project.scripts]
 github-mcp = "github_mcp:main"

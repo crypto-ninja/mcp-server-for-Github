@@ -148,7 +148,7 @@ Include:
 **Response time:** 24 hours
 
 ### Option 2: GitHub
-Open an issue: [Request Commercial License](https://github.com/crypto-ninja/github-mcp-server/issues/new?title=Commercial+License+Inquiry)
+Open an issue: [Request Commercial License](https://github.com/crypto-ninja/mcp-server-for-Github/issues/new?title=Commercial+License+Inquiry)
 
 ### Option 3: Self-Service Portal (Coming Soon)
 Visit: https://mcplabs.co.uk
@@ -250,7 +250,7 @@ United Kingdom
 
 **General inquiries:** licensing@mcplabs.co.uk  
 **Website:** https://mcplabs.co.uk (coming soon)  
-**GitHub:** https://github.com/crypto-ninja/github-mcp-server
+**GitHub:** https://github.com/crypto-ninja/mcp-server-for-Github
 
 ---
 

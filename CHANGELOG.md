@@ -608,10 +608,10 @@ Built with passion by the MCP Labs team through systematic dogfooding and iterat
 
 #### 🔗 Links
 
-- [GitHub Repository](https://github.com/crypto-ninja/github-mcp-server)
-- [Documentation](https://github.com/crypto-ninja/github-mcp-server#readme)
-- [Issues](https://github.com/crypto-ninja/github-mcp-server/issues)
-- [Releases](https://github.com/crypto-ninja/github-mcp-server/releases)
+- [GitHub Repository](https://github.com/crypto-ninja/mcp-server-for-Github)
+- [Documentation](https://github.com/crypto-ninja/mcp-server-for-Github#readme)
+- [Issues](https://github.com/crypto-ninja/mcp-server-for-Github/issues)
+- [Releases](https://github.com/crypto-ninja/mcp-server-for-Github/releases)
 
 ---
 
@@ -829,7 +829,7 @@ Major infrastructure improvements with 2 new tools, connection pooling, GraphQL 
 - Issue #16: Roadmap documentation update
 - Merge Commit: f4e9fcd6374ef42d4fd0a7c2f2b8ac08cd5e17e2
 
-[1.5.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.5.0
+[1.5.0]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.5.0
 
 ## [1.4.0] - 2025-11-06
 
@@ -875,7 +875,7 @@ The tools created their own license verification:
 - PR #13: License implementation
 - Merge Commit: 9323b91c5e5b2cc120ec6b221f5e7205101b3c0f
 
-[1.4.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.4.0
+[1.4.0]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.4.0
 
 ## [1.3.0] - 2025-11-04
 
@@ -948,7 +948,7 @@ Major expansion adding 9 new tools for complete repository lifecycle and PR work
 - Competitive analysis completed
 - Updated use cases and examples
 
-[1.3.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.3.0
+[1.3.0]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.3.0
 
 ## [Unreleased]
 
@@ -1032,10 +1032,10 @@ Automated cleanup using the new tools:
 
 ### 🔗 Links
 
-- [Issue #29](https://github.com/crypto-ninja/github-mcp-server/issues/29) - Feature request (closed by itself!)
+- [Issue #29](https://github.com/crypto-ninja/mcp-server-for-Github/issues/29) - Feature request (closed by itself!)
 - [Dogfooding Story #14](docs/dogfooding/story_14.md) - Full narrative
 
-[1.6.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.6.0
+[1.6.0]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.6.0
 
 ## [1.2.1] - 2025-10-31
 
@@ -1054,7 +1054,7 @@ Added the workflow advisor tool that recommends when to use API tools vs local g
 ### 🐕🍖 Dogfooding Story #11
 We built the self-aware tool while deciding how to document itself. It recommended using itself to document itself. META LEVEL: ∞ 🤯
 
-[1.2.1]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.2.1
+[1.2.1]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.2.1
 
 
 All notable changes to this project will be documented in this file.
@@ -1081,7 +1081,7 @@ TL;DR: We tried to verify our own v1.1.0 release and realized we couldn't. So we
 ### 🎯 Use Cases
 - Release verification, version discovery, dependency updates
 
-[1.1.1]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.1.1
+[1.1.1]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.1.1
 
 ## [1.1.0] - 2025-10-24
 
@@ -1220,7 +1220,7 @@ No new dependencies required - still just:
 
 Special thanks to the MCP community for feedback and support during Phase 1 development!
 
-[1.1.0]: https://github.com/crypto-ninja/github-mcp-server/releases/tag/v1.1.0
+[1.1.0]: https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v1.1.0
 
 ## [1.0.0] - 2025-10-23
 

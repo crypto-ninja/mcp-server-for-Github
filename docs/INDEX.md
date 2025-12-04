@@ -187,7 +187,7 @@ All documentation follows these principles:
 1. Check the [README](../README.md) - Most comprehensive
 2. Browse [Feature Showcase](FEATURES.md) - Lots of examples
 3. Read [Quick Start](QUICKSTART.md) - Step-by-step setup
-4. Open an [Issue](https://github.com/crypto-ninja/github-mcp-server/issues) - We'll help!
+4. Open an [Issue](https://github.com/crypto-ninja/mcp-server-for-Github/issues) - We'll help!
 
 **Business inquiries:**
 - Email: licensing@mcplabs.co.uk

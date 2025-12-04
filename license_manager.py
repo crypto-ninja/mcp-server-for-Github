@@ -36,7 +36,7 @@ LICENSE_TIERS = {
         "max_developers": None,
         "features": ["all"],
         "requires_key": False,
-        "url": "https://github.com/crypto-ninja/github-mcp-server"
+        "url": "https://github.com/crypto-ninja/mcp-server-for-Github"
     },
     "startup": {
         "name": "Startup License",
@@ -229,7 +229,7 @@ class LicenseManager:
             print(f"Message: {license_info.get('message', '')}", file=sys.stderr)
             print(file=sys.stderr)
             print("Options:", file=sys.stderr)
-            print("1. Get free AGPL license: https://github.com/crypto-ninja/github-mcp-server", file=sys.stderr)
+            print("1. Get free AGPL license: https://github.com/crypto-ninja/mcp-server-for-Github", file=sys.stderr)
             print("2. Purchase commercial license: https://mcplabs.co.uk/pricing", file=sys.stderr)
             print("3. Contact support: licensing@mcplabs.co.uk", file=sys.stderr)
             print("=" * 60, file=sys.stderr)
