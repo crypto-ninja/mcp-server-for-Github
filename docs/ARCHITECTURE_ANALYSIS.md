@@ -1,7 +1,7 @@
-## GitHub MCP Server Architecture Analysis (v2.3.1)
+## GitHub MCP Server Architecture Analysis (v2.4.0)
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
-**Version:** 2.3.1  
+**Version:** 2.4.0  
 **Tools:** 62 total (1 exposed MCP tool, 61 internal GitHub/workspace tools)
 
 ---
@@ -522,13 +522,14 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
 
 ### 9.1 Version & Tool Count
 
-- **Version:** 2.3.1 (per `pyproject.toml` and README badges).
+- **Version:** 2.4.0 (per `pyproject.toml` and README badges).
 - **Total Tools:** 62 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
   - External MCP surface: `execute_code`.
   - Internal tools: 61 GitHub/workspace/meta tools.
 
 ### 9.2 Recent Major Changes (from README)
 
+- **v2.4.0** – Phase 1 tool expansion (48 → 62 tools).
 - **v2.3.1** – Code-first mode enforced by default.
   - `MCP_CODE_FIRST_MODE` is defaulted to `true`, fully aligning runtime with documented architecture.
 - **v2.3.0** – Architecture formalization and testing uplift.

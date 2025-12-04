@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.4.0] - 2025-12-04
+
+### Added
+
+- **Phase 1 tool expansion: 15 new tools (48 → 62 total)**
+  - Issue Comments: `github_add_issue_comment`
+  - Gists: `github_list_gists`, `github_get_gist`, `github_create_gist`, `github_update_gist`
+  - Labels: `github_list_labels`, `github_create_label`, `github_delete_label`
+  - Stargazers: `github_list_stargazers`, `github_star_repository`, `github_unstar_repository`
+  - User Context: `github_get_authenticated_user`, `github_list_user_repos`, `github_list_org_repos`, `github_search_users`
+- Restored `github_get_user_info` to TypeScript definitions
+
+### Changed
+
+- Total tools: 62 (61 internal + execute_code)
+- New categories: Gists, Labels, Stargazers
+- Updated all documentation to reflect 62 tools
+
+---
+
 ## [Unreleased]
 
 ### Added

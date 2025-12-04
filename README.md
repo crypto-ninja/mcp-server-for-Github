@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-62-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.3.1)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.4.0)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,11 +12,19 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.3.1 - Code-First Mode Enforced by Default (January 26, 2025)
+### 🚀 Latest: v2.4.0 - Phase 1 Tool Expansion (December 4, 2025)
 
-**CRITICAL FIX:** Code-first mode now truly enforced by default - one character change with massive impact!
+**MAJOR RELEASE:** 15 new tools added (48 → 62 total tools)!
 
-**New in v2.3.1:**
+**New in v2.4.0:**
+- 🎯 **Issue Comments** - `github_add_issue_comment` for commenting on issues
+- 📝 **Gists** - Full CRUD operations: `github_list_gists`, `github_get_gist`, `github_create_gist`, `github_update_gist`
+- 🏷️ **Labels** - Complete label management: `github_list_labels`, `github_create_label`, `github_delete_label`
+- ⭐ **Stargazers** - Star/unstar repositories: `github_list_stargazers`, `github_star_repository`, `github_unstar_repository`
+- 👤 **User Context** - Enhanced user operations: `github_get_authenticated_user`, `github_list_user_repos`, `github_list_org_repos`, `github_search_users`
+- ✅ **Restored** - `github_get_user_info` back in TypeScript definitions
+
+**Previous: v2.3.1 - Code-First Mode Enforced by Default (January 26, 2025)**
 - 🎯 **Default Enforcement** - Code-first mode now defaults to `true` (was `false`)
 - 🚀 **Zero Configuration** - New users get 98% token reduction automatically
 - ✅ **Documentation Alignment** - Code now matches documentation claims
@@ -282,7 +290,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 | Aspect | Traditional MCP | Code-First MCP (Us) |
 |--------|----------------|---------------------|
-| Tools exposed | 48 tools | 1 tool |
+| Tools exposed | 62 tools | 1 tool |
 | Token cost | ~70,000 | ~800 |
 | Reduction | - | **98%** |
 | Functionality | Same | Same |
@@ -1014,7 +1022,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.3.1 with 62 tools (Code-first architecture with 98% token reduction!)
+**Current:** v2.4.0 with 62 tools (Code-first architecture with 98% token reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
