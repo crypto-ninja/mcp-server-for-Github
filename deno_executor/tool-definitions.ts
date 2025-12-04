@@ -140,6 +140,60 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // LABELS (3 tools)
+  {
+    name: "github_list_labels",
+    category: "Labels",
+    description: "List all labels in a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of labels including name, color, and description",
+    example: `const labels = await callMCPTool("github_list_labels", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+  {
+    name: "github_create_label",
+    category: "Labels",
+    description: "Create a new label in a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Label name" },
+      color: { type: "string", required: true, description: "6-character hex color code without '#'", example: "ff0000" },
+      description: { type: "string", required: false, description: "Label description" }
+    },
+    returns: "Created label details including name, color, and description",
+    example: `const label = await callMCPTool("github_create_label", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "bug",
+  color: "d73a4a",
+  description: "Something isn't working"
+});`
+  },
+  {
+    name: "github_delete_label",
+    category: "Labels",
+    description: "Delete a label from a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      name: { type: "string", required: true, description: "Label name to delete" }
+    },
+    returns: "Success confirmation message",
+    example: `const result = await callMCPTool("github_delete_label", {
+  owner: "myuser",
+  repo: "myrepo",
+  name: "old-label"
+});`
+  },
+
   // ISSUES (4 tools)
   {
     name: "github_list_issues",

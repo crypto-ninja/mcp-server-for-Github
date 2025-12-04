@@ -826,6 +826,51 @@ class ListReleasesInput(BaseModel):
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
 
+class ListLabelsInput(BaseModel):
+    """Input model for listing labels in a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
+class CreateLabelInput(BaseModel):
+    """Input model for creating a label in a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=50, description="Label name")
+    color: str = Field(..., min_length=3, max_length=10, description="6-character hex color code without '#' (GitHub accepts up to 10 chars including alpha)")
+    description: Optional[str] = Field(default=None, max_length=255, description="Label description")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class DeleteLabelInput(BaseModel):
+    """Input model for deleting a label from a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=50, description="Label name to delete")
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
 class GetReleaseInput(BaseModel):
     """Input model for getting a specific release or latest release."""
     model_config = ConfigDict(
@@ -4302,6 +4347,114 @@ async def github_update_gist(params: UpdateGistInput) -> str:
         )
         
         return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_list_labels",
+    annotations={
+        "title": "List Labels",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_labels(params: ListLabelsInput) -> str:
+    """
+    List all labels in a repository.
+    """
+    try:
+        query: Dict[str, Any] = {}
+        if params.per_page:
+            query["per_page"] = params.per_page
+        if params.page:
+            query["page"] = params.page
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/labels",
+            token=params.token,
+            params=query
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_create_label",
+    annotations={
+        "title": "Create Label",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True
+    }
+)
+async def github_create_label(params: CreateLabelInput) -> str:
+    """
+    Create a new label in a repository.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for creating labels. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        payload: Dict[str, Any] = {
+            "name": params.name,
+            "color": params.color.lstrip("#"),
+        }
+        if params.description is not None:
+            payload["description"] = params.description
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/labels",
+            method="POST",
+            token=auth_token,
+            json=payload
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_delete_label",
+    annotations={
+        "title": "Delete Label",
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_delete_label(params: DeleteLabelInput) -> str:
+    """
+    Delete a label from a repository.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting labels. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/labels/{params.name}",
+            method="DELETE",
+            token=auth_token
+        )
+        return json.dumps({
+            "success": True,
+            "message": f"Label '{params.name}' deleted from {params.owner}/{params.repo}."
+        }, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 
