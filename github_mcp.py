@@ -871,6 +871,47 @@ class DeleteLabelInput(BaseModel):
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 
+class ListStargazersInput(BaseModel):
+    """Input model for listing stargazers on a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number for pagination")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
+class StarRepositoryInput(BaseModel):
+    """Input model for starring a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
+class UnstarRepositoryInput(BaseModel):
+    """Input model for unstarring a repository."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
+
+
 class GetReleaseInput(BaseModel):
     """Input model for getting a specific release or latest release."""
     model_config = ConfigDict(
@@ -4454,6 +4495,110 @@ async def github_delete_label(params: DeleteLabelInput) -> str:
         return json.dumps({
             "success": True,
             "message": f"Label '{params.name}' deleted from {params.owner}/{params.repo}."
+        }, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_list_stargazers",
+    annotations={
+        "title": "List Stargazers",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_list_stargazers(params: ListStargazersInput) -> str:
+    """
+    List users who have starred a repository.
+    """
+    try:
+        query: Dict[str, Any] = {}
+        if params.per_page:
+            query["per_page"] = params.per_page
+        if params.page:
+            query["page"] = params.page
+        
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/stargazers",
+            token=params.token,
+            params=query
+        )
+        return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_star_repository",
+    annotations={
+        "title": "Star Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_star_repository(params: StarRepositoryInput) -> str:
+    """
+    Star a repository for the authenticated user.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for starring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        # PUT returns 204 No Content on success
+        await _make_github_request(
+            f"user/starred/{params.owner}/{params.repo}",
+            method="PUT",
+            token=auth_token
+        )
+        return json.dumps({
+            "success": True,
+            "message": f"Repository {params.owner}/{params.repo} has been starred."
+        }, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+@conditional_tool(
+    name="github_unstar_repository",
+    annotations={
+        "title": "Unstar Repository",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True
+    }
+)
+async def github_unstar_repository(params: UnstarRepositoryInput) -> str:
+    """
+    Unstar a repository for the authenticated user.
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for unstarring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"user/starred/{params.owner}/{params.repo}",
+            method="DELETE",
+            token=auth_token
+        )
+        return json.dumps({
+            "success": True,
+            "message": f"Repository {params.owner}/{params.repo} has been unstarred."
         }, indent=2)
     except Exception as e:
         return _handle_api_error(e)

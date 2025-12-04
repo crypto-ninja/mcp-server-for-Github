@@ -140,6 +140,53 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
 
+  // STARGAZERS (3 tools)
+  {
+    name: "github_list_stargazers",
+    category: "Stargazers",
+    description: "List users who have starred a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+    },
+    returns: "List of users who starred the repository, including login and profile URLs",
+    example: `const stargazers = await callMCPTool("github_list_stargazers", {
+  owner: "facebook",
+  repo: "react",
+  per_page: 10
+});`
+  },
+  {
+    name: "github_star_repository",
+    category: "Stargazers",
+    description: "Star a repository for the authenticated user",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "Success confirmation that the repository was starred",
+    example: `const result = await callMCPTool("github_star_repository", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+  {
+    name: "github_unstar_repository",
+    category: "Stargazers",
+    description: "Unstar a repository for the authenticated user",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" }
+    },
+    returns: "Success confirmation that the repository was unstarred",
+    example: `const result = await callMCPTool("github_unstar_repository", {
+  owner: "myuser",
+  repo: "myrepo"
+});`
+  },
+
   // LABELS (3 tools)
   {
     name: "github_list_labels",
