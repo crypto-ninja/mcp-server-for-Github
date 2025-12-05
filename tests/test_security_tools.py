@@ -145,7 +145,7 @@ class TestDependabotTools:
         
         result = await github_list_org_dependabot_alerts(params)
         
-        assert "/orgs/test-org/dependabot/alerts" in mock_github_request.call_args[0][0]
+        assert "orgs/test-org/dependabot/alerts" in mock_github_request.call_args[0][0]
 
 
 class TestCodeScanningTools:

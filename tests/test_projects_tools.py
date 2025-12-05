@@ -80,7 +80,7 @@ class TestProjectsTools:
         result = await github_list_org_projects(params)
         
         mock_github_request.assert_called_once()
-        assert "/orgs/test-org/projects" in mock_github_request.call_args[0][0]
+        assert "orgs/test-org/projects" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_get_project(self, mock_github_request, mock_auth_token):
@@ -96,7 +96,7 @@ class TestProjectsTools:
         result = await github_get_project(params)
         
         mock_github_request.assert_called_once()
-        assert "/projects/123" in mock_github_request.call_args[0][0]
+        assert "projects/123" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_create_repo_project(self, mock_github_request, mock_auth_token):
@@ -136,7 +136,7 @@ class TestProjectsTools:
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
-        assert "/orgs/test-org/projects" in call_args[0][0]
+        assert "orgs/test-org/projects" in call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_update_project(self, mock_github_request, mock_auth_token):
@@ -183,7 +183,7 @@ class TestProjectsTools:
         
         result = await github_list_project_columns(params)
         
-        assert "/projects/123/columns" in mock_github_request.call_args[0][0]
+        assert "projects/123/columns" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_create_project_column(self, mock_github_request, mock_auth_token):
