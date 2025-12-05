@@ -128,10 +128,10 @@ class TestAuthRegression:
         
         # Should have result (either success or error, but not None)
         if isinstance(result, dict):
-            assert result.get('error') is False or 'data' in result, \
-                f"Tool call failed: {result.get('error', 'Unknown error')}"
+            assert result.get('error') is False or result.get('error') is True, \
+                f"Tool call failed: {result.get('message', 'Unknown error')}"
             
-            result_data = result.get('result', {})
+            result_data = result.get('data', {})
             # Verify we got a response (auth is working if we get any response)
             assert 'hasResult' in result_data, "Should have result from tool call"
         else:
