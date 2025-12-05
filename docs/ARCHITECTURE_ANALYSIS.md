@@ -55,7 +55,7 @@
     - Initializes MCP client.
     - Constructs a new `Function` injecting the helpers.
     - Runs user-provided TypeScript asynchronously.
-    - Returns `{ success: true, result }` or `{ success: false, error, stack }` and always prints JSON to stdout.
+    - Returns `{ error: false, data }` or `{ error: true, message, code?, details? }` and always prints JSON to stdout.
   - `import.meta.main` block:
     - Reads code from stdin (with timeout fallback to `Deno.args[0]`).
     - Calls `executeUserCode` and prints JSON result.
@@ -95,7 +95,7 @@
 
 - **This Project's Code-First Design**
   - MCP client sees **exactly one** tool: **`execute_code`**.
-  - All other tools (46 GitHub/workspace tools) are invoked **dynamically** by user-provided TypeScript code.
+  - All other tools (108 GitHub/workspace tools) are invoked **dynamically** by user-provided TypeScript code.
   - TypeScript code runs in Deno, using the MCP bridge to call back into Python tools as needed.
   - Tool schemas are not injected into the LLM context; instead, they are available **inside** the execution environment via discovery functions.
   - Result: ~800 tokens vs ~70,000 → **≈98% token reduction**.
@@ -117,7 +117,7 @@
    - Executes user code with injected helpers:
      - `callMCPTool` – bridging to Python-registered tools.
      - `listAvailableTools`, `searchTools`, `getToolInfo`, `getToolsInCategory` – discovery APIs using `GITHUB_TOOLS` from `tool-definitions.ts`.
-   - Collects the `result` (whatever the user returns) and wraps it in `{ success: true, result }`.
+   - Collects the `result` (whatever the user returns) and wraps it in `{ error: false, data: result }`.
    - On error, catches and ensures a **JSON** error object is printed to stdout (not just stderr).
    - Ensures MCP client is closed gracefully in both success and failure paths.
 
@@ -388,8 +388,8 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
      - `initializeMCPClient()` – sets up MCP connection.
      - Constructs `userFunction` with injected helpers.
      - Awaits `userFunction(...)`.
-     - On success, returns `{ success: true, result }`.
-     - On error, returns `{ success: false, error, stack }`.
+     - On success, returns `{ error: false, data: result }`.
+     - On error, returns `{ error: true, message, code, details? }`.
    - Always prints JSON to stdout and exits with code `0` or `1` depending on `success`.
 
 4. **Python MCP Server**
@@ -414,7 +414,7 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
     - 5xx – transient GitHub errors.
 - **Deno Execution Errors**
   - `executeUserCode` logs to stderr (for debugging) and then:
-    - Constructs JSON `{ success: false, error, stack }`.
+    - Constructs JSON `{ error: true, message, code, details? }`.
     - Prints it to stdout.
   - This guarantees the Python side always sees **valid JSON**, even for TypeScript exceptions.
 - **Tool Contract / Schema Errors**
@@ -523,9 +523,9 @@ This design explicitly treats the **AI agent as the primary user** of the tool-d
 ### 9.1 Version & Tool Count
 
 - **Version:** 2.5.0 (per `pyproject.toml` and README badges).
-- **Total Tools:** 62 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
+- **Total Tools:** 109 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
   - External MCP surface: `execute_code`.
-  - Internal tools: 61 GitHub/workspace/meta tools.
+  - Internal tools: 108 GitHub/workspace/meta tools.
 
 ### 9.2 Recent Major Changes (from README)
 
@@ -617,7 +617,7 @@ flowchart TD
   (Cursor, Claude, etc.)]
   subgraph python[Python MCP Server (github_mcp.py)]
     mcp[FastMCP "github_mcp"\nCODE_FIRST_MODE=true]
-    tools[GitHub & Workspace Tools\n(46 internal tools)]
+    tools[GitHub & Workspace Tools\n(108 internal tools)]
     auth[GitHub App + PAT Auth\n(auth/github_app.py)]
   end
 
@@ -661,8 +661,8 @@ flowchart TD
   - Alternatively, introduce a shared schema (e.g., JSON) that both sides generate from.
 
 - **Richer Error Typing Across the Boundary**
-  - Currently, Deno executor wraps errors as `{ success: false, error, stack }`.
-  - Consider encoding a structured error type (e.g., `type`, `statusCode`, `hint`) to make error handling in TypeScript workflows more programmatic.
+  - Currently, Deno executor wraps errors as `{ error: true, message, code, details? }` with standardized error codes.
+  - Error codes enable programmatic error handling in TypeScript workflows.
 
 - **Configurable Execution Limits**
   - Introduce configuration for code execution limits (max runtime, max MCP calls per execution) to harden against pathological scripts.

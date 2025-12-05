@@ -67,8 +67,9 @@ class DenoRuntime:
                     stdout_text = result.stdout.strip() if result.stdout else ""
                     if not stdout_text:
                         return {
-                            "success": False,
-                            "error": "No output from Deno execution"
+                            "error": True,
+                            "message": "No output from Deno execution",
+                            "code": "NO_OUTPUT"
                         }
                     
                     output_lines = stdout_text.split('\n')
@@ -84,45 +85,56 @@ class DenoRuntime:
                                 continue
                     
                     if json_output:
+                        # Return new format as-is: {error: true/false, message/data: ...}
                         return json_output
                     else:
                         # If no JSON found, return stdout as error
                         return {
-                            "success": False,
-                            "error": f"No JSON output found. stdout: {stdout_text[:500]}",
-                            "raw_stdout": stdout_text[:1000]
+                            "error": True,
+                            "message": f"No JSON output found. stdout: {stdout_text[:500]}",
+                            "code": "NO_JSON_OUTPUT",
+                            "details": {"raw_stdout": stdout_text[:1000]}
                         }
                 except Exception as e:
                     return {
-                        "success": False,
-                        "error": f"Error parsing output: {str(e)}",
-                        "stdout": result.stdout[:500] if result.stdout else None,
-                        "stderr": result.stderr[:500] if result.stderr else None
+                        "error": True,
+                        "message": f"Error parsing output: {str(e)}",
+                        "code": "PARSE_ERROR",
+                        "details": {
+                            "stdout": result.stdout[:500] if result.stdout else None,
+                            "stderr": result.stderr[:500] if result.stderr else None
+                        }
                     }
             else:
                 # Non-zero exit code - try to parse error from stderr
                 error_msg = result.stderr or result.stdout
                 return {
-                    "success": False,
-                    "error": error_msg[:1000] if error_msg else "Unknown error",
-                    "stderr": result.stderr[:500] if result.stderr else None,
-                    "stdout": result.stdout[:500] if result.stdout else None
+                    "error": True,
+                    "message": error_msg[:1000] if error_msg else "Unknown error",
+                    "code": "EXECUTION_FAILED",
+                    "details": {
+                        "stderr": result.stderr[:500] if result.stderr else None,
+                        "stdout": result.stdout[:500] if result.stdout else None
+                    }
                 }
                 
         except subprocess.TimeoutExpired:
             return {
-                "success": False,
-                "error": "Code execution timed out (60s limit)"
+                "error": True,
+                "message": "Code execution timed out (60s limit)",
+                "code": "TIMEOUT"
             }
         except FileNotFoundError:
             return {
-                "success": False,
-                "error": "Deno not found. Please install Deno: https://deno.land"
+                "error": True,
+                "message": "Deno not found. Please install Deno: https://deno.land",
+                "code": "DENO_NOT_FOUND"
             }
         except Exception as e:
             return {
-                "success": False,
-                "error": f"Execution error: {str(e)}"
+                "error": True,
+                "message": f"Execution error: {str(e)}",
+                "code": "EXECUTION_ERROR"
             }
 
 

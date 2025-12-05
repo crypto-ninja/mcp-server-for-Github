@@ -66,8 +66,8 @@ class TestToolChaining:
         result = runtime.execute_code(code)
         
         # Should execute without errors
-        assert result['success'] or 'error' in result, \
-            f"Code execution failed: {result.get('error', 'Unknown error')}"
+        assert result.get('error') is False or 'error' not in result or result.get('error') is None, \
+            f"Code execution failed: {result.get('message', 'Unknown error')}"
     
     @pytest.mark.asyncio
     async def test_create_then_update_pattern(self):
@@ -92,8 +92,8 @@ class TestToolChaining:
         result = runtime.execute_code(code)
         
         # Should execute without errors
-        assert result['success'] or 'error' in result, \
-            f"Code execution failed: {result.get('error', 'Unknown error')}"
+        assert result.get('error') is False or 'error' not in result or result.get('error') is None, \
+            f"Code execution failed: {result.get('message', 'Unknown error')}"
 
 
 class TestExecuteCodeIntegration:
@@ -121,12 +121,12 @@ return {
     keys: Object.keys(parsed || {})
 };"""
         
-        # execute_code returns a dict with 'success' and 'result' or 'error'
+        # execute_code returns a dict with 'error' (true/false) and 'data' or 'message'
         result = runtime.execute_code(code.strip())
         
         # Should execute successfully (check if it's a dict with success key)
         if isinstance(result, dict):
-            assert result.get('success', False) or 'result' in result, \
+            assert result.get('error') is False or 'data' in result, \
                 f"execute_code failed: {result.get('error', 'Unknown error')}"
         else:
             # If it's not a dict, it might be the result directly
@@ -196,7 +196,7 @@ return {
         
         # Should execute and return parseable data
         if isinstance(result, dict):
-            assert result.get('success', False) or 'result' in result, \
+            assert result.get('error') is False or 'data' in result, \
                 f"JSON parsing test failed: {result.get('error', 'Unknown error')}"
         else:
             assert result is not None, "execute_code returned None"

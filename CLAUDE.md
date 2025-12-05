@@ -30,6 +30,7 @@ const result = await callMCPTool("tool_name", { params });
 ```
 
 **Example:**
+
 ```typescript
 const issue = await callMCPTool("github_create_issue", {
   owner: "username",
@@ -43,6 +44,7 @@ const issue = await callMCPTool("github_create_issue", {
 ## Response Formats
 
 Many tools support a `response_format` parameter:
+
 - `"json"` - Structured data for programmatic use
 - `"markdown"` - Formatted text for human readability
 
@@ -101,7 +103,11 @@ Handled automatically via environment variables.
 
 The server automatically uses GitHub App if configured, otherwise falls back to PAT.
 
-## Common Errors
+## Error Handling
+
+### Tool Call Errors
+
+When calling tools, you may encounter HTTP errors:
 
 | Code | Meaning | Hint |
 |------|---------|------|
@@ -109,6 +115,36 @@ The server automatically uses GitHub App if configured, otherwise falls back to 
 | 403 | Permission denied | Token may lack required scope |
 | 422 | Validation failed | Check required parameters |
 | 429 | Rate limited | Wait and retry |
+
+### Code Execution Errors
+
+When executing code via `execute_code`, responses use a standardized format:
+
+**Success:**
+```typescript
+{
+  error: false,
+  data: { /* your result */ }
+}
+```
+
+**Error:**
+```typescript
+{
+  error: true,
+  message: "Human-readable error message",
+  code: "ERROR_CODE",  // e.g., "VALIDATION_ERROR", "EXECUTION_ERROR"
+  details: { /* optional context */ }
+}
+```
+
+Common error codes:
+- `VALIDATION_ERROR` - Code failed validation (blocked patterns, etc.)
+- `EXECUTION_ERROR` - Runtime error during execution
+- `TOOL_ERROR` - Error calling an MCP tool
+- `TIMEOUT` - Execution exceeded 60s limit
+
+See [Error Handling Guide](docs/ERROR_HANDLING.md) for complete documentation.
 
 ## Multi-Step Workflows
 

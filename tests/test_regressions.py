@@ -91,7 +91,7 @@ class TestResponseFormatRegression:
         
         # Should execute without "Extra inputs" error
         if isinstance(result, dict):
-            assert result.get('success', False) or 'result' in result, \
+            assert result.get('error') is False or 'data' in result, \
                 f"Should not require response_format: {result.get('error', 'Unknown error')}"
         else:
             assert result is not None, "execute_code returned None"
@@ -128,7 +128,7 @@ class TestAuthRegression:
         
         # Should have result (either success or error, but not None)
         if isinstance(result, dict):
-            assert result.get('success', False) or 'result' in result, \
+            assert result.get('error') is False or 'data' in result, \
                 f"Tool call failed: {result.get('error', 'Unknown error')}"
             
             result_data = result.get('result', {})
@@ -176,7 +176,7 @@ class TestJsonErrorRegression:
         result = runtime.execute_code(code)
         
         # Should handle errors gracefully
-        assert result['success'] or 'error' in result, \
+        assert result.get('error') is False or 'error' in result, \
             "Should handle JSON errors without crashing"
 
 
@@ -212,7 +212,7 @@ class TestParameterValidationRegression:
         # Should reject extra parameters
         # Note: Pydantic validation happens server-side
         # This test verifies the pattern exists
-        assert result['success'] or 'error' in result, \
+        assert result.get('error') is False or 'error' in result, \
             "Should handle parameter validation"
 
 

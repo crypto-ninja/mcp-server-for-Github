@@ -26,6 +26,28 @@ let mcpTransport: StdioClientTransport | null = null;
 let isInitializing = false;
 
 /**
+ * Standardized error response format
+ */
+interface ErrorResponse {
+  error: true;
+  message: string;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Check if an object is an error response
+ */
+function isErrorResponse(obj: unknown): obj is ErrorResponse {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'error' in obj &&
+    (obj as Record<string, unknown>).error === true
+  );
+}
+
+/**
  * Configuration for MCP server connection
  */
 interface MCPConfig {
@@ -253,8 +275,17 @@ export async function callMCPTool<T = string>(
                 // Try to parse as JSON if possible
                 if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
                     try {
-                        return JSON.parse(text) as T;
+                        const parsed = JSON.parse(text);
+                        // Check if it's a structured error response
+                        if (isErrorResponse(parsed)) {
+                            throw new Error(parsed.message);
+                        }
+                        return parsed as T;
                     } catch (parseError) {
+                        // If it's an Error we threw (structured error), re-throw it
+                        if (parseError instanceof Error) {
+                            throw parseError;
+                        }
                         // If JSON parse fails, check if it's an error message
                         if (text.includes('Error:') || text.includes('error')) {
                             return text as unknown as T;
@@ -269,8 +300,17 @@ export async function callMCPTool<T = string>(
                 const jsonBlockMatch = text.match(/```(?:json)?\s*([{[].*?[}\]])\s*```/s);
                 if (jsonBlockMatch) {
                     try {
-                        return JSON.parse(jsonBlockMatch[1]) as T;
-                    } catch {
+                        const parsed = JSON.parse(jsonBlockMatch[1]);
+                        // Check if it's a structured error response
+                        if (isErrorResponse(parsed)) {
+                            throw new Error(parsed.message);
+                        }
+                        return parsed as T;
+                    } catch (parseError) {
+                        // If it's an Error we threw (structured error), re-throw it
+                        if (parseError instanceof Error) {
+                            throw parseError;
+                        }
                         // Failed to parse extracted JSON, continue
                     }
                 }

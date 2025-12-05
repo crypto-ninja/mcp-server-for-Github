@@ -26,6 +26,7 @@ Complete guide to GitHub MCP Server documentation.
 | **Configuration** | Advanced setup and options | [CONFIGURATION.md](CONFIGURATION.md) |
 | **Features** | Tool showcase with examples | [FEATURES.md](FEATURES.md) |
 | **Architecture** | System design and implementation | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| **Error Handling** | Error response format and codes | [ERROR_HANDLING.md](ERROR_HANDLING.md) |
 | **Project Summary** | Overview and statistics | [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) |
 
 ---
@@ -73,6 +74,7 @@ Complete guide to GitHub MCP Server documentation.
 **Using the Tools:**
 - [README.md](../README.md) - Complete API reference
 - [Feature Examples](FEATURES.md) - Real-world use cases
+- [Error Handling](ERROR_HANDLING.md) - Error response format and codes
 - [Project Summary](PROJECT_SUMMARY.md) - Capabilities overview
 
 ### For Developers

@@ -43,6 +43,51 @@
 import { initializeMCPClient, callMCPTool, closeMCPClient } from "../servers/client-deno.ts";
 import { GITHUB_TOOLS, getToolsByCategory, getCategories, type ToolDefinition, type ToolParameter } from "./tool-definitions.ts";
 import { validateCode, sanitizeErrorMessage, type ValidationResult } from "./code-validator.ts";
+import { ErrorCodes, type ErrorCode } from "./error-codes.ts";
+
+/**
+ * Standardized error response format
+ */
+export interface ErrorResponse {
+  error: true;
+  message: string;
+  code?: ErrorCode;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Standardized success response format
+ */
+export interface SuccessResponse<T = unknown> {
+  error: false;
+  data: T;
+}
+
+export type MCPResponse<T = unknown> = ErrorResponse | SuccessResponse<T>;
+
+/**
+ * Create a standardized error response
+ */
+function createErrorResponse(message: string, code?: ErrorCode, details?: Record<string, unknown>): string {
+  const response: ErrorResponse = {
+    error: true,
+    message,
+    ...(code && { code }),
+    ...(details && { details }),
+  };
+  return JSON.stringify(response);
+}
+
+/**
+ * Create a standardized success response
+ */
+function createSuccessResponse<T>(data: T): string {
+  const response: SuccessResponse<T> = {
+    error: false,
+    data,
+  };
+  return JSON.stringify(response);
+}
 
 /**
  * List all available GitHub MCP tools with complete schemas
@@ -226,11 +271,15 @@ async function executeUserCode(code: string): Promise<any> {
     if (!validationResult.valid) {
       const errorMessage = validationResult.errors.join("; ");
       console.error("Code validation failed:", errorMessage);
-      return {
-        success: false,
-        error: `Code validation failed: ${errorMessage}`,
-        validationErrors: validationResult.errors,
-      };
+      // Return structured error response (for Python to parse)
+      const errorResponse = createErrorResponse(
+        `Code validation failed: ${errorMessage}`,
+        ErrorCodes.VALIDATION_ERROR,
+        { validationErrors: validationResult.errors }
+      );
+      console.log(errorResponse);
+      // Return object for main entry point to check
+      return { error: true, message: `Code validation failed: ${errorMessage}`, code: ErrorCodes.VALIDATION_ERROR, details: { validationErrors: validationResult.errors } };
     }
 
     // Log warnings (but don't block execution)
@@ -272,10 +321,11 @@ async function executeUserCode(code: string): Promise<any> {
     // Close connection gracefully
     await closeMCPClient();
 
-    return {
-      success: true,
-      result: result
-    };
+    // Return structured success response (for Python to parse)
+    const successResponse = createSuccessResponse(result);
+    console.log(successResponse);
+    // Return object for main entry point to check
+    return { error: false, data: result };
 
   } catch (error) {
     // Log the actual error before closing
@@ -293,16 +343,19 @@ async function executeUserCode(code: string): Promise<any> {
 
     // CRITICAL: Always output JSON to stdout, even on error
     // This ensures Python subprocess can always parse the result
-    const errorResult = {
-      success: false,
-      error: sanitizeErrorMessage(errorMessage),
-      stack: error instanceof Error ? sanitizeErrorMessage(error.stack || '') : undefined
-    };
+    const errorResponse = createErrorResponse(
+      sanitizeErrorMessage(errorMessage),
+      ErrorCodes.EXECUTION_ERROR,
+      {
+        ...(error instanceof Error && error.stack && { stack: sanitizeErrorMessage(error.stack) })
+      }
+    );
     
     // Ensure this is logged to stdout (not stderr) so Python can parse it
-    console.log(JSON.stringify(errorResult));
+    console.log(errorResponse);
     
-    return errorResult;
+    // Return object for main entry point to check
+    return { error: true, message: sanitizeErrorMessage(errorMessage), code: ErrorCodes.EXECUTION_ERROR, details: { ...(error instanceof Error && error.stack && { stack: sanitizeErrorMessage(error.stack) }) } };
   }
 }
 
@@ -347,15 +400,16 @@ if (import.meta.main) {
   }
   
   if (!code || code.trim() === "") {
-    console.log(JSON.stringify({
-      success: false,
-      error: "No code provided via stdin or command-line arguments"
-    }));
+    const errorResponse = createErrorResponse(
+      "No code provided via stdin or command-line arguments",
+      ErrorCodes.CODE_EMPTY
+    );
+    console.log(errorResponse);
     Deno.exit(1);
   }
 
   const result = await executeUserCode(code);
-  console.log(JSON.stringify(result));
-  Deno.exit(result.success ? 0 : 1);
+  // Result is already logged inside executeUserCode, but we need to check error for exit code
+  Deno.exit(result.error ? 1 : 0);
 }
 

@@ -856,6 +856,34 @@ If you discover a security vulnerability, please email **security@mcplabs.co.uk*
 
 ---
 
+## 📋 Error Handling
+
+All code execution responses use a standardized format for consistent error handling.
+
+**Success Response:**
+```json
+{
+  "error": false,
+  "data": { /* your result */ }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": true,
+  "message": "Human-readable error message",
+  "code": "ERROR_CODE",
+  "details": { /* optional context */ }
+}
+```
+
+Standard error codes include: `VALIDATION_ERROR`, `EXECUTION_ERROR`, `TIMEOUT`, `TOOL_ERROR`, `TOOL_NOT_FOUND`, `INVALID_PARAMS`, and more.
+
+[📖 Full Error Handling Guide →](docs/ERROR_HANDLING.md)
+
+---
+
 ## 🚀 Features Overview
 
 ### 📦 Repository Management (7 tools)

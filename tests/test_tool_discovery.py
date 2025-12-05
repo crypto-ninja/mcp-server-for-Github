@@ -52,14 +52,15 @@ def test_list_available_tools():
     
     result = runtime.execute_code(code)
     print("Test 1: List Available Tools")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        data = result['result']
-        print(f"Total tools: {data['totalTools']}")
-        print(f"Categories: {len(data['categories'])}")
-        print(f"First tool: {data['firstTool']}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        data = result.get('data', {})
+        print(f"Total tools: {data.get('totalTools', 'N/A')}")
+        print(f"Categories: {len(data.get('categories', []))}")
+        print(f"First tool: {data.get('firstTool', 'N/A')}")
     else:
-        print(f"Error: {result.get('error', 'Unknown error')}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 
@@ -79,13 +80,14 @@ def test_search_tools():
     
     result = runtime.execute_code(code)
     print("Test 2: Search Tools")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        data = result['result']
-        print(f"Found {data['resultsFound']} tools")
-        print(f"Tools: {data['toolNames']}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        data = result.get('data', {})
+        print(f"Found {data.get('resultsFound', 0)} tools")
+        print(f"Tools: {data.get('toolNames', [])}")
     else:
-        print(f"Error: {result.get('error', 'Unknown error')}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 
@@ -106,15 +108,16 @@ def test_get_tool_info():
     
     result = runtime.execute_code(code)
     print("Test 3: Get Tool Info")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        data = result['result']
-        print(f"Tool: {data['toolName']}")
-        print(f"Category: {data['category']}")
-        print(f"Has example: {data['hasExample']}")
-        print(f"Parameters: {data['paramCount']}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        data = result.get('data', {})
+        print(f"Tool: {data.get('toolName', 'N/A')}")
+        print(f"Category: {data.get('category', 'N/A')}")
+        print(f"Has example: {data.get('hasExample', False)}")
+        print(f"Parameters: {data.get('paramCount', 0)}")
     else:
-        print(f"Error: {result.get('error', 'Unknown error')}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 
@@ -146,9 +149,10 @@ def test_discovery_then_use():
     
     result = runtime.execute_code(code)
     print("Test 4: Discovery + Usage")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        data = result['result']
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        data = result.get('data', {})
         print(f"Discovered: {data.get('discoveredTool', 'unknown')}")
         print(f"Used successfully: {data.get('toolUsed', False)}")
         if 'repoDataLength' in data:
@@ -156,7 +160,7 @@ def test_discovery_then_use():
         else:
             print("Repo data length not available")
     else:
-        print(f"Error: {result.get('error', 'Unknown error')}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 

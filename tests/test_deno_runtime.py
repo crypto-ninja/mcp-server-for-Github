@@ -48,11 +48,12 @@ def test_simple_execution():
     
     result = runtime.execute_code(code)
     print("Test 1: Simple execution")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        print(f"Result: {result['result']}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        print(f"Result: {result.get('data')}")
     else:
-        print(f"Error: {result['error']}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 
@@ -76,9 +77,10 @@ def test_mcp_tool_call():
     
     result = runtime.execute_code(code)
     print("Test 2: MCP tool call")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        result_data = result['result']
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        result_data = result.get('data')
         if isinstance(result_data, dict):
             print(f"Result keys: {list(result_data.keys())}")
             if 'preview' in result_data:
@@ -88,7 +90,7 @@ def test_mcp_tool_call():
         else:
             print(f"Result type: {type(result_data).__name__}, length: {len(str(result_data))}")
     else:
-        print(f"Error: {result.get('error', 'Unknown')[:200]}")
+        print(f"Error: {result.get('message', 'Unknown')[:200]}")
     print()
 
 
@@ -103,8 +105,9 @@ def test_error_handling():
     
     result = runtime.execute_code(code)
     print("Test 3: Error handling")
-    print(f"Success: {result['success']}")
-    print(f"Error caught: {result.get('error', 'N/A')[:100]}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    print(f"Error message: {result.get('message', 'N/A')[:100]}")
     print()
 
 
@@ -137,11 +140,12 @@ def test_multiple_tool_calls():
     
     result = runtime.execute_code(code)
     print("Test 4: Multiple tool calls")
-    print(f"Success: {result['success']}")
-    if result['success']:
-        print(f"Result: {result['result']}")
+    is_error = result.get("error", True)
+    print(f"Error: {is_error}")
+    if not is_error:
+        print(f"Result: {result.get('data')}")
     else:
-        print(f"Error: {result['error']}")
+        print(f"Error: {result.get('message', 'Unknown error')}")
     print()
 
 

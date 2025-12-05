@@ -1388,7 +1388,7 @@ class GitHubStrReplaceInput(BaseModel):
 # GITHUB TOOLS (Internal Use Only - Called by execute_code via Deno runtime)
 # ============================================================================
 # Note: Claude Desktop only sees execute_code tool (exposed below)
-# These 46 tools are registered for internal use by the Deno runtime
+# These 108 tools are registered for internal use by the Deno runtime
 # This architecture provides 98% token savings vs traditional MCP
 # ============================================================================
 
@@ -10618,7 +10618,7 @@ async def github_create_pr_review(params: CreatePRReviewInput) -> str:
 # CODE-FIRST EXECUTION TOOL (The Only Tool Exposed to Claude)
 # ============================================================================
 # This is the ONLY tool Claude Desktop sees, providing 98% token reduction
-# All 46 GitHub tools above are accessed via this tool through TypeScript code
+# All 108 GitHub tools above are accessed via this tool through TypeScript code
 # ============================================================================
 
 @mcp.tool(
@@ -10644,7 +10644,7 @@ async def execute_code(code: str) -> str:
     return tools;
     ```
     
-    This returns a structured catalog of all 46 GitHub tools including:
+    This returns a structured catalog of all 109 GitHub tools including:
     - Tool names and descriptions
     - Required/optional parameters with types
     - Return value descriptions
@@ -10701,9 +10701,27 @@ async def execute_code(code: str) -> str:
         runtime = get_runtime()
         result = runtime.execute_code(code)
         
-        if result.get("success"):
+        # Handle new format: {error: true/false, message/data: ...}
+        is_error = result.get("error", True)
+        
+        if is_error:
+            # Format error
+            error = result.get("message", "Unknown error")
+            details = result.get("details", {})
+            stack = details.get("stack", "")
+            code = result.get("code", "")
+            
+            error_msg = f"❌ Code execution failed"
+            if code:
+                error_msg += f" ({code})"
+            error_msg += f"\n\n**Error:**\n```\n{error}\n```"
+            if stack:
+                error_msg += f"\n\n**Stack Trace:**\n```\n{stack}\n```"
+            
+            return error_msg
+        else:
             # Format successful result
-            return_value = result.get("result", "Code executed successfully")
+            return_value = result.get("data", "Code executed successfully")
             
             # Return raw JSON for structured data (dict/list) so TypeScript can parse it
             if isinstance(return_value, (dict, list)):
@@ -10720,16 +10738,6 @@ async def execute_code(code: str) -> str:
             else:
                 # Other types (numbers, booleans, etc.) - convert to JSON
                 return json.dumps(return_value)
-        else:
-            # Format error
-            error = result.get("error", "Unknown error")
-            stack = result.get("stack", "")
-            
-            error_msg = f"❌ Code execution failed\n\n**Error:**\n```\n{error}\n```"
-            if stack:
-                error_msg += f"\n\n**Stack Trace:**\n```\n{stack}\n```"
-            
-            return error_msg
             
     except ImportError as e:
         return f"❌ Error: Deno runtime not available. {str(e)}\n\nPlease ensure:\n1. Deno is installed\n2. src/github_mcp/deno_runtime.py exists"
