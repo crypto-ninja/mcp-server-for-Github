@@ -42,6 +42,7 @@
 // Use Deno-compatible client
 import { initializeMCPClient, callMCPTool, closeMCPClient } from "../servers/client-deno.ts";
 import { GITHUB_TOOLS, getToolsByCategory, getCategories, type ToolDefinition, type ToolParameter } from "./tool-definitions.ts";
+import { validateCode, sanitizeErrorMessage, type ValidationResult } from "./code-validator.ts";
 
 /**
  * List all available GitHub MCP tools with complete schemas
@@ -220,6 +221,23 @@ function getToolsInCategory(category: string): ToolDefinition[] {
  */
 async function executeUserCode(code: string): Promise<any> {
   try {
+    // Validate code before execution
+    const validationResult = validateCode(code);
+    if (!validationResult.valid) {
+      const errorMessage = validationResult.errors.join("; ");
+      console.error("Code validation failed:", errorMessage);
+      return {
+        success: false,
+        error: `Code validation failed: ${errorMessage}`,
+        validationErrors: validationResult.errors,
+      };
+    }
+
+    // Log warnings (but don't block execution)
+    if (validationResult.warnings.length > 0) {
+      console.warn("Code validation warnings:", validationResult.warnings.join("; "));
+    }
+
     // Initialize MCP bridge
     await initializeMCPClient();
 
@@ -262,7 +280,8 @@ async function executeUserCode(code: string): Promise<any> {
   } catch (error) {
     // Log the actual error before closing
     // This helps diagnose connection closing issues
-    console.error('[Execute Code] Error during execution:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Execute Code] Error during execution:', errorMessage);
     console.error('[Execute Code] Error stack:', error instanceof Error ? error.stack : 'No stack');
     
     // Close connection on error
@@ -276,8 +295,8 @@ async function executeUserCode(code: string): Promise<any> {
     // This ensures Python subprocess can always parse the result
     const errorResult = {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      error: sanitizeErrorMessage(errorMessage),
+      stack: error instanceof Error ? sanitizeErrorMessage(error.stack || '') : undefined
     };
     
     // Ensure this is logged to stdout (not stderr) so Python can parse it

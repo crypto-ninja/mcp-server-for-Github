@@ -205,7 +205,7 @@ python -m github_mcp
 
 If `MCP_WORKSPACE_ROOT` is not set, tools will use your current working directory as the workspace root.
 
-#### Security
+#### Workspace Security
 
 - ✅ Tools can ONLY access files within the workspace root
 - ✅ Path traversal attempts are blocked
@@ -826,6 +826,33 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 [Read more about our testing philosophy →](TESTING.md)
 
 **📖 Need detailed setup instructions?** See [Advanced GitHub App Guide](docs/ADVANCED_GITHUB_APP.md)
+
+---
+
+## 🔒 Security
+
+### Code Execution Sandboxing
+
+The GitHub MCP Server implements multiple layers of security for code execution:
+
+1. **Code Validation**: All TypeScript code is validated before execution to block:
+   - `eval()` and `new Function()` calls
+   - Dangerous Deno APIs (file writes, process spawning, etc.)
+   - Prototype pollution attempts
+   - Dynamic code construction patterns
+   - Excessive nesting (DoS prevention)
+
+2. **Deno Sandbox**: Code runs in Deno with restricted permissions:
+   - Network access limited to GitHub API
+   - No file system write access
+   - No subprocess spawning
+   - 60-second execution timeout
+
+3. **Error Sanitization**: Error messages are sanitized to prevent information leakage.
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please email **security@mcplabs.co.uk** rather than opening a public issue.
 
 ---
 
