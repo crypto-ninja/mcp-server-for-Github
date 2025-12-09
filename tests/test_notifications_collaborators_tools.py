@@ -4,26 +4,24 @@ Tests for Notifications and Collaborators tools (Phase 2).
 
 import pytest
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import sys
 from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import (  # noqa: E402
-    # Notifications
+from src.github_mcp.tools import (
     github_list_notifications,
     github_get_thread,
     github_mark_thread_read,
     github_mark_notifications_read,
     github_get_thread_subscription,
     github_set_thread_subscription,
-    # Collaborators
     github_list_repo_collaborators,
-    github_check_collaborator,
     github_list_repo_teams,
-    # Input models
+)
+from src.github_mcp.models import (
     ListNotificationsInput,
     GetThreadInput,
     MarkThreadReadInput,
@@ -33,27 +31,18 @@ from github_mcp import (  # noqa: E402
     ListRepoCollaboratorsInput,
     CheckCollaboratorInput,
     ListRepoTeamsInput,
-    ResponseFormat,
 )
 
 
 class TestNotificationsTools:
     """Test suite for Notifications tools."""
 
-    @pytest.fixture
-    def mock_github_request(self):
-        with patch('github_mcp._make_github_request') as mock:
-            yield mock
-
-    @pytest.fixture
-    def mock_auth_token(self):
-        with patch('github_mcp._get_auth_token_fallback') as mock:
-            mock.return_value = "test-token"
-            yield mock
-
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_list_notifications(self, mock_github_request, mock_auth_token):
         """Test listing notifications."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = [
             {"id": "1", "reason": "mention", "unread": True}
         ]
@@ -66,8 +55,11 @@ class TestNotificationsTools:
         assert "notifications" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_list_notifications_with_filters(self, mock_github_request, mock_auth_token):
         """Test listing notifications with filters."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = []
         
         params = ListNotificationsInput(
@@ -82,6 +74,8 @@ class TestNotificationsTools:
         assert params_dict.get("all") == "true"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_list_notifications_no_auth(self, mock_github_request, mock_auth_token):
         """Test listing notifications without auth returns error."""
         mock_auth_token.return_value = None
@@ -93,8 +87,11 @@ class TestNotificationsTools:
         assert data.get("error") == "Authentication required"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_get_thread(self, mock_github_request, mock_auth_token):
         """Test getting a notification thread."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": "12345",
             "subject": {"title": "Issue title", "type": "Issue"}
@@ -107,8 +104,11 @@ class TestNotificationsTools:
         assert "notifications/threads/12345" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_mark_thread_read(self, mock_github_request, mock_auth_token):
         """Test marking a thread as read."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = MarkThreadReadInput(thread_id="12345")
@@ -119,8 +119,11 @@ class TestNotificationsTools:
         assert call_args[1]["method"] == "PATCH"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_mark_notifications_read(self, mock_github_request, mock_auth_token):
         """Test marking all notifications as read."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = MarkNotificationsReadInput()
@@ -131,8 +134,11 @@ class TestNotificationsTools:
         assert call_args[1]["method"] == "PUT"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_get_thread_subscription(self, mock_github_request, mock_auth_token):
         """Test getting thread subscription status."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "subscribed": True,
             "ignored": False
@@ -145,8 +151,11 @@ class TestNotificationsTools:
         mock_github_request.assert_called_once()
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.notifications._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.notifications._make_github_request')
     async def test_set_thread_subscription(self, mock_github_request, mock_auth_token):
         """Test setting thread subscription."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "subscribed": False,
             "ignored": True
@@ -166,20 +175,12 @@ class TestNotificationsTools:
 class TestCollaboratorsTools:
     """Test suite for Collaborators tools."""
 
-    @pytest.fixture
-    def mock_github_request(self):
-        with patch('github_mcp._make_github_request') as mock:
-            yield mock
-
-    @pytest.fixture
-    def mock_auth_token(self):
-        with patch('github_mcp._get_auth_token_fallback') as mock:
-            mock.return_value = "test-token"
-            yield mock
-
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.collaborators._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.collaborators._make_github_request')
     async def test_list_repo_collaborators(self, mock_github_request, mock_auth_token):
         """Test listing repository collaborators."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = [
             {"login": "user1", "permissions": {"admin": True}},
             {"login": "user2", "permissions": {"push": True}}
@@ -195,8 +196,11 @@ class TestCollaboratorsTools:
         assert "/collaborators" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.collaborators._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.collaborators._make_github_request')
     async def test_list_repo_collaborators_with_filters(self, mock_github_request, mock_auth_token):
         """Test listing collaborators with filters."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = []
         
         params = ListRepoCollaboratorsInput(
@@ -213,8 +217,30 @@ class TestCollaboratorsTools:
         assert params_dict.get("affiliation") == "direct"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.collaborators._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.collaborators._make_github_request')
+    async def test_list_repo_teams(self, mock_github_request, mock_auth_token):
+        """Test listing teams with repository access."""
+        mock_auth_token.return_value = "test-token"
+        mock_github_request.return_value = [
+            {"id": 1, "name": "developers", "permission": "push"},
+            {"id": 2, "name": "admins", "permission": "admin"}
+        ]
+        
+        params = ListRepoTeamsInput(
+            owner="test-owner",
+            repo="test-repo"
+        )
+        
+        result = await github_list_repo_teams(params)
+        
+        assert "/teams" in mock_github_request.call_args[0][0]
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.collaborators._get_auth_token_fallback')
     async def test_check_collaborator(self, mock_auth_token):
         """Test checking if user is a collaborator - verifies function structure."""
+        # This test doesn't need mock setup since it only validates input model
         # This function uses GhClient directly which is complex to mock
         # We'll just verify it handles the input correctly
         # In a real scenario, this would return collaborator status
@@ -235,21 +261,4 @@ class TestCollaboratorsTools:
         
         # Note: Full test would require mocking GhClient.instance() which is complex
         # This test verifies the input model works correctly
-
-    @pytest.mark.asyncio
-    async def test_list_repo_teams(self, mock_github_request, mock_auth_token):
-        """Test listing teams with repository access."""
-        mock_github_request.return_value = [
-            {"id": 1, "name": "developers", "permission": "push"},
-            {"id": 2, "name": "admins", "permission": "admin"}
-        ]
-        
-        params = ListRepoTeamsInput(
-            owner="test-owner",
-            repo="test-repo"
-        )
-        
-        result = await github_list_repo_teams(params)
-        
-        assert "/teams" in mock_github_request.call_args[0][0]
 

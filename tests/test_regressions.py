@@ -16,7 +16,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp  # noqa: E402
+from src.github_mcp.tools import __all__ as all_tool_names  # noqa: E402
+from src.github_mcp import tools as tools_module  # noqa: E402
 from src.github_mcp.deno_runtime import get_runtime  # noqa: E402
 
 
@@ -50,7 +51,7 @@ class TestResponseFormatRegression:
         for tool_name in write_tools:
             # Get the input model
             import inspect
-            func = getattr(github_mcp, tool_name, None)
+            func = getattr(tools_module, tool_name, None)
             if not func:
                 continue
             

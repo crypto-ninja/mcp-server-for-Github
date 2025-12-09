@@ -20,7 +20,9 @@ from pathlib import Path as PathLib
 project_root = PathLib(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp  # noqa: E402
+from src.github_mcp.utils.health import health_check, github_clear_token_cache  # noqa: E402
+from src.github_mcp.utils.workspace_validation import validate_workspace_path  # noqa: E402
+from src.github_mcp.server import check_deno_installed  # noqa: E402
 
 
 class TestHealthCheck:
@@ -35,7 +37,7 @@ class TestHealthCheck:
     })
     async def test_health_check_with_pat(self):
         """Test health check with PAT configured."""
-        result = await github_mcp.health_check()
+        result = await health_check()
         
         # Should return JSON
         data = json.loads(result)
@@ -54,7 +56,7 @@ class TestHealthCheck:
     })
     async def test_health_check_with_app(self):
         """Test health check with GitHub App configured."""
-        result = await github_mcp.health_check()
+        result = await health_check()
         
         # Should return JSON
         data = json.loads(result)
@@ -72,7 +74,7 @@ class TestHealthCheck:
     })
     async def test_health_check_no_auth(self):
         """Test health check with no authentication configured."""
-        result = await github_mcp.health_check()
+        result = await health_check()
         
         # Should return JSON
         data = json.loads(result)
@@ -81,12 +83,12 @@ class TestHealthCheck:
         assert data["authentication"]["method"] is None
 
     @pytest.mark.asyncio
-    @patch('github_mcp.check_deno_installed')
+    @patch('src.github_mcp.utils.health.check_deno_installed')
     async def test_health_check_deno_info(self, mock_check_deno):
         """Test health check includes Deno information."""
         mock_check_deno.return_value = (True, "deno 1.40.0")
         
-        result = await github_mcp.health_check()
+        result = await health_check()
         data = json.loads(result)
         
         assert "deno" in data
@@ -94,12 +96,12 @@ class TestHealthCheck:
         assert "1.40.0" in data["deno"]["version"]
 
     @pytest.mark.asyncio
-    @patch('github_mcp.check_deno_installed')
+    @patch('src.github_mcp.utils.health.check_deno_installed')
     async def test_health_check_deno_unavailable(self, mock_check_deno):
         """Test health check when Deno is not available."""
         mock_check_deno.return_value = (False, "Deno not found")
         
-        result = await github_mcp.health_check()
+        result = await health_check()
         data = json.loads(result)
         
         assert data["deno"]["available"] is False
@@ -115,10 +117,10 @@ class TestClearTokenCache:
         "GITHUB_APP_INSTALLATION_ID": "456",
         "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem"
     })
-    @patch('github_mcp.clear_token_cache')
+    @patch('src.github_mcp.utils.health.clear_token_cache')
     async def test_github_clear_token_cache_with_app(self, mock_clear):
         """Test clearing token cache when App is configured."""
-        result = await github_mcp.github_clear_token_cache()
+        result = await github_clear_token_cache()
         
         # Should call clear_token_cache
         mock_clear.assert_called_once()
@@ -131,10 +133,10 @@ class TestClearTokenCache:
         "GITHUB_APP_INSTALLATION_ID": "",
         "GITHUB_APP_PRIVATE_KEY_PATH": ""
     })
-    @patch('github_mcp.clear_token_cache')
+    @patch('src.github_mcp.utils.health.clear_token_cache')
     async def test_github_clear_token_cache_no_app(self, mock_clear):
         """Test clearing token cache when App is not configured."""
-        result = await github_mcp.github_clear_token_cache()
+        result = await github_clear_token_cache()
         
         # Should not call clear_token_cache
         mock_clear.assert_not_called()
@@ -146,10 +148,10 @@ class TestClearTokenCache:
         "GITHUB_APP_INSTALLATION_ID": "456",
         "GITHUB_APP_PRIVATE_KEY": "-----BEGIN RSA PRIVATE KEY-----\nMOCK\n-----END RSA PRIVATE KEY-----"
     })
-    @patch('github_mcp.clear_token_cache')
+    @patch('src.github_mcp.utils.health.clear_token_cache')
     async def test_github_clear_token_cache_with_direct_key(self, mock_clear):
         """Test clearing token cache with direct private key (not path)."""
-        result = await github_mcp.github_clear_token_cache()
+        result = await github_clear_token_cache()
         
         # Should call clear_token_cache
         mock_clear.assert_called_once()
@@ -163,7 +165,7 @@ class TestValidateWorkspacePath:
         """Test workspace path validation with valid path."""
         # Use a path within workspace (tests directory)
         valid_path = Path(__file__).parent  # tests directory
-        result = github_mcp.validate_workspace_path(valid_path)
+        result = validate_workspace_path(valid_path)
         # Should be True if within workspace, or False if workspace validation is strict
         assert isinstance(result, bool)
 
@@ -172,7 +174,7 @@ class TestValidateWorkspacePath:
         # Use a subdirectory within tests
         subdir = Path(__file__).parent / "test_utilities.py"
         if subdir.exists():
-            result = github_mcp.validate_workspace_path(subdir)
+            result = validate_workspace_path(subdir)
             # Should be True if within workspace
             assert isinstance(result, bool)
 
@@ -181,7 +183,7 @@ class TestValidateWorkspacePath:
         # Try a path outside workspace (e.g., parent directory)
         try:
             invalid_path = Path.cwd().parent.parent
-            result = github_mcp.validate_workspace_path(invalid_path)
+            result = validate_workspace_path(invalid_path)
             # Should return False if outside workspace
             assert result is False
         except (ValueError, OSError):
@@ -192,7 +194,7 @@ class TestValidateWorkspacePath:
         """Test workspace path validation with absolute path."""
         # Use absolute path within workspace
         abs_path = Path(__file__).resolve()
-        result = github_mcp.validate_workspace_path(abs_path)
+        result = validate_workspace_path(abs_path)
         # Should be True if within workspace
         assert isinstance(result, bool)
 
@@ -208,7 +210,7 @@ class TestCheckDenoInstalled:
         mock_result.stdout = "deno 1.40.0\nv8 12.0.0\ntypescript 5.3.0"
         mock_run.return_value = mock_result
         
-        available, info = github_mcp.check_deno_installed()
+        available, info = check_deno_installed()
         
         assert available is True
         assert "1.40.0" in info or "deno" in info
@@ -219,7 +221,7 @@ class TestCheckDenoInstalled:
         """Test Deno check when Deno is not found."""
         mock_run.side_effect = FileNotFoundError()
         
-        available, info = github_mcp.check_deno_installed()
+        available, info = check_deno_installed()
         
         assert available is False
         assert "not found" in info.lower()
@@ -231,7 +233,7 @@ class TestCheckDenoInstalled:
         mock_result.returncode = 1
         mock_run.return_value = mock_result
         
-        available, info = github_mcp.check_deno_installed()
+        available, info = check_deno_installed()
         
         assert available is False
         assert "failed" in info.lower()
@@ -242,7 +244,7 @@ class TestCheckDenoInstalled:
         import subprocess
         mock_run.side_effect = subprocess.TimeoutExpired("deno", 5)
         
-        available, info = github_mcp.check_deno_installed()
+        available, info = check_deno_installed()
         
         assert available is False
         assert "timeout" in info.lower() or "timed out" in info.lower()

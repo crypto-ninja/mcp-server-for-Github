@@ -1,674 +1,1100 @@
-## GitHub MCP Server Architecture Analysis (v2.5.0)
+# GitHub MCP Server - Architecture Analysis v2.5.1
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
-**Version:** 2.5.0  
-**Tools:** 109 total (1 exposed MCP tool, 108 internal GitHub/workspace tools)
+**Version:** 2.5.1  
+**Last Updated:** 2025-12-09
 
 ---
 
-## 1. Project Structure
+## Executive Summary
 
-### 1.1 Directory Layout & Organization
+The GitHub MCP Server is a **code-first MCP implementation** that provides 109 GitHub tools through a single `execute_code` entrypoint, achieving **98% token reduction** compared to traditional MCP servers.
 
-- **Root**
-  - `github_mcp.py` – Main MCP server implementation in Python, defines all tools and the `execute_code` entrypoint.
-  - `auth/` – Authentication helpers for GitHub App and PAT, including token caching and dual-auth logic.
-    - `github_app.py` – GitHub App + PAT dual-auth implementation.
-  - `deno_executor/` – TypeScript-based code execution engine used by the `execute_code` MCP tool.
-    - `mod.ts` – Entrypoint for Deno execution; hosts the code-first execution environment.
-    - `tool-definitions.ts` – TypeScript catalog of all 109 tools (schema for AI use).
-  - `servers/` – Deno-side MCP client logic and lower-level GitHub client abstractions for the executor.
-  - `src/github_mcp/` – CLI utilities and runtime helpers (e.g., `cli.py`, `deno_runtime.py`).
-  - `tests/` – Comprehensive test suite (Python) validating tools, contracts, auth, and executor integration.
-  - `.github/workflows/ci.yml` – CI pipeline (lint, type-check, security, tests, coverage).
-  - `pyproject.toml` / `requirements.txt` – Packaging and Python dependencies.
-  - `README.md` and additional docs – Human-facing documentation, architecture notes, auth guides, testing docs.
+### Key Metrics
 
-### 1.2 Key Files & Roles
+- **109 tools** across 21 categories
+- **1 exposed MCP tool** (`execute_code`)
+- **108 internal tools** (GitHub API + workspace operations)
+- **21 tool modules** organized by domain
+- **97% latency reduction** with connection pooling (~4000ms → ~108ms)
+- **297+ tests** with comprehensive coverage
+- **Dual authentication** (GitHub App + PAT fallback)
 
-- **`github_mcp.py`**
-  - Initializes `FastMCP("github_mcp")` server.
-  - Loads environment (`.env`) and validates Deno availability at startup.
-  - Defines `CODE_FIRST_MODE` and conditionally registers tools via a `conditional_tool` decorator.
-  - Implements all GitHub-related tools (repo, issues, PRs, workflows, releases, search, workspace tools, licensing) using Pydantic models.
-  - Provides shared utilities: `_get_auth_token_fallback`, `_make_github_request`, `_handle_api_error`, formatting helpers, workspace path validation, etc.
-  - Exposes the `execute_code` MCP tool which shells out to Deno (`deno_executor/mod.ts`).
+### Core Innovations
 
-- **`auth/github_app.py`**
-  - `GitHubAppAuth` class: generates JWTs, fetches & caches installation tokens, and provides auth headers.
-  - `get_installation_token_from_env()` – reads GitHub App config from env vars and returns installation token.
-  - `get_auth_token()` – central dual-auth resolver: chooses GitHub App vs PAT based on config and `GITHUB_AUTH_MODE`.
-  - `verify_installation_access()` – optional check that installation can access a given repo (diagnostics).
-  - Global `_app_auth` instance provides process-wide token caching across requests.
-
-- **`deno_executor/mod.ts`**
-  - Deno entrypoint for executing user TypeScript code.
-  - Imports `initializeMCPClient`, `callMCPTool`, `closeMCPClient` from `servers/client-deno.ts`.
-  - Imports `GITHUB_TOOLS` and helpers from `deno_executor/tool-definitions.ts`.
-  - Exposes AI-facing helpers inside the execution context:
-    - `listAvailableTools()` – returns categorized catalog of all tools.
-    - `searchTools(keyword)` – relevance-ranked search over tool names, descriptions, categories, parameters.
-    - `getToolInfo(toolName)` – returns full metadata + usage hints for a single tool.
-    - `getToolsInCategory(category)` – returns tools in a category.
-    - `callMCPTool(name, params)` – calls Python-side MCP tools via the MCP bridge (`client-deno.ts`).
-  - `executeUserCode(code)` – core executor that:
-    - Initializes MCP client.
-    - Constructs a new `Function` injecting the helpers.
-    - Runs user-provided TypeScript asynchronously.
-    - Returns `{ error: false, data }` or `{ error: true, message, code?, details? }` and always prints JSON to stdout.
-  - `import.meta.main` block:
-    - Reads code from stdin (with timeout fallback to `Deno.args[0]`).
-    - Calls `executeUserCode` and prints JSON result.
-
-- **`deno_executor/tool-definitions.ts`**
-  - TypeScript `ToolDefinition` / `ToolParameter` interfaces.
-  - `GITHUB_TOOLS`: array of 61 tools, each with name, category, description, parameters, return description, and TypeScript usage example.
-  - Helper functions `getToolsByCategory` and `getCategories` for discovery.
-  - Includes the `execute_code` tool definition itself as a first-class tool in the catalog.
-
-- **`README.md`**
-  - High-level positioning, changelog excerpts, and code-first architecture explanation.
-  - Explains code-first vs traditional MCP, token savings, and tool discovery APIs.
-  - Documents dual authentication (GitHub App + PAT) and why PAT is required for release operations.
-  - Describes testing philosophy, self-referential "dogfooding", and roadmap.
-
-- **`tests/`**
-  - `test_tool_schemas.py` – Pydantic schema validation and tool registration correctness.
-  - `test_tool_integration.py` – higher-level workflows and tool chaining.
-  - `test_contracts.py` – TS↔Python contract tests (schema, response format alignment).
-  - `test_execute_code_mcp.py`, `test_execute_code.py`, `test_deno_runtime.py` – validate Deno executor, MCP bridge, error handling.
-  - `test_auth.py` – GitHub App / PAT dual-auth logic, headers, caching.
-  - `test_individual_tools.py`, `test_write_operations_auth.py`, `test_write_operations_integration.py` – per-tool and write-path tests.
-  - `test_regressions.py` – regression coverage.
-  - Guides/summary: `TEST_SUITE_GUIDE.md`, `TEST_SUITE_SUMMARY.md`, `INTEGRATION_TEST_REPORT.md` etc.
+1. **Code-First Architecture**: Single `execute_code` tool instead of 109 individual tools
+2. **Connection Pooling**: Persistent Deno subprocesses with MCP connections for 35x performance improvement
+3. **Dict→Model Conversion**: Automatic Pydantic model hydration from JavaScript objects
+4. **Modular Structure**: Clean separation of tools, models, utilities, and authentication
 
 ---
 
-## 2. Core Architecture
-
-### 2.1 Code-First MCP Approach
-
-- **Traditional MCP**
-  - Client loads 40+ tool definitions directly into model context.
-  - Tool schemas consume ~70,000 tokens every session.
-  - Tool discovery is static: the model must "see" all tool definitions ahead of time.
-
-- **This Project's Code-First Design**
-  - MCP client sees **exactly one** tool: **`execute_code`**.
-  - All other tools (108 GitHub/workspace tools) are invoked **dynamically** by user-provided TypeScript code.
-  - TypeScript code runs in Deno, using the MCP bridge to call back into Python tools as needed.
-  - Tool schemas are not injected into the LLM context; instead, they are available **inside** the execution environment via discovery functions.
-  - Result: ~800 tokens vs ~70,000 → **≈98% token reduction**.
-
-### 2.2 High-Level Flow: User Request → Tool Execution → Response
-
-1. **MCP Client** (Cursor, Claude Desktop, etc.)
-   - Exposes a single server tool: `execute_code`.
-   - The user (or AI agent) passes TypeScript source code as the `code` parameter.
-
-2. **Python MCP Server (`github_mcp.py`)**
-   - Registered `execute_code` MCP tool receives the `code` string.
-   - Spawns Deno (via `deno` CLI) running `deno_executor/mod.ts`.
-   - Passes the code string via stdin (safer on Windows) or args fallback.
-
-3. **Deno Executor (`deno_executor/mod.ts`)**
-   - Uses `initializeMCPClient` from `servers/client-deno.ts` to establish an MCP-client connection back to the Python server process.
-   - Creates an execution sandbox via `new Function("callMCPTool", "listAvailableTools", ...)` which returns an async IIFE.
-   - Executes user code with injected helpers:
-     - `callMCPTool` – bridging to Python-registered tools.
-     - `listAvailableTools`, `searchTools`, `getToolInfo`, `getToolsInCategory` – discovery APIs using `GITHUB_TOOLS` from `tool-definitions.ts`.
-   - Collects the `result` (whatever the user returns) and wraps it in `{ error: false, data: result }`.
-   - On error, catches and ensures a **JSON** error object is printed to stdout (not just stderr).
-   - Ensures MCP client is closed gracefully in both success and failure paths.
-
-4. **Python MCP Server**
-   - Receives Deno subprocess's JSON on stdout.
-   - Maps this to the MCP tool result payload for `execute_code`.
-   - Returns the JSON result to the MCP client.
-
-5. **MCP Client / LLM**
-   - Receives a JSON object describing success/error and any nested tool call results.
-   - The LLM can then use that JSON to generate natural language responses or additional tool calls.
-
-### 2.3 Deno TypeScript Executor ↔ Python Integration
-
-- **Bridge Design**
-  - `servers/client-deno.ts` (not detailed here, but implied by imports) is a Deno-side MCP client that can call any Python MCP tool by name.
-  - All GitHub operations (e.g. `github_create_issue`, `github_list_pull_requests`, etc.) are defined in Python in `github_mcp.py` and registered with `FastMCP`.
-  - Deno invokes them through `callMCPTool(toolName, params)` which sends an MCP tool call over the established connection.
-
-- **Execution Context**
-  - The user's TypeScript has full access to:
-    - **Tool discovery** (`listAvailableTools`, `searchTools`, `getToolInfo`, `getToolsInCategory`).
-    - **Tool invocation** (`callMCPTool`).
-    - Standard JS/TS logic (loops, conditionals, try/catch, composition).
-  - This enables **multi-step workflows** in a single MCP call:
-    - Example: read repo info → search issues → create a PR → update an issue → create a release.
-
-### 2.4 Relationship Between `execute_code` and the Tool Set
-
-- **Total Tools**: 62
-  - 1 exposed to MCP clients: `execute_code`.
-  - 108 internal GitHub/workspace tools (e.g. repo management, issues, PRs, files, search, workspace operations, licensing, gists, labels, stargazers, user context, security, projects, discussions, notifications).
-- **Public MCP Surface**
-  - When `CODE_FIRST_MODE=true` (default), only `execute_code` is registered with MCP.
-  - In **internal mode** (`CODE_FIRST_MODE=false`), all tools are registered: used by Deno and for internal tests/diagnostics.
-- **Executor Role**
-  - `execute_code` is the **only** gateway; every GitHub operation is reachable **only through code**.
-  - AI agents are expected to:
-    - Discover tools at runtime.
-    - Compose them into workflows.
-    - Handle errors and branching within their TypeScript code.
-
----
-
-## 3. Authentication System
-
-### 3.1 GitHub App Authentication (Advanced, 15k req/hour)
-
-- Implemented in `auth/github_app.py`:
-  - `GitHubAppAuth` maintains:
-    - `_token` – current installation access token.
-    - `_expires_at` – expiry timestamp.
-    - `_lock` – `asyncio.Lock` for concurrency-safe refresh.
-  - `get_installation_token(app_id, private_key_pem, installation_id, force_refresh)`:
-    - If cached token is valid (`now < _expires_at - 60`), returns it.
-    - Otherwise:
-      - Generates a JWT via `_generate_jwt()` with 9-minute lifetime (GitHub max 10 minutes).
-      - Calls `POST /app/installations/{installation_id}/access_tokens` to get new token.
-      - Caches token for 55 minutes (safety margin vs 60 min expiry).
-  - `get_installation_token_from_env()` wires env-based configuration:
-    - Reads `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`.
-    - Loads private key from `GITHUB_APP_PRIVATE_KEY` or `GITHUB_APP_PRIVATE_KEY_PATH`.
-    - Returns an installation token or `None`.
-
-### 3.2 Personal Access Token (Simple Default, 5k req/hour)
-
-- PATs are read from `GITHUB_TOKEN`.
-- Recommended starting point for most users:
-  - Easiest to configure (2‑minute setup).
-  - Sufficient for personal projects and light automation.
-- Also used when:
-  - GitHub App is not configured.
-  - App token acquisition fails.
-  - App cannot perform certain operations (notably **releases** and tagging), so the server intentionally falls back to PAT.
-
-### 3.3 Dual-Auth Resolution Logic (Behavior vs Recommendation)
-
-- Key functions:
-  - `_has_app_config()` – checks presence of App ID, Installation ID, and at least one key source.
-  - `get_auth_token()` – core resolver, with optional `GITHUB_MCP_DEBUG_AUTH` logging.
-
-- **Decision Order (Code Behavior)** (as implemented in `get_auth_token()`):
-
-  1. **Explicit mode `GITHUB_AUTH_MODE=pat`**
-     - Immediately returns `GITHUB_TOKEN` (if present).
-  2. **Explicit mode `GITHUB_AUTH_MODE=app` and App configured**
-     - Attempts `get_installation_token_from_env()`.
-     - On success, returns App token.
-     - On failure/exception, logs (if debug) and falls through to PAT fallback.
-  3. **Default (no explicit mode)**
-     - If `_has_app_config()`:
-       - Try GitHub App first via `get_installation_token_from_env()`.
-       - On success, return App token.
-       - On failure, log and fall back to PAT.
-     - Regardless, attempts PAT fallback:
-       - `GITHUB_TOKEN` is returned if set.
-
-### 3.4 Recommended Setup vs Runtime Behavior
-
-- For **most users**:
-  - Configure only `GITHUB_TOKEN` (PAT) to get started quickly.
-- For **power users / CI / production**:
-  - Add GitHub App configuration on top of PAT for higher rate limits.
-- Docs (README, `ADVANCED_GITHUB_APP.md`, `AUTHENTICATION.md`) present PAT as the simple default with GitHub App as an **optional** optimization, while the runtime still follows the App‑first, PAT‑fallback resolution described above.
-
-### 3.5 Usage in Tool Layer
-  - `_get_auth_token_fallback(param_token)` in `github_mcp.py`:
-    - If a tool receives a `token` parameter, it uses that directly.
-    - Otherwise, calls `get_auth_token()` for dual-auth resolution.
-  - `_make_github_request()` uses `GhClient.instance().request(...)` with the token, centralizing error handling and rate-limit-friendly behavior.
-
-### 3.4 Token Caching & Refresh
-
-- Install token cache lives in `GitHubAppAuth` instance `_app_auth`.
-- Refresh rules:
-  - Tokens are valid for 60 minutes.
-  - Cache TTL is 55 minutes to avoid edge-time expiry.
-  - Refresh is protected by an `asyncio.Lock` to prevent stampedes.
-- Manual invalidation:
-  - `clear_token_cache()` module-level function resets `_token` and `_expires_at`.
-  - CLI utilities (e.g., `github-mcp-cli clear-cache`) can trigger this after permission or installation changes.
-
----
-
-## 4. Tool System
-
-### 4.1 Python Tool Definitions
-
-- All tools are defined in `github_mcp.py` using Pydantic models and the `FastMCP` tooling.
-- Core patterns:
-  - Input Pydantic models (e.g., `RepoInfoInput`, `IssueInput`, etc.) ensure strict validation (`extra='forbid'`, stripped strings, etc.).
-  - Decorators:
-    - `@mcp.tool(...)` – registers tools normally.
-    - `@conditional_tool(...)` – no-op in code-first mode (so tools aren't exposed to MCP), but active in internal mode.
-  - Shared HTTP logic in `_make_github_request()` centralizes:
-    - Endpoint construction.
-    - Authentication.
-    - Error handling mapping to user-friendly messages.
-  - Tool types include:
-    - GitHub Repo / Issues / PR / Workflow / Release / Search.
-    - Workspace operations (`workspace_grep`, `repo_read_file_chunk`, `str_replace`).
-    - Licensing meta-tool (`github_license_info`).
-
-### 4.2 TypeScript Tool Exposure
-
-- `deno_executor/tool-definitions.ts` is the **authoritative TS-side schema** used by AI agents.
-- Each `ToolDefinition` includes:
-  - `name`, `category`, `description`.
-  - `parameters` (map of `ToolParameter` with `type`, `required`, `description`, `example`).
-  - `returns` – plain-language description of the return value.
-  - `example` – concrete usage with `callMCPTool`.
-- Categories mirror human mental models: Repository Management, Issues, Pull Requests, File Operations, Branch Management, Commits, Users, Search, Releases, GitHub Actions, Workspace, Licensing, Advanced, Code Execution.
-
-### 4.3 Discovery Helpers in Deno
-
-- Implemented in `deno_executor/mod.ts`:
-
-  - **`listAvailableTools()`**
-    - Groups `GITHUB_TOOLS` by `category`.
-    - Returns:
-      - `totalTools`, `categories`, `tools` grouped, `usage` hint, and a small `quickReference` subset.
-
-  - **`searchTools(keyword)`**
-    - Case-insensitive search over:
-      - Tool name (high weight).
-      - Description.
-      - Category.
-      - Parameter names and parameter descriptions.
-    - Returns array of matches:
-      - `name`, `category`, `description`, `relevance`, `matchedIn[]`, and the full `tool` object.
-
-  - **`getToolInfo(toolName)`**
-    - Uses `listAvailableTools()` internally.
-    - Scans all tools by category to find exact name match.
-    - Returns:
-      - Original tool fields plus `category`, `usage` string (`await callMCPTool("toolName", parameters)`), and `metadata` with `totalTools`, category count, etc.
-    - On missing tool returns an error object with a suggestion to use `searchTools()`.
-
-  - **`getToolsInCategory(category)`**
-    - Thin wrapper around `getToolsByCategory()`.
-
-### 4.4 How an AI Agent Discovers and Uses Tools
-
-1. **Catalog**
-   - Call `listAvailableTools()` to see all tools and categories.
-2. **Search**
-   - Use `searchTools("issue")`, `searchTools("pull request")`, etc., to find candidate tools ranked by relevance.
-3. **Inspect**
-   - For a chosen tool name, use `getToolInfo("github_create_issue")` to inspect parameters, examples, and metadata.
-4. **Invoke**
-   - Call `await callMCPTool("github_create_issue", { owner, repo, title, body })`.
-5. **Compose**
-   - Chain multiple tool calls inside the same `execute_code` script:
-     - E.g., `github_get_repo_info` → `github_list_pull_requests` → `github_merge_pull_request`.
-
-This design explicitly treats the **AI agent as the primary user** of the tool-discovery APIs.
-
----
-
-## 5. Key Design Decisions
-
-### 5.1 Code-First vs Traditional MCP
-
-- **Motivation**
-  - Traditional MCP loads the full tool set into context, incurring heavy token cost with each conversation.
-  - Code-first avoids this by making tools part of an execution environment, not the initial prompt.
-- **Benefits**
-  - **Token efficiency**: ~70,000 → ~800 tokens (≈98% reduction).
-  - **Speed**: 95% faster initialization (per README, ~45s → ~2s in some clients).
-  - **Expressiveness**: Agents write code with loops, conditions, and composable workflows instead of one-shot tool calls.
-  - **Scalability**: Adding more tools doesn't linearly increase token cost.
-- **Trade-offs**
-  - Requires Deno runtime on the host.
-  - Errors can arise both in the tool layer and in user code, needing robust error handling.
-  - Tool schemas are no longer visible in the LLM's initial context — discovery must be done via code.
-
-### 5.2 Why Deno for TypeScript Execution
-
-- **Reasons**
-  - First-class TypeScript support (no build step), secure by default.
-  - Simple single-binary distribution and good cross-platform story (including Windows, important per README examples).
-  - Good fit for quick sandbox-style execution with permission controls.
-- **Integration**
-  - Python server spawns Deno as a subprocess.
-  - Deno uses `servers/client-deno.ts` to talk back via MCP protocol.
-
-### 5.3 Why Dual Authentication (GitHub App + PAT)
-
-- **GitHub App**
-  - Higher rate limits (15,000 req/hour) and fine-grained repository-scoped permissions.
-  - Preferred for most day-to-day GitHub operations.
-- **PAT**
-  - Required for operations not supported by GitHub Apps, notably release/tag creation.
-  - Provides compatibility with environments where App installation is not available.
-- **Dual Strategy**
-  - Achieves both high rate limits and full feature coverage.
-  - Automatic fallback keeps user experience smooth without manual toggling.
-
-### 5.4 Architectural Trade-offs
-
-- **Pros**
-  - Highly expressive workflows in a single call.
-  - Strong separation of concerns: Python for GitHub + MCP, Deno for code execution + discovery.
-  - AI-first design: discovery APIs optimized for agent usability.
-  - Strong test suite and CI pipeline for safety.
-- **Cons / Costs**
-  - Requires maintaining both Python and TypeScript code paths.
-  - Need to keep TS `GITHUB_TOOLS` definitions in sync with Python tool implementations (addressed by contract tests).
-  - Additional moving part (Deno process) introduces a class of integration failures (exec, path, permission issues).
-
----
-
-## 6. Data Flow
-
-### 6.1 Request Lifecycle (Detailed)
-
-1. **Client Invokes `execute_code`**
-   - Request payload: `{ code: string }`.
-
-2. **MCP Server (Python)**
-   - Validates Deno availability (already done at startup).
-   - Spawns Deno subprocess: `deno run deno_executor/mod.ts` (exact arguments in `deno_runtime.py`/`github_mcp.py`).
-   - Sends the `code` string to Deno via stdin.
-
-3. **Deno Executor**
-   - Reads from stdin or falls back to `Deno.args[0]` if stdin empty (esp. for test environments).
-   - Calls `executeUserCode(code)`:
-     - `initializeMCPClient()` – sets up MCP connection.
-     - Constructs `userFunction` with injected helpers.
-     - Awaits `userFunction(...)`.
-     - On success, returns `{ error: false, data: result }`.
-     - On error, returns `{ error: true, message, code, details? }`.
-   - Always prints JSON to stdout and exits with code `0` or `1` depending on `success`.
-
-4. **Python MCP Server**
-   - Reads stdout, parses JSON.
-   - Wraps or directly returns this JSON as the MCP tool result of `execute_code`.
-
-5. **Client / LLM**
-   - Receives JSON, inspects `success` and `result`/`error`.
-   - Renders human-readable markdown or triggers additional calls.
-
-### 6.2 Error Propagation
-
-- **HTTP Errors (GitHub API)**
-  - `_make_github_request()` catches `httpx.HTTPStatusError` and other specific exceptions.
-  - `_handle_api_error()` maps them to friendly error messages with hints:
-    - 401 – auth required.
-    - 403 – insufficient permissions.
-    - 404 – resource not found.
-    - 409 – conflict.
-    - 422 – validation failed.
-    - 429 – rate limited (with `Retry-After` hint when available).
-    - 5xx – transient GitHub errors.
-- **Deno Execution Errors**
-  - `executeUserCode` logs to stderr (for debugging) and then:
-    - Constructs JSON `{ error: true, message, code, details? }`.
-    - Prints it to stdout.
-  - This guarantees the Python side always sees **valid JSON**, even for TypeScript exceptions.
-- **Tool Contract / Schema Errors**
-  - Pydantic model validation errors surfaced as structured messages.
-  - Contract tests ensure TS schema matches Python's expectations.
-
-### 6.3 Response Formatting (JSON vs Markdown)
-
-- **Tool-Level Options**
-  - Many tools support a `response_format` parameter (`"json"` or `"markdown"`).
-  - Others (mainly write operations) intentionally *do not* support `response_format` to keep semantics clear.
-- **Server Behavior**
-  - For `markdown` responses:
-    - Tools return pre-formatted Markdown strings summarizing results (lists, tables, bullet points).
-  - For `json` responses:
-    - Tools return structured JSON objects suitable for programmatic handling or further code processing.
-- **Truncation**
-  - `_truncate_response` enforces `CHARACTER_LIMIT` (25,000 chars) for responses.
-  - Adds a truncation notice recommending pagination/filters.
-
----
-
-## 7. Testing & Quality
-
-### 7.1 Test Structure & Coverage
-
-- Test suite highlights (per `TEST_SUITE_GUIDE.md`):
-  - **Total Tests:** 214
-  - **Coverage:** ~63%
-  - **Pass Rate:** 100%
-
-- Coverage areas:
-  - Schema validation for all tools.
-  - Error handling across common HTTP codes (401, 403, 404, 409, 422, 429, 500).
-  - Authentication flows, including debug logging and fallback behavior.
-  - `execute_code` path, including Deno executor and MCP bridge.
-  - Individual tools: repo operations, issues, PRs, files, search, releases, actions, workspace operations, licensing.
-  - Contract alignment between TypeScript `GITHUB_TOOLS` and Python tools.
-
-### 7.2 CI/CD Pipeline
-
-- Configured in `.github/workflows/ci.yml`:
-  - Environment:
-    - `ubuntu-latest`, Python 3.12, Deno v2.x.
-  - Steps:
-    - Install dependencies via `requirements.txt` plus dev tooling.
-    - **Lint:** Ruff (`ruff check .`).
-    - **Type-check:** mypy on `src` with `mypy.ini`.
-    - **Security:** `pip-audit -r requirements.txt` (non-fatal on failure).
-    - **Tests:** `pytest -q --capture=tee-sys` with `GITHUB_TOKEN` available.
-    - **Coverage:** `pytest --cov=github_mcp --cov=auth --cov-report=term --cov-report=xml`.
-
-### 7.3 Quality Practices
-
-- Strong reliance on Pydantic models for parameter validation.
-- Centralized HTTP error mapping prevents inconsistent error surfaces across tools.
-- Contract tests enforce parity between TS tool definitions and Python server implementations.
-- Discovery scripts (e.g., `tests/discover_tool_issues.py`) detect subtle mismatches like `response_format` availability.
-
----
-
-## 8. Extension Points
-
-### 8.1 Adding New Tools
-
-1. **Python Side (Server Implementation)**
-   - Define a Pydantic input model (or parameters) in `github_mcp.py`.
-   - Implement a tool function using `@conditional_tool(...)` or `@mcp.tool(...)` depending on exposure strategy.
-   - Use `_make_github_request()` for GitHub API calls where applicable.
-   - Ensure consistent error mapping via `_handle_api_error()`.
-
-2. **TypeScript Side (Discovery Schema)**
-   - Add a new `ToolDefinition` entry to `deno_executor/tool-definitions.ts` with:
-     - Appropriate `category`, `description`, parameter descriptors, and an `example` snippet.
-   - This makes the new tool visible to `listAvailableTools`, `searchTools`, `getToolInfo`.
-
-3. **Tests**
-   - Add tests in `tests/test_individual_tools.py` (or specialized test files) covering typical and edge cases.
-   - Update contract and schema tests if needed.
-
-### 8.2 Modifying Existing Tools
-
-- Change logic in Python tool implementations in `github_mcp.py`.
-- Update corresponding `ToolDefinition` in `tool-definitions.ts` **in lockstep**.
-- Run the discovery script (`tests/discover_tool_issues.py`) to identify mismatches.
-- Run the full test suite to validate behavior.
-
-### 8.3 Configuration vs Hardcoding
-
-- **Configurable via Environment**:
-  - Auth:
-    - `GITHUB_TOKEN`, `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_PRIVATE_KEY_PATH`, `GITHUB_AUTH_MODE`.
-  - Workspace root: `MCP_WORKSPACE_ROOT`.
-  - Auth diagnostics: `GITHUB_MCP_DEBUG_AUTH`.
-  - Code-first toggle: `MCP_CODE_FIRST_MODE` (though README emphasizes code-first as the reference architecture and default).
-- **Hardcoded / Conventional**:
-  - GitHub API base URL (`https://api.github.com`).
-  - `CHARACTER_LIMIT` for output.
-  - Default pagination limits.
-  - Tool categorizations and names.
-
----
-
-## 9. Current State
-
-### 9.1 Version & Tool Count
-
-- **Version:** 2.5.0 (per `pyproject.toml` and README badges).
-- **Total Tools:** 109 as per `listAvailableTools().totalTools` and `tool-definitions.ts`.
-  - External MCP surface: `execute_code`.
-  - Internal tools: 108 GitHub/workspace/meta tools.
-
-### 9.2 Recent Major Changes (from README)
-
-- **v2.5.0** – Phase 2 Full Send (62 → 109 tools).
-- **v2.4.0** – Phase 1 tool expansion (48 → 62 tools).
-- **v2.3.1** – Code-first mode enforced by default.
-  - `MCP_CODE_FIRST_MODE` is defaulted to `true`, fully aligning runtime with documented architecture.
-- **v2.3.0** – Architecture formalization and testing uplift.
-  - Single-tool (`execute_code`) architecture clarified and documented.
-  - CLI utilities moved to `github-mcp-cli`.
-  - Test count increased to 214; coverage to 63%.
-- **v2.2.0** – Enterprise-ready auth.
-  - GitHub App authentication added.
-  - Dual-auth (App + PAT) with automatic fallback.
-  - `.env` / `python-dotenv` support for simpler configuration.
-
-### 9.3 Known Limitations / TODOs
-
-- Some tools do not support `response_format=json` though they appear in JSON-capable lists – flagged by `discover_tool_issues.py` (e.g., `github_read_file_chunk`, `repo_read_file_chunk` in certain arrays).
-- Deno runtime is a hard requirement; without it, the server exits early.
-- Maintaining strict sync between TS `GITHUB_TOOLS` schema and Python tool implementations is non-trivial (mitigated by tests but still a human process).
-
----
-
-## 10. The Meta Aspect (Dogfooding & Self-Use)
-
-### 10.1 Self-Hosting & Self-Development
-
-- The README and testing docs emphasize that this MCP server is **used to develop itself**:
-  - The tools are used on this very repo to file issues, open PRs, and create releases.
-  - The `github_create_release` tool has been used to publish its own releases.
-  - Workspace tools operate on this project to refactor code, update docs, and manage tests.
-
-### 10.2 Recursive Testing
-
-- Test suite runs within environments (e.g., Cursor) that themselves use the GitHub MCP server.
-- Tests call `execute_code`, which spawns a new MCP server subprocess, which calls tools that are being tested.
-- This **recursion** validates:
-  - MCP client/server contract.
-  - Deno executor behavior.
-  - Tool robustness under real-world usage patterns.
-
-### 10.3 Dogfooding Outcomes
-
-- Many features in the tool set (e.g., workspace tools, advanced PR operations, release helpers) originated from hitting limitations when using the server on its own repo.
-- Tool discovery improvements (`searchTools`, `getToolInfo`) were driven by AI's perspective as primary user.
-- Auth system evolved in response to real-world rate-limit and permission needs.
-
----
-
-## 11. Architecture Diagram
-
-### 11.1 ASCII Diagram
-
-```text
-+--------------------------+          +-----------------------------+
-|      MCP Client          |          |      GitHub (API)          |
-| (Cursor, Claude, etc.)   |          |  REST & GraphQL Endpoints  |
-+------------+-------------+          +--------------+-------------+
-             |                                       ^
-             | execute_code(code)                   |
-             v                                       |
-+------------+--------------------------------------+|
-|         Python MCP Server (github_mcp.py)         |
-|    - FastMCP("github_mcp")                       |
-|    - CODE_FIRST_MODE (default true)               |
-|    - Tools (GitHub, workspace, license)           |
-|    - Auth (GitHub App + PAT) via auth/github_app  |
-+------------+--------------------------+-----------+
-             |                          |
-             | spawn Deno (mod.ts)      | _make_github_request()
-             v                          v
-+------------+--------------------------+-----------+
-|          Deno Executor (mod.ts)                   |
-|   - Reads code from stdin                         |
-|   - initializeMCPClient / closeMCPClient          |
-|   - callMCPTool() -> MCP bridge to Python tools   |
-|   - listAvailableTools(), searchTools(),          |
-|     getToolInfo(), getToolsInCategory()           |
-|   - Executes user TS code with injected helpers   |
-+---------------------------------------------------+
+## Project Structure
+
+### Directory Layout
+
+```
+github-mcp-server/
+├── github_mcp.py              # Minimal entry point (delegates to server)
+├── src/github_mcp/            # Main package
+│   ├── __init__.py            # Package exports (server components only)
+│   ├── server.py              # FastMCP server + tool registration
+│   ├── deno_runtime.py        # TypeScript execution bridge
+│   ├── cli.py                 # CLI utilities for diagnostics
+│   ├── tools/                 # 20 tool modules (105 GitHub tools)
+│   │   ├── __init__.py        # Tool exports
+│   │   ├── repositories.py    # 8 tools
+│   │   ├── branches.py        # 5 tools
+│   │   ├── issues.py          # 3 tools
+│   │   ├── pull_requests.py   # 7 tools
+│   │   ├── files.py           # 9 tools
+│   │   ├── actions.py         # 15 tools
+│   │   ├── releases.py        # 4 tools
+│   │   ├── search.py          # 3 tools
+│   │   ├── security.py        # 13 tools
+│   │   ├── projects.py        # 9 tools
+│   │   ├── notifications.py   # 6 tools
+│   │   ├── collaborators.py  # 3 tools
+│   │   ├── gists.py           # 4 tools
+│   │   ├── discussions.py     # 4 tools
+│   │   ├── labels.py          # 3 tools
+│   │   ├── stargazers.py      # 3 tools
+│   │   ├── users.py           # 3 tools
+│   │   ├── commits.py         # 1 tool
+│   │   ├── comments.py        # 1 tool
+│   │   ├── misc.py            # 1 tool
+│   │   └── workspace.py       # 3 workspace tools (not GitHub API)
+│   ├── models/                # Pydantic input models
+│   │   ├── __init__.py
+│   │   ├── inputs.py          # All input model definitions
+│   │   └── enums.py            # ResponseFormat, etc.
+│   ├── utils/                 # Shared utilities
+│   │   ├── __init__.py
+│   │   ├── requests.py         # HTTP client + auth helpers
+│   │   ├── errors.py           # Error handling & mapping
+│   │   ├── formatting.py       # Response formatting & truncation
+│   │   ├── workspace_validation.py  # Workspace path validation
+│   │   ├── health.py           # Health check utilities
+│   │   ├── deno_pool.py        # Connection pooling implementation
+│   │   └── pool_stats.py       # Pool statistics & monitoring
+│   └── auth/                   # Authentication (GitHub App + PAT)
+│       └── github_app.py       # Dual-auth implementation
+├── deno_executor/             # TypeScript runtime
+│   ├── mod.ts                 # Single-run executor
+│   ├── mod-pooled.ts          # Pooled executor (persistent MCP)
+│   ├── tool-definitions.ts    # Tool schema catalog (109 tools)
+│   ├── code-validator.ts      # Code validation & sanitization
+│   ├── error-codes.ts         # Standardized error codes
+│   └── error-handling.ts      # Error handling utilities
+├── servers/                    # MCP client implementation
+│   ├── client-deno.ts         # Deno-side MCP client
+│   └── client.ts              # Node.js MCP client (legacy)
+├── tests/                      # Test suite (297+ tests)
+│   ├── test_individual_tools.py      # Per-tool unit tests
+│   ├── test_execute_code.py          # execute_code integration
+│   ├── test_execute_code_mcp.py      # MCP bridge tests
+│   ├── test_deno_runtime.py          # Deno runtime tests
+│   ├── test_tool_discovery.py        # Tool discovery tests
+│   ├── test_write_operations_integration.py  # Write op tests
+│   ├── test_contracts.py              # TS↔Python contract tests
+│   ├── test_regressions.py            # Regression tests
+│   └── discover_tool_issues.py        # Tool schema validation
+├── scripts/
+│   ├── live_integration_test.py      # Live API tests (15/15 passing)
+│   └── benchmark_deno_pool.py        # Pool performance benchmarks
+└── docs/                       # Documentation
+    ├── ARCHITECTURE_ANALYSIS.md      # This file
+    ├── AUTHENTICATION.md             # Auth setup guide
+    ├── ADVANCED_GITHUB_APP.md        # GitHub App setup
+    └── CONFIGURATION.md              # Configuration guide
 ```
 
-### 11.2 Mermaid Diagram
+### Tool Distribution by Module
 
-```mermaid
-flowchart TD
-  client[MCP Client
-  (Cursor, Claude, etc.)]
-  subgraph python[Python MCP Server (github_mcp.py)]
-    mcp[FastMCP "github_mcp"\nCODE_FIRST_MODE=true]
-    tools[GitHub & Workspace Tools\n(108 internal tools)]
-    auth[GitHub App + PAT Auth\n(auth/github_app.py)]
-  end
+| Module | Tools | Category |
+|--------|-------|----------|
+| `actions.py` | 15 | GitHub Actions |
+| `security.py` | 13 | Security & Dependabot |
+| `files.py` | 9 | File Operations |
+| `projects.py` | 9 | Projects & Boards |
+| `repositories.py` | 8 | Repository Management |
+| `pull_requests.py` | 7 | Pull Requests |
+| `notifications.py` | 6 | Notifications |
+| `branches.py` | 5 | Branch Management |
+| `gists.py` | 4 | Gists |
+| `discussions.py` | 4 | Discussions |
+| `releases.py` | 4 | Releases |
+| `search.py` | 3 | Search |
+| `collaborators.py` | 3 | Collaborators |
+| `issues.py` | 3 | Issues |
+| `labels.py` | 3 | Labels |
+| `stargazers.py` | 3 | Stargazers |
+| `users.py` | 3 | Users |
+| `commits.py` | 1 | Commits |
+| `comments.py` | 1 | Comments |
+| `misc.py` | 1 | Miscellaneous |
+| `workspace.py` | 3 | Workspace (local files) |
+| **Total** | **105 GitHub + 3 workspace = 108** | **+ 1 execute_code = 109** |
 
-  subgraph deno[Deno Executor (deno_executor/mod.ts)]
-    exec[executeUserCode(code)]
-    discovery[listAvailableTools()/searchTools()/\ngetToolInfo()/getToolsInCategory()\n(tool-definitions.ts)]
-  end
+---
 
-  client -->|execute_code(code)| mcp
-  mcp -->|spawn Deno, pass code| exec
-  exec --> discovery
-  exec -->|callMCPTool(name, params)| tools
-  tools -->|_make_github_request| auth
-  auth -->|token| tools
-  tools -->|HTTP/GraphQL| githubAPI[(GitHub API)]
-  exec -->|JSON { success, result/error }| mcp
-  mcp -->|MCP result| client
+## Architecture Layers
+
+### Layer 1: Entry Point
+
+**File:** `github_mcp.py`
+
+Minimal entry point that delegates to the server module:
+
+```python
+from src.github_mcp.server import mcp, run
+
+if __name__ == "__main__":
+    run()
+```
+
+**Purpose:**
+- Provides `python -m github_mcp` entrypoint
+- No backward compatibility exports (clean architecture)
+
+---
+
+### Layer 2: Server (FastMCP)
+
+**File:** `src/github_mcp/server.py`
+
+**Responsibilities:**
+1. FastMCP server initialization
+2. Tool registration with dict→model conversion
+3. `execute_code` implementation
+4. Conditional tool exposure (code-first mode)
+
+**Key Components:**
+
+#### Tool Registration
+
+Tools are registered with automatic dict→Pydantic model conversion:
+
+```python
+async def wrapper(params):
+    # Auto-detect Pydantic model from function signature
+    model_cls = None
+    try:
+        sig = inspect.signature(func)
+        first_param = next(iter(sig.parameters.values()))
+        ann = first_param.annotation
+        if isinstance(ann, type) and issubclass(ann, BaseModel):
+            model_cls = ann
+    except Exception:
+        model_cls = None
+    
+    # Convert dict to model if needed (for execute_code calls)
+    if model_cls and isinstance(params, dict):
+        params = model_cls(**params)
+    return await func(params)
+```
+
+**This enables:**
+- TypeScript `callMCPTool("github_get_repo_info", { owner: "...", repo: "..." })`
+- Python tools receive `RepoInfoInput(owner="...", repo="...")` automatically
+
+#### Code-First Mode
+
+- **Default:** `CODE_FIRST_MODE = true` (only `execute_code` exposed)
+- **Internal Mode:** `CODE_FIRST_MODE = false` (all tools exposed for Deno runtime)
+
+#### execute_code Implementation
+
+```python
+async def execute_code(code: str) -> str:
+    """Execute TypeScript code with access to all GitHub MCP tools."""
+    runtime = get_runtime()
+    if hasattr(runtime, 'execute_code_async'):
+        result = await runtime.execute_code_async(code)  # Pooled
+    else:
+        result = runtime.execute_code(code)  # Single-run
+    
+    # Format response (JSON for structured data, markdown for strings)
+    return format_result(result)
 ```
 
 ---
 
-## 12. Key Insights & Observations
+### Layer 3: Tools (Modular)
 
-- **Code-first MCP is implemented thoroughly and coherently**:
-  - Single exposed tool (`execute_code`) with Deno-based TypeScript execution matches the documented "code-first" pattern.
-  - Tool discovery utilities are clearly designed for AI agents, not humans.
-- **Auth and rate-limiting strategy is pragmatic and robust**:
-  - Dual-auth with clear priority and safe fallbacks ensures reliability and enterprise scalability.
-- **Strong emphasis on testing and meta-validation**:
-  - High test coverage, self-referential usage, and contract tests significantly reduce the risk of breaking changes.
-- **Architecture is highly extensible**:
-  - Adding tools is straightforward when following the Python+TS+tests pattern.
-  - Workspace tools open the door for more advanced local-code workflows beyond GitHub.
+**Location:** `src/github_mcp/tools/`
+
+**Structure:**
+- Each module contains related tools (e.g., `repositories.py` has 8 repo tools)
+- All tools use Pydantic input models from `models/inputs.py`
+- Shared utilities from `utils/` (requests, errors, formatting)
+
+**Example Tool Pattern:**
+
+```python
+from ..models.inputs import RepoInfoInput
+from ..models.enums import ResponseFormat
+from ..utils.requests import _make_github_request
+from ..utils.errors import _handle_api_error
+
+async def github_get_repo_info(params: RepoInfoInput) -> str:
+    """Get repository information."""
+    token = _get_auth_token_fallback(params.token)
+    
+    try:
+        response = await _make_github_request(
+            "GET",
+            f"/repos/{params.owner}/{params.repo}",
+            token=token
+        )
+        # Format response based on response_format
+        return format_repo_info(response, params.response_format)
+    except Exception as e:
+        return _handle_api_error(e, "Failed to get repository info")
+```
+
+**Key Patterns:**
+1. **Pydantic Input Models**: Strict validation, type safety
+2. **Dual Auth**: `_get_auth_token_fallback()` handles GitHub App + PAT
+3. **Error Handling**: Centralized via `_handle_api_error()`
+4. **Response Formatting**: JSON or Markdown based on `response_format` parameter
 
 ---
 
-## 13. Recommendations for Improvement
+### Layer 4: Deno Runtime
 
-- **Automated Sync Between Python Tools and `tool-definitions.ts`**
-  - Consider generating `tool-definitions.ts` from Python tool metadata (or vice versa) to remove manual sync and reduce drift.
-  - Alternatively, introduce a shared schema (e.g., JSON) that both sides generate from.
+**Files:**
+- `src/github_mcp/deno_runtime.py` - Python bridge
+- `src/github_mcp/utils/deno_pool.py` - Connection pooling
+- `deno_executor/mod.ts` - Single-run executor
+- `deno_executor/mod-pooled.ts` - Pooled executor
 
-- **Richer Error Typing Across the Boundary**
-  - Currently, Deno executor wraps errors as `{ error: true, message, code, details? }` with standardized error codes.
-  - Error codes enable programmatic error handling in TypeScript workflows.
+#### Single-Run Executor (`mod.ts`)
 
-- **Configurable Execution Limits**
-  - Introduce configuration for code execution limits (max runtime, max MCP calls per execution) to harden against pathological scripts.
+**Purpose:** One-time code execution (testing, debugging)
 
-- **Surface Tool Categories & Metadata in MCP-Level Docs**
-  - Provide a dedicated `ARCHITECTURE.md` (this document) and a short "for AI agents" appendix summarizing discovery APIs and categories, so agents have guidance even before first `execute_code` call.
+**Flow:**
+1. Read code from stdin (full read until EOF)
+2. Initialize MCP client
+3. Execute user code with injected helpers
+4. Return JSON result
+5. Close MCP client
 
-- **Optional Non-Code-First Mode for Debugging**
-  - While `CODE_FIRST_MODE` already exists, a small CLI or environment-driven switch (with docs) that exposes all tools directly to MCP clients can help during debugging and during migration.
+**Key Features:**
+- Reads **all** stdin (supports multiline code)
+- Command-line args fallback for testing
+- Graceful error handling with structured errors
+
+#### Pooled Executor (`mod-pooled.ts`)
+
+**Purpose:** Persistent process for connection pooling
+
+**Flow:**
+1. Initialize MCP connection once (persistent)
+2. Loop: Read JSON lines from stdin
+3. Each line: `{ "code": "..." }`
+4. Execute code, return JSON result
+5. Keep MCP connection alive
+
+**Key Features:**
+- **Persistent MCP connection** (no re-initialization overhead)
+- **JSON protocol** for multiline code support
+- **Health checks** via `listTools` MCP call
+- **Graceful degradation** (falls back to raw code if JSON parse fails)
+
+#### Connection Pool (`deno_pool.py`)
+
+**Configuration:**
+- `min_size`: 1 (default)
+- `max_size`: 5 (default)
+- `max_idle_time`: 300s (5 minutes)
+- `max_lifetime`: 3600s (1 hour)
+- `max_requests_per_process`: 1000
+
+**Lifecycle:**
+1. **Initialization**: Create `min_size` processes
+2. **Request Handling**: 
+   - Find idle process or create new (up to `max_size`)
+   - Mark as BUSY, execute code, mark as IDLE
+3. **Health Checks**: Every 30s, verify process health
+4. **Cleanup**: Remove processes that are:
+   - Idle > `max_idle_time`
+   - Age > `max_lifetime`
+   - Request count > `max_requests_per_process`
+   - Unhealthy (failed health check)
+
+**Performance:**
+- **Without pooling:** ~4000ms per execution
+- **With pooling:** ~108ms per execution
+- **Improvement:** 97.2% (35x faster)
+
+---
+
+### Layer 5: GitHub API
+
+**File:** `src/github_mcp/utils/requests.py`
+
+**Responsibilities:**
+1. HTTP client (`httpx` with async support)
+2. Authentication (GitHub App + PAT)
+3. Error handling & mapping
+4. Rate limit awareness
+
+**Authentication Flow:**
+
+```
+Tool Call
+  ↓
+_get_auth_token_fallback(param_token)
+  ↓
+  ├─ param_token provided? → Use it
+  └─ No param_token?
+      ↓
+      get_auth_token() [auth/github_app.py]
+        ↓
+        ├─ GITHUB_AUTH_MODE=pat? → GITHUB_TOKEN
+        ├─ GITHUB_AUTH_MODE=app? → GitHub App token
+        └─ Default?
+            ├─ GitHub App configured? → Try App, fallback to PAT
+            └─ No App? → GITHUB_TOKEN
+```
+
+**Dual Authentication:**
+
+1. **GitHub App** (Preferred)
+   - Rate limit: 15,000 req/hour
+   - Token lifetime: 60 minutes
+   - Cached with 55-minute TTL
+   - JWT generation for installation token
+
+2. **Personal Access Token** (Fallback)
+   - Rate limit: 5,000 req/hour
+   - Required for releases (GitHub App limitation)
+   - Simple configuration
+
+---
+
+## Key Components
+
+### Code-First Architecture
+
+**How It Works:**
+
+1. **MCP Client** sees only `execute_code` tool (~800 tokens)
+2. **User provides TypeScript code** that calls tools dynamically
+3. **Deno executor** runs code with injected helpers:
+   - `callMCPTool(name, params)` - Call any tool
+   - `listAvailableTools()` - Discover all tools
+   - `searchTools(keyword)` - Search tools
+   - `getToolInfo(name)` - Get tool details
+
+**Example:**
+
+```typescript
+// User code (executed in Deno)
+const repo = await callMCPTool("github_get_repo_info", {
+  owner: "crypto-ninja",
+  repo: "mcp-test-repo"
+});
+
+const branches = await callMCPTool("github_list_branches", {
+  owner: "crypto-ninja",
+  repo: "mcp-test-repo"
+});
+
+return { repo, branches };
+```
+
+**Benefits:**
+- **98% token reduction** (70,000 → 800 tokens)
+- **Multi-step workflows** in single call
+- **Conditional logic** and loops
+- **Error handling** with try/catch
+
+---
+
+### Connection Pooling
+
+**Architecture:**
+
+```
+Python Server
+  ↓
+DenoConnectionPool
+  ├─ PooledDenoProcess 1 (IDLE, MCP connected)
+  ├─ PooledDenoProcess 2 (BUSY, executing)
+  └─ PooledDenoProcess 3 (IDLE, MCP connected)
+```
+
+**Process States:**
+- `IDLE`: Ready for requests
+- `BUSY`: Currently executing code
+- `UNHEALTHY`: Failed health check
+
+**Health Checks:**
+- Every 30 seconds
+- Calls `listTools` via MCP to verify connection
+- Removes unhealthy processes
+
+**JSON Protocol:**
+
+Python sends:
+```json
+{"code": "const x = 1 + 1; return x;"}
+```
+
+Deno receives, executes, returns:
+```json
+{"error": false, "data": 2}
+```
+
+**Performance Benchmarks:**
+
+| Metric | Without Pooling | With Pooling | Improvement |
+|--------|----------------|--------------|-------------|
+| First request | ~4000ms | ~4000ms | - |
+| Subsequent requests | ~4000ms | ~108ms | **97.2%** |
+| MCP connection overhead | Per request | Once per process | **Eliminated** |
+| Process creation | Per request | Pooled | **Eliminated** |
+
+---
+
+### Authentication Flow
+
+**File:** `src/github_mcp/auth/github_app.py`
+
+**GitHub App Authentication:**
+
+```python
+class GitHubAppAuth:
+    _token: Optional[str] = None
+    _expires_at: Optional[float] = None
+    _lock: asyncio.Lock
+    
+    async def get_installation_token(...):
+        # Check cache (55-minute TTL)
+        if self._token and time.time() < self._expires_at - 60:
+            return self._token
+        
+        # Generate JWT (9-minute lifetime)
+        jwt = self._generate_jwt()
+        
+        # Get installation token (60-minute lifetime)
+        token = await self._fetch_installation_token(jwt)
+        
+        # Cache for 55 minutes
+        self._token = token
+        self._expires_at = time.time() + 3300
+        return token
+```
+
+**Dual-Auth Resolution:**
+
+```python
+def get_auth_token() -> Optional[str]:
+    """Resolve authentication: App → PAT → None."""
+    # 1. Explicit mode: GITHUB_AUTH_MODE=pat
+    if os.getenv("GITHUB_AUTH_MODE") == "pat":
+        return os.getenv("GITHUB_TOKEN")
+    
+    # 2. Explicit mode: GITHUB_AUTH_MODE=app
+    if os.getenv("GITHUB_AUTH_MODE") == "app":
+        token = get_installation_token_from_env()
+        if token:
+            return token
+        # Fallback to PAT
+    
+    # 3. Default: Try App, fallback to PAT
+    if _has_app_config():
+        token = get_installation_token_from_env()
+        if token:
+            return token
+    
+    # Fallback to PAT
+    return os.getenv("GITHUB_TOKEN")
+```
+
+**Token Priority:**
+1. Tool `token` parameter (explicit override)
+2. GitHub App (if configured)
+3. Personal Access Token (`GITHUB_TOKEN`)
+4. None (public repos only)
+
+---
+
+### Error Handling
+
+**File:** `src/github_mcp/utils/errors.py`
+
+**Structured Errors:**
+
+```python
+def _handle_api_error(e: Exception, context: str) -> str:
+    """Map HTTP errors to user-friendly messages."""
+    if isinstance(e, httpx.HTTPStatusError):
+        status = e.response.status_code
+        if status == 401:
+            return "❌ Authentication required. Check your GITHUB_TOKEN or GitHub App configuration."
+        elif status == 403:
+            return "❌ Insufficient permissions. Check your token scopes."
+        elif status == 404:
+            return f"❌ Resource not found: {context}"
+        # ... more mappings
+```
+
+**Deno Error Format:**
+
+```typescript
+{
+  error: true,
+  message: "Error description",
+  code: "AUTHENTICATION_REQUIRED",
+  details: {
+    stack: "...",
+    // Additional context
+  }
+}
+```
+
+**Error Codes:**
+- `AUTHENTICATION_REQUIRED`
+- `INSUFFICIENT_PERMISSIONS`
+- `RESOURCE_NOT_FOUND`
+- `VALIDATION_ERROR`
+- `RATE_LIMIT_EXCEEDED`
+- `EXECUTION_TIMEOUT`
+- `CODE_VALIDATION_FAILED`
+
+---
+
+### Security
+
+**Code Validation:**
+
+**File:** `deno_executor/code-validator.ts`
+
+**Blocked Patterns:**
+- `Deno.*` (except allowed APIs)
+- `import.*` (no external imports)
+- `fetch.*` (no network access)
+- `eval`, `Function` constructor (no dynamic code)
+
+**Allowed APIs:**
+- Standard JavaScript/TypeScript
+- Injected helpers (`callMCPTool`, `listAvailableTools`, etc.)
+- `JSON.parse`, `JSON.stringify`
+- Array/object methods
+
+**Sanitization:**
+- Error messages sanitized before returning
+- Stack traces truncated
+- No sensitive data in errors
+
+---
+
+## Data Flow
+
+### Read Operation Flow
+
+```
+┌─────────────┐
+│ MCP Client  │
+│ (Cursor)    │
+└──────┬──────┘
+       │ execute_code(code)
+       ↓
+┌──────────────────────────┐
+│ Python Server            │
+│ (server.py)              │
+│ - Receives code string   │
+│ - Gets Deno runtime      │
+└──────┬───────────────────┘
+       │ execute_code_async(code)
+       ↓
+┌──────────────────────────┐
+│ Deno Pool                │
+│ (deno_pool.py)           │
+│ - Finds idle process     │
+│ - Sends JSON: {code}     │
+└──────┬───────────────────┘
+       │ JSON line via stdin
+       ↓
+┌──────────────────────────┐
+│ Deno Executor            │
+│ (mod-pooled.ts)          │
+│ - Parses JSON            │
+│ - Executes user code     │
+│ - callMCPTool(...)       │
+└──────┬───────────────────┘
+       │ MCP tool call
+       ↓
+┌──────────────────────────┐
+│ Python Tool              │
+│ (tools/repositories.py)  │
+│ - Converts dict→model    │
+│ - Gets auth token        │
+│ - Makes GitHub API call  │
+└──────┬───────────────────┘
+       │ HTTP GET
+       ↓
+┌──────────────────────────┐
+│ GitHub API               │
+│ api.github.com           │
+└──────┬───────────────────┘
+       │ JSON response
+       ↓
+┌──────────────────────────┐
+│ Python Tool              │
+│ - Formats response       │
+│ - Returns to MCP         │
+└──────┬───────────────────┘
+       │ Tool result
+       ↓
+┌──────────────────────────┐
+│ Deno Executor            │
+│ - Collects result        │
+│ - Returns to pool        │
+└──────┬───────────────────┘
+       │ JSON: {error: false, data: ...}
+       ↓
+┌──────────────────────────┐
+│ Python Server            │
+│ - Formats final result   │
+└──────┬───────────────────┘
+       │ MCP response
+       ↓
+┌─────────────┐
+│ MCP Client  │
+│ (Result)    │
+└─────────────┘
+```
+
+### Write Operation Flow
+
+Same as read flow, with additional authentication check:
+
+```
+Python Tool
+  ↓
+_get_auth_token_fallback()
+  ↓
+  ├─ Token provided? → Use it
+  └─ No token?
+      ↓
+      get_auth_token()
+        ↓
+        ├─ GitHub App → Installation token
+        └─ PAT → GITHUB_TOKEN
+  ↓
+_make_github_request("POST", ...)
+  ↓
+GitHub API
+  ↓
+Response
+```
+
+**Authentication Required:**
+- Create, update, delete operations
+- Private repository access
+- Write operations (issues, PRs, files, etc.)
+
+**Read Operations (Public Repos):**
+- Can work without authentication
+- Token optional (for higher rate limits)
+
+---
+
+## Performance
+
+### Benchmarks
+
+**Connection Pooling:**
+
+| Scenario | Latency | Notes |
+|----------|---------|-------|
+| First request (cold start) | ~4000ms | Process creation + MCP init |
+| Subsequent requests (warm) | ~108ms | Pooled process reuse |
+| **Improvement** | **97.2%** | **35x faster** |
+
+**Token Efficiency:**
+
+| Mode | Tokens | Savings |
+|------|--------|---------|
+| Traditional MCP | ~70,000 | Baseline |
+| Code-First | ~800 | **98.9% reduction** |
+
+**Rate Limits:**
+
+| Auth Method | Rate Limit | Use Case |
+|-------------|------------|----------|
+| GitHub App | 15,000 req/hour | Production, CI/CD |
+| Personal Access Token | 5,000 req/hour | Development, personal |
+
+---
+
+## Testing
+
+### Test Coverage
+
+**Total Tests:** 297+
+
+**Test Categories:**
+
+1. **Unit Tests** (`test_individual_tools.py`)
+   - Per-tool validation
+   - Pydantic model validation
+   - Error handling
+   - Authentication mocks
+
+2. **Integration Tests** (`test_execute_code.py`, `test_execute_code_mcp.py`)
+   - `execute_code` end-to-end
+   - MCP bridge functionality
+   - Deno runtime integration
+
+3. **Contract Tests** (`test_contracts.py`)
+   - TypeScript ↔ Python schema alignment
+   - Tool parameter validation
+   - Response format consistency
+
+4. **Live Integration Tests** (`scripts/live_integration_test.py`)
+   - Real GitHub API calls
+   - **15/15 tests passing**
+   - Read operations (no token)
+   - Write operations (with token)
+   - `execute_code` functionality
+   - Connection pooling verification
+
+5. **Regression Tests** (`test_regressions.py`)
+   - Known issue prevention
+   - Backward compatibility
+
+6. **Discovery Tests** (`discover_tool_issues.py`)
+   - Tool schema validation
+   - Missing tool detection
+   - Parameter mismatch detection
+
+### Test Execution
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=src/github_mcp --cov-report=html
+
+# Run live integration tests
+python scripts/live_integration_test.py
+```
+
+---
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `GITHUB_TOKEN` | Yes* | Personal Access Token | - |
+| `GITHUB_APP_ID` | No | GitHub App ID | - |
+| `GITHUB_APP_INSTALLATION_ID` | No | Installation ID | - |
+| `GITHUB_APP_PRIVATE_KEY` | No | Private key content (CI/CD) | - |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | No | Path to .pem file (local) | - |
+| `GITHUB_AUTH_MODE` | No | `app` or `pat` | Auto-detect |
+| `MCP_WORKSPACE_ROOT` | No | Workspace root directory | Current directory |
+| `MCP_CODE_FIRST_MODE` | No | Code-first mode (legacy) | `true` |
+| `GITHUB_MCP_DEBUG_AUTH` | No | Enable auth debug logging | `false` |
+
+**\* Required for write operations and private repos. Read operations on public repos work without authentication.**
+
+### Configuration Files
+
+**`.env` file:**
+```bash
+GITHUB_TOKEN=ghp_your_token_here
+GITHUB_APP_ID=123456
+GITHUB_APP_INSTALLATION_ID=12345678
+GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
+MCP_WORKSPACE_ROOT=/path/to/workspace
+```
+
+**Claude Desktop Config:**
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "python",
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Future Considerations
+
+### Planned Improvements
+
+1. **Automated Tool Schema Sync**
+   - Generate `tool-definitions.ts` from Python tool metadata
+   - Eliminate manual sync between TS and Python
+
+2. **Enhanced Error Typing**
+   - Richer error types across Python↔TypeScript boundary
+   - Programmatic error handling in workflows
+
+3. **Configurable Execution Limits**
+   - Max runtime per execution
+   - Max MCP calls per execution
+   - Memory limits
+
+4. **Tool Categories in MCP Docs**
+   - Surface tool categories in MCP-level documentation
+   - Help agents discover tools before first `execute_code` call
+
+5. **Non-Code-First Mode for Debugging**
+   - Optional mode exposing all tools directly
+   - Useful for debugging and migration
+
+### Known Limitations
+
+1. **Deno Runtime Required**
+   - Server exits early if Deno not found
+   - Clear error message with installation instructions
+
+2. **Manual Schema Sync**
+   - TypeScript `tool-definitions.ts` must match Python tools
+   - Contract tests catch mismatches, but manual updates required
+
+3. **Some Tools Don't Support `response_format=json`**
+   - Write operations intentionally omit `response_format`
+   - Some read operations may not support JSON (legacy)
+
+---
+
+## Architecture Diagrams
+
+### Request Flow (ASCII)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        MCP Client                            │
+│                    (Cursor, Claude, etc.)                    │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ execute_code(code: string)
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Python MCP Server                         │
+│                  (src/github_mcp/server.py)                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ FastMCP("github_mcp")                                │   │
+│  │ - CODE_FIRST_MODE=true (default)                     │   │
+│  │ - Tool registration with dict→model conversion       │   │
+│  │ - execute_code handler                               │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ get_runtime().execute_code_async(code)
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  Deno Connection Pool                        │
+│              (src/github_mcp/utils/deno_pool.py)            │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ PooledDenoProcess 1 (IDLE, MCP connected)           │   │
+│  │ PooledDenoProcess 2 (BUSY, executing)                │   │
+│  │ PooledDenoProcess 3 (IDLE, MCP connected)           │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ JSON: {"code": "..."}
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  Deno Executor (Pooled)                      │
+│              (deno_executor/mod-pooled.ts)                    │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ - Persistent MCP connection                           │   │
+│  │ - Reads JSON lines from stdin                         │   │
+│  │ - Executes user TypeScript code                       │   │
+│  │ - Injected helpers:                                   │   │
+│  │   • callMCPTool(name, params)                        │   │
+│  │   • listAvailableTools()                             │   │
+│  │   • searchTools(keyword)                             │   │
+│  │   • getToolInfo(name)                                │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ MCP tool call
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Python Tools                             │
+│              (src/github_mcp/tools/*.py)                     │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ - Dict→Pydantic model conversion                     │   │
+│  │ - Authentication (GitHub App + PAT)                  │   │
+│  │ - GitHub API calls via _make_github_request()        │   │
+│  │ - Error handling & formatting                        │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ HTTP/GraphQL
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                      GitHub API                              │
+│                  (api.github.com)                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Authentication Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Tool Call                                │
+│         github_get_repo_info({owner, repo})                 │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│         _get_auth_token_fallback(param_token)               │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ├─ param_token provided?
+                            │  └─→ Use param_token
+                            │
+                            └─ No param_token?
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│              get_auth_token()                                │
+│         (src/github_mcp/auth/github_app.py)                 │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ├─ GITHUB_AUTH_MODE=pat?
+                            │  └─→ Return GITHUB_TOKEN
+                            │
+                            ├─ GITHUB_AUTH_MODE=app?
+                            │  └─→ Try GitHub App
+                            │      ├─ Success → Return App token
+                            │      └─ Failure → Fallback to PAT
+                            │
+                            └─ Default (auto-detect)?
+                               ├─ GitHub App configured?
+                               │  ├─ Try App → Success → Return App token
+                               │  └─ Failure → Fallback to PAT
+                               │
+                               └─ Return GITHUB_TOKEN (or None)
+```
+
+### Connection Pool Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Pool Initialization                       │
+│              (min_size=1, max_size=5)                        │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Create PooledDenoProcess 1                      │
+│  - Start Deno subprocess (mod-pooled.ts)                     │
+│  - Initialize MCP connection                                 │
+│  - State: IDLE                                              │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Request Arrives                           │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Find Idle Process                               │
+│  - Check pool for IDLE process                               │
+│  - If none, create new (up to max_size)                     │
+│  - Mark as BUSY                                             │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Execute Code                                    │
+│  - Send JSON: {"code": "..."}                               │
+│  - Deno executes, calls tools via MCP                        │
+│  - Receive JSON: {"error": false, "data": ...}              │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Mark as IDLE                                    │
+│  - Update last_used timestamp                               │
+│  - Increment request_count                                   │
+└───────────────────────────┬─────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Health Check Loop (every 30s)                    │
+│  - Check process health (listTools MCP call)                │
+│  - Remove if:                                               │
+│    • Idle > max_idle_time (5 min)                           │
+│    • Age > max_lifetime (1 hour)                             │
+│    • Requests > max_requests_per_process (1000)              │
+│    • Unhealthy (failed health check)                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key Insights
+
+### Design Decisions
+
+1. **Code-First Over Traditional MCP**
+   - **Why:** 98% token reduction, better scalability
+   - **Trade-off:** Requires Deno runtime, more complex error handling
+
+2. **Connection Pooling**
+   - **Why:** 97% latency reduction for subsequent requests
+   - **Trade-off:** More complex lifecycle management
+
+3. **Dict→Model Conversion**
+   - **Why:** Seamless TypeScript→Python integration
+   - **Trade-off:** Runtime type checking (no compile-time safety)
+
+4. **Dual Authentication**
+   - **Why:** Best of both worlds (high rate limits + full feature coverage)
+   - **Trade-off:** More complex configuration
+
+5. **Modular Structure**
+   - **Why:** Clean separation, easier maintenance
+   - **Trade-off:** More files, but better organization
+
+### Architecture Strengths
+
+- **Highly Extensible:** Adding tools is straightforward
+- **Well-Tested:** 297+ tests with live integration
+- **Performance-Optimized:** Connection pooling for 35x speedup
+- **Token-Efficient:** 98% reduction vs traditional MCP
+- **Robust Error Handling:** Structured errors with codes
+- **Security-Conscious:** Code validation, sanitization
+
+### Areas for Improvement
+
+- **Schema Sync:** Manual sync between TS and Python (could be automated)
+- **Error Typing:** Could be richer across boundaries
+- **Execution Limits:** No configurable limits yet
+- **Documentation:** Tool categories not surfaced in MCP docs
+
+---
+
+## Conclusion
+
+The GitHub MCP Server v2.5.1 represents a **mature, production-ready code-first MCP implementation** with:
+
+- **109 tools** across 21 categories
+- **98% token reduction** through code-first architecture
+- **97% latency reduction** through connection pooling
+- **297+ tests** with comprehensive coverage
+- **Dual authentication** for flexibility and reliability
+- **Modular structure** for maintainability
+
+The architecture is **highly extensible**, **well-tested**, and **performance-optimized**, making it an excellent reference implementation for code-first MCP servers.
+
+---
+
+**Document Version:** 2.5.1  
+**Last Updated:** 2025-12-09  
+**Maintained By:** GitHub MCP Server Team

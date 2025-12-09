@@ -3,54 +3,26 @@ Tests for GitHub Projects tools (Phase 2).
 """
 
 import pytest
-import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import sys
 from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import (  # noqa: E402
-    github_list_repo_projects,
-    github_list_org_projects,
-    github_get_project,
-    github_create_repo_project,
-    github_create_org_project,
-    github_update_project,
-    github_delete_project,
-    github_list_project_columns,
-    github_create_project_column,
-    ListRepoProjectsInput,
-    ListOrgProjectsInput,
-    GetProjectInput,
-    CreateRepoProjectInput,
-    CreateOrgProjectInput,
-    UpdateProjectInput,
-    DeleteProjectInput,
-    ListProjectColumnsInput,
-    CreateProjectColumnInput,
-    ResponseFormat,
-)
+from src.github_mcp.tools import github_list_repo_projects, github_list_org_projects, github_get_project, github_create_repo_project, github_create_org_project, github_update_project, github_delete_project, github_list_project_columns, github_create_project_column
+from src.github_mcp.models import ListRepoProjectsInput, ListOrgProjectsInput, GetProjectInput, CreateRepoProjectInput, CreateOrgProjectInput, UpdateProjectInput, DeleteProjectInput, ListProjectColumnsInput, CreateProjectColumnInput
 
 
 class TestProjectsTools:
     """Test suite for GitHub Projects tools."""
 
-    @pytest.fixture
-    def mock_github_request(self):
-        with patch('github_mcp._make_github_request') as mock:
-            yield mock
-
-    @pytest.fixture
-    def mock_auth_token(self):
-        with patch('github_mcp._get_auth_token_fallback') as mock:
-            mock.return_value = "test-token"
-            yield mock
-
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_list_repo_projects(self, mock_github_request, mock_auth_token):
         """Test listing repository projects."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = [
             {"id": 1, "name": "Sprint 1", "state": "open"}
         ]
@@ -69,8 +41,11 @@ class TestProjectsTools:
         assert "inertia-preview" in str(headers.get("Accept", ""))
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_list_org_projects(self, mock_github_request, mock_auth_token):
         """Test listing organization projects."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = [
             {"id": 1, "name": "Roadmap", "state": "open"}
         ]
@@ -83,8 +58,11 @@ class TestProjectsTools:
         assert "orgs/test-org/projects" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_get_project(self, mock_github_request, mock_auth_token):
         """Test getting a specific project."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 123,
             "name": "Test Project",
@@ -99,8 +77,11 @@ class TestProjectsTools:
         assert "projects/123" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_create_repo_project(self, mock_github_request, mock_auth_token):
         """Test creating a repository project."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 123,
             "name": "New Project",
@@ -120,8 +101,11 @@ class TestProjectsTools:
         assert call_args[1]["method"] == "POST"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_create_org_project(self, mock_github_request, mock_auth_token):
         """Test creating an organization project."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 124,
             "name": "Org Project"
@@ -139,8 +123,11 @@ class TestProjectsTools:
         assert "orgs/test-org/projects" in call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_update_project(self, mock_github_request, mock_auth_token):
         """Test updating a project."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 123,
             "name": "Updated Name",
@@ -159,8 +146,11 @@ class TestProjectsTools:
         assert call_args[1]["method"] == "PATCH"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_delete_project(self, mock_github_request, mock_auth_token):
         """Test deleting a project."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = DeleteProjectInput(project_id=123)
@@ -171,8 +161,11 @@ class TestProjectsTools:
         assert call_args[1]["method"] == "DELETE"
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_list_project_columns(self, mock_github_request, mock_auth_token):
         """Test listing project columns."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = [
             {"id": 1, "name": "To Do"},
             {"id": 2, "name": "In Progress"},
@@ -186,8 +179,11 @@ class TestProjectsTools:
         assert "projects/123/columns" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.projects._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.projects._make_github_request')
     async def test_create_project_column(self, mock_github_request, mock_auth_token):
         """Test creating a project column."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 4,
             "name": "Review"
@@ -202,4 +198,3 @@ class TestProjectsTools:
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
-

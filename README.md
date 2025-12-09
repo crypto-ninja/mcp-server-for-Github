@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.0)
+[![Version](https://img.shields.io/badge/version-2.5.1-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.1)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,7 +12,19 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.5.0 - Phase 2 Full Send (December 4, 2025)
+### 🚀 Latest: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)
+
+**MAJOR REFACTOR:** Complete modular restructure with connection pooling for 97% latency reduction!
+
+**New in v2.5.1:**
+- 🏗️ **Modular Architecture** - `github_mcp.py` reduced from 10,857 to ~50 lines
+- ⚡ **Connection Pooling** - 97% latency reduction (4000ms → 108ms for subsequent calls)
+- 🔧 **Dict→Model Conversion** - `callMCPTool` now works seamlessly with plain JavaScript objects
+- 📝 **Multiline Code Support** - Fixed truncation issues, full JSON protocol support
+- ✅ **Live Integration Tests** - 15/15 passing, 297 total tests
+- 📦 **21 Tool Modules** - Clean organization: tools/, models/, utils/, auth/
+
+**Previous: v2.5.0 - Phase 2 Full Send (December 4, 2025)**
 
 **MAJOR RELEASE:** 47 new tools added (62 → 109 total tools)! Comprehensive GitHub API coverage.
 
@@ -1089,7 +1101,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.0 with 109 tools (Code-first architecture with 98% token reduction!)
+**Current:** v2.5.1 with 109 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

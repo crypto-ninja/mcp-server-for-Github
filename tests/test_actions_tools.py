@@ -4,14 +4,14 @@ Tests for GitHub Actions tools (Phase 2).
 
 import pytest
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import sys
 from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import (  # noqa: E402
+from src.github_mcp.tools import (
     github_get_workflow,
     github_trigger_workflow,
     github_get_workflow_run,
@@ -24,6 +24,8 @@ from github_mcp import (  # noqa: E402
     github_list_workflow_run_artifacts,
     github_get_artifact,
     github_delete_artifact,
+)
+from src.github_mcp.models import (
     GetWorkflowInput,
     TriggerWorkflowInput,
     GetWorkflowRunInput,
@@ -43,23 +45,13 @@ from github_mcp import (  # noqa: E402
 class TestActionsTools:
     """Test suite for GitHub Actions tools."""
 
-    @pytest.fixture
-    def mock_github_request(self):
-        """Mock the GitHub API request function."""
-        with patch('github_mcp._make_github_request') as mock:
-            yield mock
-
-    @pytest.fixture
-    def mock_auth_token(self):
-        """Mock authentication token resolution."""
-        with patch('github_mcp._get_auth_token_fallback') as mock:
-            mock.return_value = "test-token"
-            yield mock
-
     # github_get_workflow tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_workflow_by_id(self, mock_github_request, mock_auth_token):
         """Test getting a workflow by ID."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 12345,
             "name": "CI",
@@ -77,11 +69,14 @@ class TestActionsTools:
         
         mock_github_request.assert_called_once()
         call_args = mock_github_request.call_args
-        assert "/actions/workflows/12345" in call_args[0][0]
+        assert "actions/workflows/12345" in call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_workflow_by_filename(self, mock_github_request, mock_auth_token):
         """Test getting a workflow by filename."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 12345,
             "name": "CI",
@@ -97,11 +92,14 @@ class TestActionsTools:
         result = await github_get_workflow(params)
         
         mock_github_request.assert_called_once()
-        assert "/actions/workflows/ci.yml" in mock_github_request.call_args[0][0]
+        assert "actions/workflows/ci.yml" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_workflow_json_format(self, mock_github_request, mock_auth_token):
         """Test getting workflow with JSON format."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 12345,
             "name": "CI",
@@ -121,8 +119,11 @@ class TestActionsTools:
 
     # github_trigger_workflow tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_trigger_workflow(self, mock_github_request, mock_auth_token):
         """Test triggering a workflow dispatch."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = TriggerWorkflowInput(
@@ -137,11 +138,14 @@ class TestActionsTools:
         mock_github_request.assert_called_once()
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
-        assert "/dispatches" in call_args[0][0]
+        assert "dispatches" in call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_trigger_workflow_with_inputs(self, mock_github_request, mock_auth_token):
         """Test triggering a workflow with inputs."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = TriggerWorkflowInput(
@@ -160,8 +164,11 @@ class TestActionsTools:
 
     # github_get_workflow_run tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_workflow_run(self, mock_github_request, mock_auth_token):
         """Test getting a specific workflow run."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 98765,
             "status": "completed",
@@ -177,12 +184,15 @@ class TestActionsTools:
         result = await github_get_workflow_run(params)
         
         mock_github_request.assert_called_once()
-        assert "/actions/runs/98765" in mock_github_request.call_args[0][0]
+        assert "actions/runs/98765" in mock_github_request.call_args[0][0]
 
     # github_list_workflow_run_jobs tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_list_workflow_run_jobs(self, mock_github_request, mock_auth_token):
         """Test listing jobs for a workflow run."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "total_count": 2,
             "jobs": [
@@ -202,8 +212,11 @@ class TestActionsTools:
         mock_github_request.assert_called_once()
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_list_workflow_run_jobs_with_filter(self, mock_github_request, mock_auth_token):
         """Test listing jobs with filter."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "total_count": 1,
             "jobs": [{"id": 1, "name": "build"}]
@@ -224,8 +237,11 @@ class TestActionsTools:
 
     # github_get_job tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_job(self, mock_github_request, mock_auth_token):
         """Test getting a specific job."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 123,
             "name": "build",
@@ -242,14 +258,13 @@ class TestActionsTools:
         result = await github_get_job(params)
         
         mock_github_request.assert_called_once()
-        assert "/actions/jobs/123" in mock_github_request.call_args[0][0]
+        assert "actions/jobs/123" in mock_github_request.call_args[0][0]
 
     # github_get_job_logs tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
     async def test_get_job_logs(self, mock_auth_token):
         """Test getting job logs - verifies function structure."""
-        # This function uses GhClient directly which is complex to mock
-        # We'll just verify it handles missing auth correctly
         mock_auth_token.return_value = None
         
         params = GetJobLogsInput(
@@ -271,8 +286,11 @@ class TestActionsTools:
 
     # github_cancel_workflow_run tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_cancel_workflow_run(self, mock_github_request, mock_auth_token):
         """Test cancelling a workflow run."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = CancelWorkflowRunInput(
@@ -285,12 +303,15 @@ class TestActionsTools:
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
-        assert "/cancel" in call_args[0][0]
+        assert "cancel" in call_args[0][0]
 
     # github_rerun_workflow tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_rerun_workflow(self, mock_github_request, mock_auth_token):
         """Test rerunning a workflow."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = RerunWorkflowInput(
@@ -303,12 +324,15 @@ class TestActionsTools:
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
-        assert "/rerun" in call_args[0][0]
+        assert "rerun" in call_args[0][0]
 
     # github_rerun_failed_jobs tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_rerun_failed_jobs(self, mock_github_request, mock_auth_token):
         """Test rerunning only failed jobs."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = RerunFailedJobsInput(
@@ -320,12 +344,15 @@ class TestActionsTools:
         result = await github_rerun_failed_jobs(params)
         
         call_args = mock_github_request.call_args
-        assert "/rerun-failed-jobs" in call_args[0][0]
+        assert "rerun-failed-jobs" in call_args[0][0]
 
     # Artifact tests
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_list_workflow_run_artifacts(self, mock_github_request, mock_auth_token):
         """Test listing artifacts for a workflow run."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "total_count": 1,
             "artifacts": [
@@ -344,8 +371,11 @@ class TestActionsTools:
         mock_github_request.assert_called_once()
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_get_artifact(self, mock_github_request, mock_auth_token):
         """Test getting artifact details."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {
             "id": 123,
             "name": "build-output",
@@ -362,11 +392,14 @@ class TestActionsTools:
         result = await github_get_artifact(params)
         
         mock_github_request.assert_called_once()
-        assert "/actions/artifacts/123" in mock_github_request.call_args[0][0]
+        assert "actions/artifacts/123" in mock_github_request.call_args[0][0]
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.actions._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.actions._make_github_request')
     async def test_delete_artifact(self, mock_github_request, mock_auth_token):
         """Test deleting an artifact."""
+        mock_auth_token.return_value = "test-token"
         mock_github_request.return_value = {}
         
         params = DeleteArtifactInput(
@@ -379,4 +412,3 @@ class TestActionsTools:
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "DELETE"
-

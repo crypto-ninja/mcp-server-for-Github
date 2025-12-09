@@ -1,34 +1,34 @@
 /**
  * GitHub MCP Server - Deno Executor
- * 
+ *
  * PRIMARY USER: AI Agents (LLMs like Claude, GPT, etc.)
  * SECONDARY USER: Human developers
  * END BENEFICIARY: Users getting AI assistance
- * 
+ *
  * Design Philosophy:
  * These functions (searchTools, getToolInfo, callMCPTool) are used BY AI agents
- * to help humans. When designing features, we ask: "Can the AI agent use this 
+ * to help humans. When designing features, we ask: "Can the AI agent use this
  * effectively?" rather than "Can a developer use this?"
- * 
+ *
  * The Moment of Realization:
  * During v2.3.1 development, Dave kept asking Claude: "Can YOU use these tools?"
  * Claude kept analyzing from a "developer perspective" until the breakthrough:
  * "Wait... I'M the one calling searchTools(). I'M the user!"
- * 
+ *
  * This shift in perspective led to:
  * - searchTools() with relevance scoring (AI needs best-match-first)
  * - getToolInfo() with complete metadata (AI needs full context)
  * - 70% → 95% AI confidence boost (AI can now help users better)
- * 
+ *
  * This is AI-first design: Optimize for AI capability → Better human outcomes
- * 
+ *
  * The Future of Development:
  * This project was built through human-AI collaboration, where the AI is both
  * the builder AND the primary user. Dave and Claude worked together—testing,
  * debugging, designing—with Claude using the very tools it was helping to create.
  * This is not "AI-generated code"—this is genuine partnership, where both human
  * and AI contribute their unique strengths.
- * 
+ *
  * Available functions in execution context:
  * - listAvailableTools() - Get all tools organized by category
  * - searchTools(keyword) - Search for tools by keyword
@@ -40,10 +40,24 @@
 // Note: We need to use the compiled version or import directly
 // For Deno, we'll import from the TypeScript source
 // Use Deno-compatible client
-import { initializeMCPClient, callMCPTool, closeMCPClient } from "../servers/client-deno.ts";
-import { GITHUB_TOOLS, getToolsByCategory, getCategories, type ToolDefinition, type ToolParameter } from "./tool-definitions.ts";
-import { validateCode, sanitizeErrorMessage, type ValidationResult } from "./code-validator.ts";
-import { ErrorCodes, type ErrorCode } from "./error-codes.ts";
+import {
+  callMCPTool,
+  closeMCPClient,
+  initializeMCPClient,
+} from "../servers/client-deno.ts";
+import {
+  getCategories,
+  getToolsByCategory,
+  GITHUB_TOOLS,
+  type ToolDefinition,
+  type ToolParameter,
+} from "./tool-definitions.ts";
+import {
+  sanitizeErrorMessage,
+  validateCode,
+  type ValidationResult,
+} from "./code-validator.ts";
+import { type ErrorCode, ErrorCodes } from "./error-codes.ts";
 
 /**
  * Standardized error response format
@@ -68,7 +82,11 @@ export type MCPResponse<T = unknown> = ErrorResponse | SuccessResponse<T>;
 /**
  * Create a standardized error response
  */
-function createErrorResponse(message: string, code?: ErrorCode, details?: Record<string, unknown>): string {
+function createErrorResponse(
+  message: string,
+  code?: ErrorCode,
+  details?: Record<string, unknown>,
+): string {
   const response: ErrorResponse = {
     error: true,
     message,
@@ -96,26 +114,35 @@ function createSuccessResponse<T>(data: T): string {
 function listAvailableTools() {
   // Group by category
   const byCategory: Record<string, ToolDefinition[]> = {};
-  
+
   for (const tool of GITHUB_TOOLS) {
     if (!byCategory[tool.category]) {
       byCategory[tool.category] = [];
     }
     byCategory[tool.category].push(tool);
   }
-  
+
   return {
     totalTools: GITHUB_TOOLS.length,
     categories: getCategories(),
     tools: byCategory,
+    byCategory,
     usage: "Call any tool via: await callMCPTool(toolName, parameters)",
     quickReference: {
-      "Repository Management": GITHUB_TOOLS.filter(t => t.category === "Repository Management").map(t => t.name),
-      "Issues": GITHUB_TOOLS.filter(t => t.category === "Issues").map(t => t.name),
-      "Pull Requests": GITHUB_TOOLS.filter(t => t.category === "Pull Requests").map(t => t.name),
-      "Files": GITHUB_TOOLS.filter(t => t.category === "File Operations").map(t => t.name),
+      "Repository Management": GITHUB_TOOLS.filter((t) =>
+        t.category === "Repository Management"
+      ).map((t) => t.name),
+      "Issues": GITHUB_TOOLS.filter((t) => t.category === "Issues").map((t) =>
+        t.name
+      ),
+      "Pull Requests": GITHUB_TOOLS.filter((t) =>
+        t.category === "Pull Requests"
+      ).map((t) => t.name),
+      "Files": GITHUB_TOOLS.filter((t) => t.category === "File Operations").map(
+        (t) => t.name,
+      ),
     },
-    exampleTool: GITHUB_TOOLS[0]
+    exampleTool: GITHUB_TOOLS[0],
   };
 }
 
@@ -123,14 +150,14 @@ function listAvailableTools() {
  * Search for tools by keyword
  * Searches tool names, descriptions, categories, and parameter descriptions
  * Returns matching tools sorted by relevance
- * 
+ *
  * @param keyword - Search term (case-insensitive)
  * @returns Array of matching tools with relevance scores
- * 
+ *
  * @example
  * const issueTools = searchTools("issue");
  * // Returns all tools related to issues
- * 
+ *
  * const createTools = searchTools("create");
  * // Returns all tools that create resources
  */
@@ -151,30 +178,30 @@ function searchTools(keyword: string): Array<{
     tool: ToolDefinition;
   }> = [];
   const searchTerm = keyword.toLowerCase();
-  
+
   // Get all tools from GITHUB_TOOLS
   for (const tool of GITHUB_TOOLS) {
     const matches: string[] = [];
     let relevance = 0;
-    
+
     // Check tool name (highest relevance)
     if (tool.name.toLowerCase().includes(searchTerm)) {
       matches.push("name");
       relevance += 10;
     }
-    
+
     // Check description
     if (tool.description?.toLowerCase().includes(searchTerm)) {
       matches.push("description");
       relevance += 5;
     }
-    
+
     // Check category
     if (tool.category.toLowerCase().includes(searchTerm)) {
       matches.push("category");
       relevance += 3;
     }
-    
+
     // Check parameter names and descriptions
     if (tool.parameters) {
       for (const [paramName, paramInfo] of Object.entries(tool.parameters)) {
@@ -189,7 +216,7 @@ function searchTools(keyword: string): Array<{
         }
       }
     }
-    
+
     // If matches found, add to results
     if (matches.length > 0) {
       results.push({
@@ -198,24 +225,24 @@ function searchTools(keyword: string): Array<{
         description: tool.description,
         relevance: relevance,
         matchedIn: matches,
-        tool: tool  // Include full tool object
+        tool: tool, // Include full tool object
       });
     }
   }
-  
+
   // Sort by relevance (highest first)
   results.sort((a, b) => b.relevance - a.relevance);
-  
+
   return results;
 }
 
 /**
  * Get detailed information about a specific tool
  * Returns complete tool metadata including parameters, examples, and usage
- * 
+ *
  * @param toolName - Name of the tool (e.g., "github_create_issue")
  * @returns Complete tool information or null if not found
- * 
+ *
  * @example
  * const info = getToolInfo("github_create_issue");
  * console.log(info.description);
@@ -224,7 +251,7 @@ function searchTools(keyword: string): Array<{
  */
 function getToolInfo(toolName: string): any {
   const allTools = listAvailableTools();
-  
+
   // Search through all categories for the tool
   for (const [category, tools] of Object.entries(allTools.tools)) {
     for (const tool of tools as ToolDefinition[]) {
@@ -237,18 +264,18 @@ function getToolInfo(toolName: string): any {
           metadata: {
             totalTools: allTools.totalTools,
             categoryTools: (tools as ToolDefinition[]).length,
-            relatedCategory: category
-          }
+            relatedCategory: category,
+          },
         };
       }
     }
   }
-  
+
   // Tool not found
   return {
     error: `Tool "${toolName}" not found`,
     suggestion: "Use searchTools() to find available tools",
-    availableTools: allTools.totalTools
+    availableTools: allTools.totalTools,
   };
 }
 
@@ -264,7 +291,7 @@ function getToolsInCategory(category: string): ToolDefinition[] {
 /**
  * Execute user code with MCP tool access
  */
-async function executeUserCode(code: string): Promise<any> {
+export async function executeUserCode(code: string): Promise<any> {
   try {
     // Validate code before execution
     const validationResult = validateCode(code);
@@ -275,16 +302,24 @@ async function executeUserCode(code: string): Promise<any> {
       const errorResponse = createErrorResponse(
         `Code validation failed: ${errorMessage}`,
         ErrorCodes.VALIDATION_ERROR,
-        { validationErrors: validationResult.errors }
+        { validationErrors: validationResult.errors },
       );
       console.log(errorResponse);
       // Return object for main entry point to check
-      return { error: true, message: `Code validation failed: ${errorMessage}`, code: ErrorCodes.VALIDATION_ERROR, details: { validationErrors: validationResult.errors } };
+      return {
+        error: true,
+        message: `Code validation failed: ${errorMessage}`,
+        code: ErrorCodes.VALIDATION_ERROR,
+        details: { validationErrors: validationResult.errors },
+      };
     }
 
     // Log warnings (but don't block execution)
     if (validationResult.warnings.length > 0) {
-      console.warn("Code validation warnings:", validationResult.warnings.join("; "));
+      console.warn(
+        "Code validation warnings:",
+        validationResult.warnings.join("; "),
+      );
     }
 
     // Initialize MCP bridge
@@ -301,7 +336,7 @@ async function executeUserCode(code: string): Promise<any> {
       "getToolsInCategory",
       `return (async () => {
         ${code}
-      })();`
+      })();`,
     );
 
     // Execute user code with all helpers injected
@@ -310,13 +345,13 @@ async function executeUserCode(code: string): Promise<any> {
       listAvailableTools,
       searchTools,
       getToolInfo,
-      getToolsInCategory
+      getToolsInCategory,
     );
 
     // Wait a brief moment to ensure all responses are fully processed
     // This prevents connection from closing while responses are still being flushed
     // This is especially important for HTTP requests that may still be processing
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Close connection gracefully
     await closeMCPClient();
@@ -326,14 +361,16 @@ async function executeUserCode(code: string): Promise<any> {
     console.log(successResponse);
     // Return object for main entry point to check
     return { error: false, data: result };
-
   } catch (error) {
     // Log the actual error before closing
     // This helps diagnose connection closing issues
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[Execute Code] Error during execution:', errorMessage);
-    console.error('[Execute Code] Error stack:', error instanceof Error ? error.stack : 'No stack');
-    
+    console.error("[Execute Code] Error during execution:", errorMessage);
+    console.error(
+      "[Execute Code] Error stack:",
+      error instanceof Error ? error.stack : "No stack",
+    );
+
     // Close connection on error
     try {
       await closeMCPClient();
@@ -347,62 +384,63 @@ async function executeUserCode(code: string): Promise<any> {
       sanitizeErrorMessage(errorMessage),
       ErrorCodes.EXECUTION_ERROR,
       {
-        ...(error instanceof Error && error.stack && { stack: sanitizeErrorMessage(error.stack) })
-      }
+        ...(error instanceof Error && error.stack &&
+          { stack: sanitizeErrorMessage(error.stack) }),
+      },
     );
-    
+
     // Ensure this is logged to stdout (not stderr) so Python can parse it
     console.log(errorResponse);
-    
+
     // Return object for main entry point to check
-    return { error: true, message: sanitizeErrorMessage(errorMessage), code: ErrorCodes.EXECUTION_ERROR, details: { ...(error instanceof Error && error.stack && { stack: sanitizeErrorMessage(error.stack) }) } };
+    return {
+      error: true,
+      message: sanitizeErrorMessage(errorMessage),
+      code: ErrorCodes.EXECUTION_ERROR,
+      details: {
+        ...(error instanceof Error && error.stack &&
+          { stack: sanitizeErrorMessage(error.stack) }),
+      },
+    };
   }
 }
 
 /**
  * Main entry point
- * 
+ *
  * Reads code from stdin (to avoid Windows command-line character escaping issues)
  * Falls back to Deno.args[0] for backward compatibility
- * 
+ *
  * Includes timeout-based fallback for test environments where stdin may not be immediately ready
  */
-if (import.meta.main) {
-  let code: string;
-  
-  try {
-    // Try reading from stdin first (production mode)
-    const decoder = new TextDecoder();
-    const reader = Deno.stdin.readable.getReader();
-    const readPromise = reader.read();
-    
-    // Add timeout for test environments where stdin may not be immediately ready
-    // This prevents hanging in pytest subprocess execution
-    const timeoutPromise = new Promise<{value?: Uint8Array, done: boolean}>((resolve) => 
-      setTimeout(() => resolve({ value: undefined, done: true }), 100)
-    );
-    
-    const result = await Promise.race([readPromise, timeoutPromise]);
-    
-    if (result.value && result.value.length > 0) {
-      code = decoder.decode(result.value).trim();
-    } else {
-      // Fall back to command-line args (test mode or empty stdin)
-      code = Deno.args[0] || "";
-    }
-    
-    // Clean up reader
-    reader.releaseLock();
-  } catch (e) {
-    // If stdin fails completely, use command-line args
-    // This is expected in some test environments
-    code = Deno.args[0] || "";
+async function readFullStdin(): Promise<string> {
+  const reader = Deno.stdin.readable.getReader();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) chunks.push(value);
   }
-  
+  reader.releaseLock();
+  if (chunks.length === 0) return "";
+  const total = chunks.reduce((acc, c) => acc + c.length, 0);
+  const all = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    all.set(c, offset);
+    offset += c.length;
+  }
+  return new TextDecoder().decode(all).trim();
+}
+
+if (import.meta.main) {
+  // Prefer command-line arg if provided (compat), else read entire stdin
+  let code = Deno.args.length > 0 ? Deno.args[0] : await readFullStdin();
+
   if (!code || code.trim() === "") {
     const errorResponse = createErrorResponse(
       "No code provided via stdin or command-line arguments",
-      ErrorCodes.CODE_EMPTY
+      ErrorCodes.CODE_EMPTY,
     );
     console.log(errorResponse);
     Deno.exit(1);
@@ -412,4 +450,3 @@ if (import.meta.main) {
   // Result is already logged inside executeUserCode, but we need to check error for exit code
   Deno.exit(result.error ? 1 : 0);
 }
-

@@ -30,8 +30,6 @@ Before starting, ensure you have:
 
 ---
 
-## Step 1: Create a GitHub App
-
 ## Required Permissions
 
 For all **109 tools** to work with GitHub App authentication, configure these repository permissions:
@@ -106,7 +104,7 @@ The server implements automatic auth fallback:
 
 ## Setup Steps
 
-### Step 1: Create GitHub App
+### Step 1: Create a GitHub App
 
 1. Go to: https://github.com/settings/apps/new
 2. Fill in:
@@ -262,4 +260,4 @@ After changing app permissions:
 
 ---
 
-*Last updated: November 2025 (v2.4.0)*
+*Last updated: December 2025 (v2.5.0)*

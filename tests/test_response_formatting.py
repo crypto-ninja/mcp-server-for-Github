@@ -15,15 +15,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import (  # noqa: E402
+from src.github_mcp.tools import (
     github_get_repo_info,
     github_list_issues,
     github_search_code,
-    RepoInfoInput,
-    ListIssuesInput,
-    SearchCodeInput,
-    ResponseFormat,
 )
+from src.github_mcp.models import RepoInfoInput, ListIssuesInput, SearchCodeInput
+from src.github_mcp.models import ResponseFormat
 
 
 def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
@@ -62,7 +60,7 @@ class TestResponseFormatting:
     """Test different response formats."""
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_json_response_formatting(self, mock_request):
         """Test JSON response formatting."""
         data = {
@@ -91,7 +89,7 @@ class TestResponseFormatting:
         assert parsed["nested"]["inner"] == "data"
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_markdown_response_formatting(self, mock_request):
         """Test Markdown response formatting."""
         data = {
@@ -131,7 +129,7 @@ class TestResponseFormatting:
         assert "test-repo" in result or "100" in result or "50" in result or "Error" in result
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.issues._make_github_request')
     async def test_json_list_response_formatting(self, mock_request):
         """Test JSON formatting for list responses."""
         data = [
@@ -157,7 +155,7 @@ class TestResponseFormatting:
         assert parsed[0]["number"] == 1
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.issues._make_github_request')
     async def test_markdown_list_response_formatting(self, mock_request):
         """Test Markdown formatting for list responses."""
         data = [
@@ -202,7 +200,7 @@ class TestResponseFormatting:
         assert "Issue 1" in result or "Issue 2" in result or "1" in result
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_default_markdown_format(self, mock_request):
         """Test that default format is Markdown."""
         data = {
@@ -249,7 +247,7 @@ class TestResponseFormatting:
             assert "test-repo" in result or "Test" in result or "Error" in result
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.search._make_github_request')
     async def test_search_results_json_format(self, mock_request):
         """Test search results in JSON format."""
         data = {
@@ -289,7 +287,7 @@ class TestErrorResponseFormatting:
     """Test error response formatting."""
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_error_response_json_format(self, mock_request):
         """Test error response in JSON format."""
         # Mock error
@@ -312,7 +310,7 @@ class TestErrorResponseFormatting:
         assert "error" in result.lower() or "not found" in result.lower() or "404" in result
 
     @pytest.mark.asyncio
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_error_response_markdown_format(self, mock_request):
         """Test error response in Markdown format."""
         # Mock error
