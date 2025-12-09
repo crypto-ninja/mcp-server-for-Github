@@ -17,7 +17,8 @@ import sys
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp  # noqa: E402
+from src.github_mcp.tools import __all__ as all_tool_names  # noqa: E402
+from src.github_mcp import tools as tools_module  # noqa: E402
 import inspect  # noqa: E402
 
 
@@ -52,20 +53,21 @@ def get_python_tools_with_response_format() -> Set[str]:
     """Get all Python tools that support response_format."""
     tools = set()
     
-    for name, obj in inspect.getmembers(github_mcp):
-        # Include github_, repo_, workspace_ prefixed tools
-        if (inspect.iscoroutinefunction(obj) or inspect.isfunction(obj)) and \
-           (name.startswith('github_') or name.startswith('repo_') or name.startswith('workspace_')):
-            sig = inspect.signature(obj)
-            params = sig.parameters
-            
-            if 'params' in params:
-                param_type = params['params'].annotation
-                if inspect.isclass(param_type):
-                    if hasattr(param_type, 'model_fields'):
-                        fields = param_type.model_fields
-                        if 'response_format' in fields:
-                            tools.add(name)
+    # Get all tools from tools module
+    for tool_name in all_tool_names:
+        if hasattr(tools_module, tool_name):
+            tool_func = getattr(tools_module, tool_name)
+            if inspect.iscoroutinefunction(tool_func) or inspect.isfunction(tool_func):
+                sig = inspect.signature(tool_func)
+                params = sig.parameters
+                
+                if 'params' in params:
+                    param_type = params['params'].annotation
+                    if inspect.isclass(param_type):
+                        if hasattr(param_type, 'model_fields'):
+                            fields = param_type.model_fields
+                            if 'response_format' in fields:
+                                tools.add(tool_name)
     
     return tools
 
@@ -84,7 +86,8 @@ class TestClientServerContract:
         if missing_in_python:
             pytest.fail(
                 "Tools in READ_TOOLS_WITH_JSON_SUPPORT but don't support response_format in Python:\n" +
-                "\n".join(f"  - {tool}" for tool in sorted(missing_in_python))
+                "\n".join(f"  - {tool}" for tool in sorted(missing_in_python)) +
+                "\n\nNote: If workspace tools are missing, they may need to be implemented."
             )
         
         # All tools match (verified by assertion above)
@@ -105,7 +108,7 @@ class TestClientServerContract:
     
     def test_response_format_enum_consistency(self):
         """Verify response_format uses consistent enum values."""
-        from github_mcp import ResponseFormat
+        from src.github_mcp.models import ResponseFormat
         
         # Check enum values
         assert hasattr(ResponseFormat, 'JSON'), "ResponseFormat should have JSON value"

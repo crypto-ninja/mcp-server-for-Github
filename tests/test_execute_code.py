@@ -12,13 +12,8 @@ if str(project_root / "src") in sys.path:
     sys.path.remove(str(project_root / "src"))
 sys.path.insert(0, str(project_root))
 
-# Import the tool directly using importlib (like test_smoke.py)
-import importlib  # noqa: E402
-# Force reload to get the root module, not the package
-if "github_mcp" in sys.modules:
-    del sys.modules["github_mcp"]
-github_mcp = importlib.import_module("github_mcp")
-execute_code = github_mcp.execute_code
+# Import execute_code from the new modular structure
+from src.github_mcp.server import execute_code  # noqa: E402
 
 
 def _fix_windows_encoding():

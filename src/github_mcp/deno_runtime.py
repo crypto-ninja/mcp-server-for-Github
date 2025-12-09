@@ -3,6 +3,8 @@ Deno Runtime for executing TypeScript code with MCP tool access.
 
 This module spawns a Deno subprocess to execute user-provided TypeScript code
 with access to GitHub MCP tools via the MCP client bridge.
+
+Supports connection pooling for improved performance.
 """
 
 import subprocess
@@ -10,6 +12,9 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+# Enable connection pooling by default (can be disabled via env var)
+USE_CONNECTION_POOL = os.environ.get("DENO_POOL_ENABLED", "true").lower() == "true"
 
 
 class DenoRuntime:
@@ -21,6 +26,29 @@ class DenoRuntime:
         self.deno_executor_path = project_root / "deno_executor" / "mod.ts"
         self.servers_path = project_root / "servers"
         self.project_root = project_root
+        
+    async def execute_code_async(self, code: str) -> Dict[str, Any]:
+        """
+        Execute TypeScript code in Deno runtime (async version with pooling support).
+        
+        Args:
+            code: TypeScript code to execute
+            
+        Returns:
+            Dict with 'error', 'message'/'data', and optional 'code' keys
+        """
+        if USE_CONNECTION_POOL:
+            try:
+                from .utils.deno_pool import execute_with_pool
+                return await execute_with_pool(code)
+            except ImportError:
+                # Fallback to non-pooled execution if pool not available
+                pass
+        
+        # Fallback to synchronous execution (wrap in async)
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.execute_code, code)
         
     def execute_code(self, code: str) -> Dict[str, Any]:
         """
@@ -136,6 +164,10 @@ class DenoRuntime:
                 "message": f"Execution error: {str(e)}",
                 "code": "EXECUTION_ERROR"
             }
+
+    async def execute(self, code: str) -> Dict[str, Any]:
+        """Alias for execute_code_async for convenience/backward compatibility."""
+        return await self.execute_code_async(code)
 
 
 # Global instance

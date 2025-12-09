@@ -19,25 +19,32 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import after path setup
-import github_mcp  # noqa: E402
-from github_mcp import ResponseFormat  # noqa: E402
+from src.github_mcp.tools import __all__ as all_tool_names  # noqa: E402
+from src.github_mcp import tools as tools_module  # noqa: E402
+from src.github_mcp.server import execute_code  # noqa: E402
+from src.github_mcp.models import ResponseFormat  # noqa: E402
+from src.github_mcp import models as models_module  # noqa: E402
 
 
 def get_all_tools() -> List[Dict[str, Any]]:
     """Get list of all registered MCP tools by inspecting functions."""
     tools = []
     
-    # Get all functions from github_mcp module
-    for name, obj in inspect.getmembers(github_mcp):
-        # Look for async functions that start with github_, repo_, workspace_, or are execute_code
-        # Note: health_check is no longer an MCP tool (it's internal/CLI only)
-        if (inspect.iscoroutinefunction(obj) or inspect.isfunction(obj)) and \
-           (name.startswith('github_') or name.startswith('repo_') or 
-            name.startswith('workspace_') or name == 'execute_code'):
-            tools.append({
-                'name': name,
-                'function': obj
-            })
+    # Get all tools from tools module
+    for tool_name in all_tool_names:
+        if hasattr(tools_module, tool_name):
+            tool_func = getattr(tools_module, tool_name)
+            if inspect.iscoroutinefunction(tool_func) or inspect.isfunction(tool_func):
+                tools.append({
+                    'name': tool_name,
+                    'function': tool_func
+                })
+    
+    # Add execute_code
+    tools.append({
+        'name': 'execute_code',
+        'function': execute_code
+    })
     
     return tools
 
@@ -59,9 +66,9 @@ def get_tool_input_model(tool_name: str) -> Optional[Any]:
         param_type = params['params'].annotation
         # If it's a string annotation, try to resolve it
         if isinstance(param_type, str):
-            # Try to get from module
-            if hasattr(github_mcp, param_type):
-                return getattr(github_mcp, param_type)
+            # Try to get from models module
+            if hasattr(models_module, param_type):
+                return getattr(models_module, param_type)
         elif inspect.isclass(param_type):
             return param_type
     
@@ -124,7 +131,7 @@ class TestToolSchemas:
             input_model = get_tool_input_model(tool_name)
             
             if not input_model:
-                mismatches.append(f"{tool_name}: Could not find input model")
+                mismatches.append(f"{tool_name}: Could not find input model (tool may not be implemented yet)")
                 continue
             
             # Check if response_format field exists

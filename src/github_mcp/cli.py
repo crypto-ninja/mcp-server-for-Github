@@ -19,7 +19,8 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Import functions (these are now internal, not MCP tools)
-import github_mcp  # noqa: E402
+from src.github_mcp.utils.health import health_check  # noqa: E402
+from src.github_mcp.server import check_deno_installed  # noqa: E402
 from auth.github_app import clear_token_cache  # noqa: E402
 
 
@@ -33,7 +34,7 @@ def cli():
 def health():
     """Check server health status."""
     try:
-        result = asyncio.run(github_mcp.health_check())
+        result = asyncio.run(health_check())
         # Try to pretty-print JSON if it's JSON
         try:
             data = json.loads(result)
@@ -62,7 +63,7 @@ def clear_cache():
 @cli.command()
 def check_deno():
     """Verify Deno installation."""
-    installed, info = github_mcp.check_deno_installed()
+    installed, info = check_deno_installed()
     if installed:
         click.echo(f"✅ Deno is installed: {info}")
     else:

@@ -29,9 +29,10 @@ const prTools = getToolsInCategory("Pull Requests");
 const result = await callMCPTool("tool_name", { params });
 ```
 
-**Example:**
+**Key Feature:** `callMCPTool` automatically converts JavaScript objects to Pydantic models, so you can pass plain objects:
 
 ```typescript
+// This works! Dict params are automatically converted to models
 const issue = await callMCPTool("github_create_issue", {
   owner: "username",
   repo: "repository", 
@@ -39,6 +40,36 @@ const issue = await callMCPTool("github_create_issue", {
   body: "Issue description"
 });
 // Result contains: number, html_url, title, state, labels, assignees, etc.
+```
+
+**Multiline Code Support:** You can write complex workflows with multiple tool calls:
+
+```typescript
+// Get repository info
+const repo = await callMCPTool("github_get_repo_info", {
+  owner: "facebook",
+  repo: "react"
+});
+
+// List branches
+const branches = await callMCPTool("github_list_branches", {
+  owner: "facebook",
+  repo: "react"
+});
+
+// List open issues
+const issues = await callMCPTool("github_list_issues", {
+  owner: "facebook",
+  repo: "react",
+  state: "open"
+});
+
+// Return combined result
+return { 
+  repo: repo.name, 
+  branchCount: branches.length, 
+  openIssues: issues.length 
+};
 ```
 
 ## Response Formats
@@ -60,30 +91,31 @@ const display = await callMCPTool("github_list_branches", {
 });
 ```
 
-## Tool Categories (109 total)
+## Tool Categories (109 total across 21 categories)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|
-| Repository Management | 10 | get_repo_info, create_repository, search_repositories, list_collaborators, check_collaborator, list_teams |
-| Branch Management | 5 | list/create/get/delete/compare_branches |
-| Issues | 5 | list/create/update_issue, add_issue_comment, search_issues |
-| Pull Requests | 7 | create/merge/close_pr, get_pr_details, create_pr_review |
+| GitHub Actions | 15 | list_workflows, get_workflow_runs, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact, suggest_workflow |
+| Security & Dependabot | 13 | list_dependabot_alerts, get_dependabot_alert, update_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
 | File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
-| Releases | 4 | list/get/create/update_release |
-| Search | 1 | search_code |
-| Commits | 1 | list_commits |
-| Users | 5 | get_authenticated_user, get_user_info, list_user_repos, list_org_repos, search_users |
-| GitHub Actions | 14 | list_workflows, get_workflow_runs, get_workflow, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact |
-| Security | 13 | list_dependabot_alerts, get_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
-| Projects | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
-| Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |
+| Projects & Boards | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
+| Repository Management | 8 | get_repo_info, create_repository, delete_repository, update_repository, transfer_repository, archive_repository, list_user_repos, list_org_repos |
+| Pull Requests | 7 | create/merge/close_pr, get_pr_details, get_pr_overview_graphql, create_pr_review |
 | Notifications | 6 | list_notifications, get_thread, mark_thread_read, mark_notifications_read, get_subscription, set_subscription |
+| Branch Management | 5 | list/create/get/delete/compare_branches |
 | Gists | 4 | list_gists, get_gist, create_gist, update_gist |
+| Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |
+| Releases | 4 | list/get/create/update_release |
+| Search | 3 | search_code, search_repositories, search_issues |
+| Collaborators | 3 | list_collaborators, check_collaborator, list_teams |
+| Issues | 3 | list/create/update_issue |
 | Labels | 3 | list_labels, create_label, delete_label |
 | Stargazers | 3 | list_stargazers, star_repository, unstar_repository |
-| Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |
-| Licensing | 1 | license_info |
-| Advanced | 1 | suggest_workflow |
+| Users | 3 | get_user_info, get_authenticated_user, search_users |
+| Workspace (Local Files) | 3 | repo_read_file_chunk, workspace_grep, str_replace |
+| Commits | 1 | list_commits |
+| Comments | 1 | add_issue_comment |
+| Miscellaneous | 1 | license_info |
 
 ## Authentication
 
@@ -121,6 +153,7 @@ When calling tools, you may encounter HTTP errors:
 When executing code via `execute_code`, responses use a standardized format:
 
 **Success:**
+
 ```typescript
 {
   error: false,
@@ -129,6 +162,7 @@ When executing code via `execute_code`, responses use a standardized format:
 ```
 
 **Error:**
+
 ```typescript
 {
   error: true,
@@ -139,6 +173,7 @@ When executing code via `execute_code`, responses use a standardized format:
 ```
 
 Common error codes:
+
 - `VALIDATION_ERROR` - Code failed validation (blocked patterns, etc.)
 - `EXECUTION_ERROR` - Runtime error during execution
 - `TOOL_ERROR` - Error calling an MCP tool
@@ -148,7 +183,7 @@ See [Error Handling Guide](docs/ERROR_HANDLING.md) for complete documentation.
 
 ## Multi-Step Workflows
 
-Chain tools in a single execution for efficiency:
+Chain tools in a single execution for efficiency. **Connection pooling** makes subsequent tool calls 97% faster (~108ms vs ~4000ms):
 
 ```typescript
 // Create branch → Add file → Open PR
@@ -172,10 +207,24 @@ const pr = await callMCPTool("github_create_pull_request", {
 return { branch: branch.branch, file: file.success, pr_url: pr.pr.html_url };
 ```
 
+**Performance Note:** The first `execute_code` call takes ~4000ms (cold start), but subsequent calls within the same session use connection pooling and complete in ~108ms (97% faster!).
+
+## Performance
+
+**Connection Pooling:** The server uses persistent Deno processes with MCP connections, providing:
+
+- **First call:** ~4000ms (cold start - process creation + MCP initialization)
+- **Subsequent calls:** ~108ms (warm - pooled process reuse)
+- **97% latency reduction** for multi-tool workflows
+
+This means chaining multiple tool calls in a single `execute_code` execution is highly efficient.
+
 ## Key Principles
 
 1. **Discover first** - Use `listAvailableTools()` or `searchTools()` when unsure
 2. **Inspect before calling** - `getToolInfo()` shows required params and return structure
-3. **Chain for efficiency** - Multiple tools in one `execute_code` is better than multiple calls
-4. **Results contain IDs and URLs** - Useful for chaining (e.g., `issue.number`, `pr.html_url`)
-5. **Human intent drives usage** - What you DO with results depends on what the human asked for
+3. **Chain for efficiency** - Multiple tools in one `execute_code` is better than multiple calls (97% faster with pooling!)
+4. **Dict params work** - Pass plain JavaScript objects to `callMCPTool` - they're automatically converted to Pydantic models
+5. **Multiline code supported** - Write complex workflows with multiple tool calls, conditionals, and loops
+6. **Results contain IDs and URLs** - Useful for chaining (e.g., `issue.number`, `pr.html_url`)
+7. **Human intent drives usage** - What you DO with results depends on what the human asked for

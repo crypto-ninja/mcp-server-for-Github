@@ -18,7 +18,8 @@ import sys
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import github_mcp  # noqa: E402
+from src.github_mcp import tools as tools_module  # noqa: E402
+from src.github_mcp import models as models_module  # noqa: E402
 
 
 def read_typescript_tool_list() -> List[str]:
@@ -57,8 +58,8 @@ def get_python_tools() -> Dict[str, Dict]:
     """Get all Python tools by inspecting function definitions."""
     tools = {}
     
-    # Get all functions from github_mcp module
-    for name, obj in inspect.getmembers(github_mcp):
+    # Get all functions from tools module
+    for name, obj in inspect.getmembers(tools_module):
         # Look for async functions that start with github_, repo_, or workspace_
         if (inspect.iscoroutinefunction(obj) or inspect.isfunction(obj)) and \
            (name.startswith('github_') or name.startswith('repo_') or name.startswith('workspace_')):
@@ -73,8 +74,8 @@ def get_python_tools() -> Dict[str, Dict]:
                 if inspect.isclass(param_type):
                     param_model = param_type
                 elif isinstance(param_type, str):
-                    if hasattr(github_mcp, param_type):
-                        param_model = getattr(github_mcp, param_type)
+                    if hasattr(models_module, param_type):
+                        param_model = getattr(models_module, param_type)
             
             tools[name] = {
                 'name': name,
@@ -84,8 +85,8 @@ def get_python_tools() -> Dict[str, Dict]:
     
     # Also check for execute_code (health_check is no longer an MCP tool)
     for name in ['execute_code']:
-        if hasattr(github_mcp, name):
-            obj = getattr(github_mcp, name)
+        if hasattr(tools_module, name):
+            obj = getattr(tools_module, name)
             if inspect.iscoroutinefunction(obj) or inspect.isfunction(obj):
                 tools[name] = {
                     'name': name,
@@ -121,8 +122,8 @@ def get_tool_input_model(tool_name: str) -> any:
         if inspect.isclass(param_type):
             return param_type
         elif isinstance(param_type, str):
-            if hasattr(github_mcp, param_type):
-                return getattr(github_mcp, param_type)
+            if hasattr(models_module, param_type):
+                return getattr(models_module, param_type)
     
     return None
 

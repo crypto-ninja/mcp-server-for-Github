@@ -1,0 +1,148 @@
+[33mtag v2.5.0[m
+Tagger: crypto-ninja <davidprodrick@outlook.com>
+Date:   Thu Dec 4 15:44:51 2025 +0000
+
+Phase 2 Full Send: 109 tools
+
+New tools added (47):
+- GitHub Actions expansion (12 tools)
+- Security Suite (13 tools): Dependabot, Code Scanning, Secret Scanning, Advisories
+- Projects (9 tools)
+- Discussions (4 tools)
+- Notifications (6 tools)
+- Collaborators & Teams (3 tools)
+
+Total: 109 tools
+
+[33mcommit 3242afea2e5665e7a9667ba0c33101d02ed87ff3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv2.5.0[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: crypto-ninja <davidprodrick@outlook.com>
+Date:   Thu Dec 4 15:28:54 2025 +0000
+
+    chore: bump version to 2.5.0, update docs for 109 tools
+
+[1mdiff --git a/CHANGELOG.md b/CHANGELOG.md[m
+[1mindex 527382e..5f07f92 100644[m
+[1m--- a/CHANGELOG.md[m
+[1m+++ b/CHANGELOG.md[m
+[36m@@ -1,5 +1,49 @@[m
+ # Changelog[m
+ [m
+[32m+[m[32m## [2.5.0] - 2025-12-04[m
+[32m+[m
+[32m+[m[32m### Added[m
+[32m+[m
+[32m+[m[32m- **Phase 2 Full Send: 47 new tools (62 → 109 total)**[m
+[32m+[m
+[32m+[m[32m#### GitHub Actions Expansion (12 tools)[m
+[32m+[m[32m- `github_get_workflow`, `github_trigger_workflow`, `github_get_workflow_run`[m
+[32m+[m[32m- `github_list_workflow_run_jobs`, `github_get_job`, `github_get_job_logs`[m
+[32m+[m[32m- `github_rerun_workflow`, `github_rerun_failed_jobs`, `github_cancel_workflow_run`[m
+[32m+[m[32m- `github_list_workflow_run_artifacts`, `github_get_artifact`, `github_delete_artifact`[m
+[32m+[m
+[32m+[m[32m#### Security Suite (13 tools)[m
+[32m+[m[32m- Dependabot: `github_list_dependabot_alerts`, `github_get_dependabot_alert`, `github_update_dependabot_alert`, `github_list_org_dependabot_alerts`[m
+[32m+[m[32m- Code Scanning: `github_list_code_scanning_alerts`, `github_get_code_scanning_alert`, `github_update_code_scanning_alert`, `github_list_code_scanning_analyses`[m
+[32m+[m[32m- Secret Scanning: `github_list_secret_scanning_alerts`, `github_get_secret_scanning_alert`, `github_update_secret_scanning_alert`[m
+[32m+[m[32m- Security Advisories: `github_list_repo_security_advisories`, `github_get_security_advisory`[m
+[32m+[m
+[32m+[m[32m#### Projects (9 tools)[m
+[32m+[m[32m- `github_list_repo_projects`, `github_list_org_projects`, `github_get_project`[m
+[32m+[m[32m- `github_create_repo_project`, `github_create_org_project`, `github_update_project`, `github_delete_project`[m
+[32m+[m[32m- `github_list_project_columns`, `github_create_project_column`[m
+[32m+[m
+[32m+[m[32m#### Discussions (4 tools)[m
+[32m+[m[32m- `github_list_discussions`, `github_get_discussion`[m
+[32m+[m[32m- `github_list_discussion_categories`, `github_list_discussion_comments`[m
+[32m+[m
+[32m+[m[32m#### Notifications (6 tools)[m
+[32m+[m[32m- `github_list_notifications`, `github_get_thread`, `github_mark_thread_read`[m
+[32m+[m[32m- `github_mark_notifications_read`, `github_get_thread_subscription`, `github_set_thread_subscription`[m
+[32m+[m
+[32m+[m[32m#### Collaborators & Teams (3 tools)[m
+[32m+[m[32m- `github_list_repo_collaborators`, `github_check_collaborator`, `github_list_repo_teams`[m
+[32m+[m
+[32m+[m[32m### Changed[m
+[32m+[m
+[32m+[m[32m- Total tools: 109 (108 internal + execute_code)[m
+[32m+[m[32m- Now EXCEEDS GitHub's official MCP server (~99 tools)[m
+[32m+[m[32m- New categories: Security, Projects, Discussions, Notifications[m
+[32m+[m[32m- GitHub Actions category expanded: 2 → 14 tools[m
+[32m+[m[32m- Repository Management category expanded: 7 → 10 tools (added Collaborators & Teams)[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+ ## [2.4.0] - 2025-12-04[m
+ [m
+ ### Added[m
+[36m@@ -16,7 +60,7 @@[m
+ [m
+ - Total tools: 62 (61 internal + execute_code)[m
+ - New categories: Gists, Labels, Stargazers[m
+[31m-- Updated all documentation to reflect 62 tools[m
+[32m+[m[32m- Updated all documentation to reflect 62 tools (historical - now 109 in v2.5.0)[m
+ [m
+ ---[m
+ [m
+[1mdiff --git a/CLAUDE.md b/CLAUDE.md[m
+[1mindex 1a9c792..ae6fb08 100644[m
+[1m--- a/CLAUDE.md[m
+[1m+++ b/CLAUDE.md[m
+[36m@@ -2,7 +2,7 @@[m
+ [m
+ ## What You Have[m
+ [m
+[31m-**62 GitHub tools** accessed through a single `execute_code` tool.[m
+[32m+[m[32m**109 GitHub tools** accessed through a single `execute_code` tool.[m
+ Write TypeScript to discover, call, and chain tools dynamically.[m
+ [m
+ ## Tool Discovery[m
+[36m@@ -58,11 +58,11 @@[m [mconst display = await callMCPTool("github_list_branches", {[m
+ });[m
+ ```[m
+ [m
+[31m-## Tool Categories (62 total)[m
+[32m+[m[32m## Tool Categories (109 total)[m
+ [m
+ | Category | Count | Key Tools |[m
+ |----------|-------|-----------|[m
+[31m-| Repository Management | 7 | get_repo_info, create_repository, search_repositories |[m
+[32m+[m[32m| Repository Management | 10 | get_repo_info, create_repository, search_repositories, list_collaborators, check_collaborator, list_teams |[m
+ | Branch Management | 5 | list/create/get/delete/compare_branches |[m
+ | Issues | 5 | list/create/update_issue, add_issue_comment, search_issues |[m
+ | Pull Requests | 7 | create/merge/close_pr, get_pr_details, create_pr_review |[m
+[36m@@ -71,7 +71,14 @@[m [mconst display = await callMCPTool("github_list_branches", {[m
+ | Search | 1 | search_code |[m
+ | Commits | 1 | list_commits |[m
+ | Users | 5 | get_authenticated_user, get_user_info, list_user_repos, list_org_repos, search_users |[m
+[31m-| GitHub Actions | 2 | list_workflows, get_workflow_runs |[m
+[32m+[m[32m| GitHub Actions | 14 | list_workflows, get_workflow_runs, get_workflow, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact |[m
+[32m+[m[32m| Security | 13 | list_dependabot_alerts, get_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |[m
+[32m+[m[32m| Projects | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |[m
+[32m+[m[32m| Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |[m
+[32m+[m[32m| Notifications | 6 | list_notifications, get_thread, mark_thread_read, mark_notifications_read, get_subscription, set_subscription |[m
+[32m+[m[32m| Gists | 4 | list_gists, get_gist, create_gist, update_gist |[m
+[32m+[m[32m| Labels | 3 | list_labels, create_label, delete_label |[m
+[32m+[m[32m| Stargazers | 3 | list_stargazers, star_repository, unstar_repository |[m
+ | Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |[m
+ | Licensing | 1 | license_info |[m
+ | Advanced | 1 | suggest_workflow |[m
+[1mdiff --git a/README.md b/README.md[m
+[1mindex 2e17e8f..1fe8a60 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -3,8 +3,8 @@[m
+ [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)[m
+ [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)[m
+ [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)[m
+[31m-[![Tools](https://img.shields.io/badge/Tools-62-brightgreen.svg)](#-available-tools)[m
+[31m-[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.4.0)[m
+[32m+[m[32m[![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)[m
+[32m+[m[32m[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/crypto-ninja/github-mcp-server/releases/tag/v2.5.0)[m
+ [m
+ > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.[m
+ [m
+[36m@@ -12,9 +12,21 @@[m
+ [m
+ ## ✨ What's New[m
+ [m
+[31m-### 🚀 Latest: v2.4.0 - Phase 1 Tool Expansion (December 4, 

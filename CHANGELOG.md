@@ -1,5 +1,50 @@
 # Changelog
 
+## [2.5.1] - 2025-12-09
+
+### Changed
+
+- **BREAKING**: Modular restructure - `github_mcp.py` reduced from 10,857 to ~50 lines
+- Tools now organized in `src/github_mcp/tools/` (21 modules)
+- Models in `src/github_mcp/models/`
+- Utilities in `src/github_mcp/utils/`
+- Authentication in `src/github_mcp/auth/`
+- Removed backward compatibility exports from `src/github_mcp/__init__.py`
+
+### Added
+
+- Connection pooling for Deno runtime (97% latency reduction)
+- JSON protocol for multiline code support in pooled executor
+- Dict→Pydantic model conversion in tool wrappers (enables `callMCPTool` with plain objects)
+- Live integration test suite (15/15 passing)
+- `execute()` alias in DenoRuntime for convenience
+- Pool statistics and monitoring utilities
+- Comprehensive architecture documentation (ARCHITECTURE_ANALYSIS.md)
+
+### Fixed
+
+- Multiline code execution (was truncating at first line/newline)
+- `callMCPTool` now works with plain dict params (automatic model conversion)
+- `github_list_branches` no longer requires auth for public repos
+- `.env` loading in test scripts (added `python-dotenv` support)
+- Path calculations for Deno executor in connection pool
+
+### Performance
+
+- First execution: ~4000ms (cold start - process creation + MCP initialization)
+- Subsequent executions: ~108ms (warm - pooled process reuse)
+- **97% latency reduction** for multi-tool workflows
+- Token efficiency: 98% reduction (800 vs 70,000 tokens)
+
+### Testing
+
+- 297 tests total (up from 214)
+- 15/15 live integration tests passing
+- All read/write operations verified
+- Connection pooling verified in live tests
+
+---
+
 ## [2.5.0] - 2025-12-04
 
 ### Added

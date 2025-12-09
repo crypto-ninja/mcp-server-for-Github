@@ -15,7 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from github_mcp import (  # noqa: E402
+from src.github_mcp.tools import (
     github_create_file,
     github_update_file,
     github_delete_file,
@@ -27,25 +27,15 @@ from github_mcp import (  # noqa: E402
     github_transfer_repository,
     github_archive_repository,
     github_merge_pull_request,
-    CreateFileInput,
-    UpdateFileInput,
-    DeleteFileInput,
-    CreateReleaseInput,
-    UpdateReleaseInput,
-    CreateRepositoryInput,
-    DeleteRepositoryInput,
-    UpdateRepositoryInput,
-    TransferRepositoryInput,
-    ArchiveRepositoryInput,
-    MergePullRequestInput,
 )
+from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, CreateRepositoryInput, DeleteRepositoryInput, UpdateRepositoryInput, TransferRepositoryInput, ArchiveRepositoryInput, MergePullRequestInput
 
 
 class TestWriteOperationsAuthValidation:
     """Test authentication validation in write operations."""
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.files._get_auth_token_fallback')
     async def test_github_create_file_no_auth(self, mock_get_token):
         """Test github_create_file returns error when no auth token."""
         mock_get_token.return_value = None
@@ -70,8 +60,8 @@ class TestWriteOperationsAuthValidation:
         mock_get_token.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
-    @patch('github_mcp._make_github_request')
+    @patch('src.github_mcp.tools.files._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.files._make_github_request')
     async def test_github_create_file_with_auth(self, mock_request, mock_get_token):
         """Test github_create_file works with valid auth."""
         mock_get_token.return_value = "valid_token"
@@ -96,7 +86,7 @@ class TestWriteOperationsAuthValidation:
         mock_request.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.files._get_auth_token_fallback')
     async def test_github_update_file_no_auth(self, mock_get_token):
         """Test github_update_file returns error when no auth token."""
         mock_get_token.return_value = None
@@ -117,7 +107,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.files._get_auth_token_fallback')
     async def test_github_delete_file_no_auth(self, mock_get_token):
         """Test github_delete_file returns error when no auth token."""
         mock_get_token.return_value = None
@@ -137,7 +127,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
     async def test_github_create_release_no_auth(self, mock_get_token):
         """Test github_create_release returns error when no auth token."""
         mock_get_token.return_value = None
@@ -156,7 +146,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
     async def test_github_update_release_no_auth(self, mock_get_token):
         """Test github_update_release returns error when no auth token."""
         mock_get_token.return_value = None
@@ -174,7 +164,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_create_repository_no_auth(self, mock_get_token):
         """Test github_create_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -190,7 +180,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_delete_repository_no_auth(self, mock_get_token):
         """Test github_delete_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -207,7 +197,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_update_repository_no_auth(self, mock_get_token):
         """Test github_update_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -225,7 +215,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_transfer_repository_no_auth(self, mock_get_token):
         """Test github_transfer_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -243,7 +233,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_archive_repository_no_auth(self, mock_get_token):
         """Test github_archive_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -261,7 +251,7 @@ class TestWriteOperationsAuthValidation:
         assert data["success"] is False
 
     @pytest.mark.asyncio
-    @patch('github_mcp._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.pull_requests._get_auth_token_fallback')
     async def test_github_merge_pull_request_no_auth(self, mock_get_token):
         """Test github_merge_pull_request returns error when no auth token."""
         mock_get_token.return_value = None

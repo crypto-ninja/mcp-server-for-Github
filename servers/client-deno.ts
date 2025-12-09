@@ -408,6 +408,23 @@ export async function closeMCPClient(): Promise<void> {
  * Check if client is connected
  */
 export function isConnected(): boolean {
-    return mcpClient !== null;
+    return mcpClient !== null && mcpTransport !== null;
+}
+
+/**
+ * Get connection health status
+ * 
+ * @returns Object with connection status and details
+ */
+export async function getConnectionHealth(): Promise<{
+    connected: boolean;
+    initialized: boolean;
+    transportActive: boolean;
+}> {
+    return {
+        connected: mcpClient !== null,
+        initialized: mcpClient !== null,
+        transportActive: mcpTransport !== null
+    };
 }
 
