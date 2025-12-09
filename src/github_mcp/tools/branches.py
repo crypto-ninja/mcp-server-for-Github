@@ -60,9 +60,6 @@ async def github_list_branches(params: ListBranchesInput) -> str:
             params=query_params
         )
         
-        # GitHub API returns a list for branches endpoint
-        branches_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
-        
         repo_info: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}",
             method="GET",
