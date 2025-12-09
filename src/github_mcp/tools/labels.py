@@ -1,6 +1,6 @@
 """Labels tools for GitHub MCP Server."""
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Union, cast
 import json
 
 from ..models.inputs import (
@@ -21,12 +21,14 @@ async def github_list_labels(params: ListLabelsInput) -> str:
         if params.page:
             query["page"] = params.page
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/labels",
             token=params.token,
             params=query
         )
-        return json.dumps(data, indent=2)
+        # GitHub API returns a list for labels endpoint
+        labels_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        return json.dumps(labels_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 
@@ -52,7 +54,7 @@ async def github_create_label(params: CreateLabelInput) -> str:
         if params.description is not None:
             payload["description"] = params.description
         
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/labels",
             method="POST",
             token=auth_token,

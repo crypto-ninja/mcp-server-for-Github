@@ -1,6 +1,7 @@
 """Comments tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any
 
 from ..models.inputs import (
     AddIssueCommentInput,
@@ -41,7 +42,7 @@ async def github_add_issue_comment(params: AddIssueCommentInput) -> str:
             "body": params.body,
         }
         
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues/{params.issue_number}/comments",
             method="POST",
             token=auth_token,

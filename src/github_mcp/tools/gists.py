@@ -1,6 +1,6 @@
 """Gists tools for GitHub MCP Server."""
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Union, cast
 import json
 
 from ..models.inputs import (
@@ -46,13 +46,14 @@ async def github_list_gists(params: ListGistsInput) -> str:
         else:
             endpoint = "gists"
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             endpoint,
             token=auth_token,
             params=query
         )
-        
-        return json.dumps(data, indent=2)
+        # GitHub API returns a list for gists endpoint
+        gists_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        return json.dumps(gists_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 
@@ -63,7 +64,7 @@ async def github_get_gist(params: GetGistInput) -> str:
     Get detailed information about a specific gist including files and metadata.
     """
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"gists/{params.gist_id}",
             token=params.token
         )
@@ -99,7 +100,7 @@ async def github_create_gist(params: CreateGistInput) -> str:
         if params.description is not None:
             payload["description"] = params.description
         
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             "gists",
             method="POST",
             token=auth_token,
@@ -141,7 +142,7 @@ async def github_update_gist(params: UpdateGistInput) -> str:
                     files_payload[filename] = {"content": file_def.content}
             payload["files"] = files_payload
         
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"gists/{params.gist_id}",
             method="PATCH",
             token=auth_token,
