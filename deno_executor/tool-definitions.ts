@@ -817,8 +817,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner", example: "facebook" },
       repo: { type: "string", required: true, description: "Repository name", example: "react" },
       path: { type: "string", required: true, description: "File path in repository", example: "src/index.js" },
-      start_line: { type: "number", required: false, description: "1-based starting line number", example: "50" },
-      num_lines: { type: "number", required: false, description: "Number of lines to read (max 500)", example: "100" },
+      start_line: { type: "number", required: false, description: "1-based starting line number (default: 1)", example: "50" },
+      num_lines: { type: "number", required: false, description: "Number of lines to read (max 500, default: all)", example: "100" },
       ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" }
     },
     returns: "Numbered lines from the file with metadata",
@@ -1257,7 +1257,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
       ecosystem: { type: "string", required: false, description: "Filter by ecosystem (e.g., 'npm', 'pip', 'maven')" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of Dependabot alerts with vulnerability details",
     example: `const alerts = await callMCPTool("github_list_dependabot_alerts", {
@@ -1273,7 +1275,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      alert_number: { type: "number", required: true, description: "Alert number" }
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed alert information including vulnerability details and remediation guidance",
     example: `const alert = await callMCPTool("github_get_dependabot_alert", {
@@ -1292,7 +1296,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       alert_number: { type: "number", required: true, description: "Alert number" },
       state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
       dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'fix_started', 'inaccurate', 'no_bandwidth', 'not_used', 'tolerable_risk'" },
-      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" },
+      token: { type: "string", required: false, description: "GitHub token (required for updating alerts)" }
     },
     returns: "Updated alert details",
     example: `const result = await callMCPTool("github_update_dependabot_alert", {
@@ -1313,7 +1318,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
       ecosystem: { type: "string", required: false, description: "Filter by ecosystem" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of organization-wide Dependabot alerts",
     example: `const alerts = await callMCPTool("github_list_org_dependabot_alerts", {
@@ -1334,7 +1341,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       severity: { type: "string", required: false, description: "Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'" },
       tool_name: { type: "string", required: false, description: "Filter by tool name (e.g., 'CodeQL', 'ESLint')" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of code scanning alerts with details",
     example: `const alerts = await callMCPTool("github_list_code_scanning_alerts", {
@@ -1350,7 +1359,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      alert_number: { type: "number", required: true, description: "Alert number" }
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed alert information including rule details, location, and remediation guidance",
     example: `const alert = await callMCPTool("github_get_code_scanning_alert", {
@@ -1369,7 +1380,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       alert_number: { type: "number", required: true, description: "Alert number" },
       state: { type: "string", required: true, description: "New state: 'dismissed' or 'open'" },
       dismissed_reason: { type: "string", required: false, description: "Reason for dismissal: 'false_positive', 'wont_fix', 'used_in_tests'" },
-      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" }
+      dismissed_comment: { type: "string", required: false, description: "Optional comment when dismissing (max 280 chars)" },
+      token: { type: "string", required: false, description: "GitHub token (required for updating alerts)" }
     },
     returns: "Updated alert details",
     example: `const result = await callMCPTool("github_update_code_scanning_alert", {
@@ -1390,7 +1402,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       tool_name: { type: "string", required: false, description: "Filter by tool name" },
       ref: { type: "string", required: false, description: "Filter by branch/tag/commit" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of code scanning analyses with status, tool, and commit information",
     example: `const analyses = await callMCPTool("github_list_code_scanning_analyses", {
@@ -1411,7 +1425,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       state: { type: "string", required: false, description: "Filter by state: 'open', 'resolved'" },
       secret_type: { type: "string", required: false, description: "Filter by secret type (e.g., 'github_personal_access_token')" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of secret scanning alerts with details",
     example: `const alerts = await callMCPTool("github_list_secret_scanning_alerts", {
@@ -1427,7 +1443,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      alert_number: { type: "number", required: true, description: "Alert number" }
+      alert_number: { type: "number", required: true, description: "Alert number" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed alert information including secret type, location, and resolution status",
     example: `const alert = await callMCPTool("github_get_secret_scanning_alert", {
@@ -1445,7 +1463,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       alert_number: { type: "number", required: true, description: "Alert number" },
       state: { type: "string", required: true, description: "New state: 'resolved' or 'open'" },
-      resolution: { type: "string", required: false, description: "Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'" }
+      resolution: { type: "string", required: false, description: "Resolution: 'false_positive', 'wont_fix', 'revoked', 'used_in_tests'" },
+      token: { type: "string", required: false, description: "GitHub token (required for updating alerts)" }
     },
     returns: "Updated alert details",
     example: `const result = await callMCPTool("github_update_secret_scanning_alert", {
@@ -1483,7 +1502,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      ghsa_id: { type: "string", required: true, description: "GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')" }
+      ghsa_id: { type: "string", required: true, description: "GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed advisory information including description, severity, affected versions, and remediation guidance",
     example: `const advisory = await callMCPTool("github_get_security_advisory", {
@@ -1503,7 +1524,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of projects with details",
     example: `const projects = await callMCPTool("github_list_repo_projects", {
@@ -1520,7 +1543,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       org: { type: "string", required: true, description: "Organization name" },
       state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of organization projects",
     example: `const projects = await callMCPTool("github_list_org_projects", {
@@ -1533,7 +1558,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Projects",
     description: "Get details about a specific project",
     parameters: {
-      project_id: { type: "number", required: true, description: "Project ID" }
+      project_id: { type: "number", required: true, description: "Project ID" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed project information including name, description, state, and metadata",
     example: `const project = await callMCPTool("github_get_project", {
@@ -1548,7 +1575,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       name: { type: "string", required: true, description: "Project name" },
-      body: { type: "string", required: false, description: "Project description" }
+      body: { type: "string", required: false, description: "Project description" },
+      token: { type: "string", required: false, description: "GitHub token (required for creating projects)" }
     },
     returns: "Created project details",
     example: `const project = await callMCPTool("github_create_repo_project", {
@@ -1565,7 +1593,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       org: { type: "string", required: true, description: "Organization name" },
       name: { type: "string", required: true, description: "Project name" },
-      body: { type: "string", required: false, description: "Project description" }
+      body: { type: "string", required: false, description: "Project description" },
+      token: { type: "string", required: false, description: "GitHub token (required for creating projects)" }
     },
     returns: "Created project details",
     example: `const project = await callMCPTool("github_create_org_project", {
@@ -1582,7 +1611,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       project_id: { type: "number", required: true, description: "Project ID" },
       name: { type: "string", required: false, description: "New project name" },
       body: { type: "string", required: false, description: "New project description" },
-      state: { type: "string", required: false, description: "New state: 'open' or 'closed'" }
+      state: { type: "string", required: false, description: "New state: 'open' or 'closed'" },
+      token: { type: "string", required: false, description: "GitHub token (required for updating projects)" }
     },
     returns: "Updated project details",
     example: `const project = await callMCPTool("github_update_project", {
@@ -1596,7 +1626,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Projects",
     description: "Delete a project (permanent, cannot be undone)",
     parameters: {
-      project_id: { type: "number", required: true, description: "Project ID" }
+      project_id: { type: "number", required: true, description: "Project ID" },
+      token: { type: "string", required: false, description: "GitHub token (required for deleting projects)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_delete_project", {
@@ -1610,7 +1641,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       project_id: { type: "number", required: true, description: "Project ID" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of project columns (e.g., 'To Do', 'In Progress', 'Done')",
     example: `const columns = await callMCPTool("github_list_project_columns", {
@@ -1623,7 +1656,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Create a new column in a project",
     parameters: {
       project_id: { type: "number", required: true, description: "Project ID" },
-      name: { type: "string", required: true, description: "Column name" }
+      name: { type: "string", required: true, description: "Column name" },
+      token: { type: "string", required: false, description: "GitHub token (required for creating columns)" }
     },
     returns: "Created column details",
     example: `const column = await callMCPTool("github_create_project_column", {
@@ -1642,7 +1676,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       category: { type: "string", required: false, description: "Filter by category slug" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of discussions with details",
     example: `const discussions = await callMCPTool("github_list_discussions", {
@@ -1658,7 +1694,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      discussion_number: { type: "number", required: true, description: "Discussion number" }
+      discussion_number: { type: "number", required: true, description: "Discussion number" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed discussion information including title, body, category, author, and comments count",
     example: `const discussion = await callMCPTool("github_get_discussion", {
@@ -1673,7 +1711,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "List discussion categories for a repository",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of discussion categories (e.g., 'General', 'Q&A', 'Ideas', 'Announcements')",
     example: `const categories = await callMCPTool("github_list_discussion_categories", {
@@ -1690,7 +1730,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       discussion_number: { type: "number", required: true, description: "Discussion number" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of discussion comments including replies and reactions",
     example: `const comments = await callMCPTool("github_list_discussion_comments", {
@@ -1711,7 +1753,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       since: { type: "string", required: false, description: "Only show notifications updated after this time (ISO 8601)" },
       before: { type: "string", required: false, description: "Only show notifications updated before this time (ISO 8601)" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of notifications with details",
     example: `const notifications = await callMCPTool("github_list_notifications", {
@@ -1724,7 +1768,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Notifications",
     description: "Get details about a notification thread (requires User Access Token - UAT)",
     parameters: {
-      thread_id: { type: "string", required: true, description: "Thread ID" }
+      thread_id: { type: "string", required: true, description: "Thread ID" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed thread information including subject, reason, and repository details",
     example: `const thread = await callMCPTool("github_get_thread", {
@@ -1736,7 +1782,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Notifications",
     description: "Mark a notification thread as read (requires User Access Token - UAT)",
     parameters: {
-      thread_id: { type: "string", required: true, description: "Thread ID" }
+      thread_id: { type: "string", required: true, description: "Thread ID" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_mark_thread_read", {
@@ -1749,7 +1796,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Mark notifications as read (requires User Access Token - UAT)",
     parameters: {
       last_read_at: { type: "string", required: false, description: "Timestamp to mark as read up to (ISO 8601)" },
-      read: { type: "boolean", required: false, description: "Mark as read (default: true)" }
+      read: { type: "boolean", required: false, description: "Mark as read (default: true)" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_mark_notifications_read", {
@@ -1761,7 +1809,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Notifications",
     description: "Get subscription status for a notification thread (requires User Access Token - UAT)",
     parameters: {
-      thread_id: { type: "string", required: true, description: "Thread ID" }
+      thread_id: { type: "string", required: true, description: "Thread ID" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Subscription status (subscribed, ignored, reason)",
     example: `const subscription = await callMCPTool("github_get_thread_subscription", {
@@ -1774,7 +1824,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Set subscription status for a notification thread (requires User Access Token - UAT)",
     parameters: {
       thread_id: { type: "string", required: true, description: "Thread ID" },
-      ignored: { type: "boolean", required: false, description: "Whether to ignore the thread (default: false)" }
+      ignored: { type: "boolean", required: false, description: "Whether to ignore the thread (default: false)" },
+      token: { type: "string", required: false, description: "GitHub token (required - UAT only)" }
     },
     returns: "Updated subscription status",
     example: `const result = await callMCPTool("github_set_thread_subscription", {
@@ -1794,7 +1845,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       affiliation: { type: "string", required: false, description: "Filter by affiliation: 'outside', 'direct', 'all' (default: 'all')" },
       permission: { type: "string", required: false, description: "Filter by permission: 'pull', 'push', 'admin'" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of collaborators with their permission levels",
     example: `const collaborators = await callMCPTool("github_list_repo_collaborators", {
@@ -1810,7 +1863,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      username: { type: "string", required: true, description: "GitHub username to check" }
+      username: { type: "string", required: true, description: "GitHub username to check" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Collaborator status (is collaborator or not)",
     example: `const status = await callMCPTool("github_check_collaborator", {
@@ -1827,7 +1882,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of teams with their permission levels",
     example: `const teams = await callMCPTool("github_list_repo_teams", {
@@ -1986,7 +2043,12 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Search for pattern in workspace files (90-98% more token efficient than reading full files)",
     parameters: {
       pattern: { type: "string", required: true, description: "Regex pattern to search for" },
-      file_pattern: { type: "string", required: false, description: "Glob pattern for files", example: "*.py" }
+      repo_path: { type: "string", required: false, description: "Optional subdirectory to search within (relative to repo root)" },
+      context_lines: { type: "number", required: false, description: "Number of lines before/after match to include (0-5, default 2)" },
+      max_results: { type: "number", required: false, description: "Maximum matches to return (1-500, default 100)" },
+      file_pattern: { type: "string", required: false, description: "Glob pattern for files to search (e.g., '*.py', '*.md')", example: "*.py" },
+      case_sensitive: { type: "boolean", required: false, description: "Whether search is case-sensitive (default: true)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Matching lines with file paths and line numbers",
     example: `const matches = await callMCPTool("workspace_grep", {
@@ -1999,9 +2061,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Workspace",
     description: "Replace a string in a file (must be unique in the file)",
     parameters: {
-      path: { type: "string", required: true, description: "File path" },
-      old_str: { type: "string", required: true, description: "String to replace (must be unique)" },
-      new_str: { type: "string", required: true, description: "Replacement string" }
+      path: { type: "string", required: true, description: "Relative path to file under repository root" },
+      old_str: { type: "string", required: true, description: "Exact string to find and replace (must be unique match)" },
+      new_str: { type: "string", required: true, description: "Replacement string" },
+      description: { type: "string", required: false, description: "Optional description of the change" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("str_replace", {
