@@ -103,7 +103,7 @@ async def github_get_discussion(params: GetDiscussionInput) -> str:
         - Use when: "Get information about discussion 456"
     """
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/discussions/{params.discussion_number}",
             token=params.token
         )
@@ -154,27 +154,30 @@ async def github_list_discussion_categories(params: ListDiscussionCategoriesInpu
         - Use when: "List available discussion types"
     """
     try:
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/discussions/categories",
             token=params.token
         )
         
+        # GitHub API returns a list for categories endpoint
+        categories_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            return json.dumps(data, indent=2)
+            return json.dumps(categories_list, indent=2)
         
         markdown = f"# Discussion Categories for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Categories:** {len(data)}\n\n"
+        markdown += f"**Total Categories:** {len(categories_list)}\n\n"
         
-        if not data:
+        if not categories_list:
             markdown += "No discussion categories found.\n"
         else:
-            for category in data:
+            for category in categories_list:
                 markdown += f"## {category['name']}\n"
                 markdown += f"- **Slug:** {category.get('slug', 'N/A')}\n"
                 markdown += f"- **Description:** {category.get('description', 'N/A')}\n"
                 markdown += f"- **Emoji:** {category.get('emoji', 'N/A')}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(categories_list))
         
     except Exception as e:
         return _handle_api_error(e)
@@ -210,24 +213,27 @@ async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -
             "page": params.page
         }
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/discussions/{params.discussion_number}/comments",
             token=params.token,
             params=params_dict
         )
         
+        # GitHub API returns a list for comments endpoint
+        comments_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(comments_list, indent=2)
+            return _truncate_response(result, len(comments_list))
         
         markdown = f"# Comments for Discussion #{params.discussion_number}\n\n"
-        markdown += f"**Total Comments:** {len(data)}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} comments\n\n"
+        markdown += f"**Total Comments:** {len(comments_list)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(comments_list)} comments\n\n"
         
-        if not data:
+        if not comments_list:
             markdown += "No comments found.\n"
         else:
-            for comment in data:
+            for comment in comments_list:
                 markdown += f"## Comment by {comment['user']['login']}\n"
                 markdown += f"- **ID:** {comment['id']}\n"
                 markdown += f"- **Created:** {_format_timestamp(comment['created_at'])}\n"
@@ -236,7 +242,7 @@ async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -
                     markdown += f"- **Content:** {comment['body'][:200]}{'...' if len(comment.get('body', '')) > 200 else ''}\n"
                 markdown += f"- **URL:** {comment['html_url']}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(comments_list))
         
     except Exception as e:
         return _handle_api_error(e)
