@@ -1,6 +1,7 @@
 """Discussions tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     GetDiscussionInput, ListDiscussionCategoriesInput, ListDiscussionCommentsInput, ListDiscussionsInput,
@@ -45,23 +46,26 @@ async def github_list_discussions(params: ListDiscussionsInput) -> str:
         if params.category:
             params_dict["category"] = params.category
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/discussions",
             token=params.token,
             params=params_dict
         )
         
+        # GitHub API returns a list for discussions endpoint
+        discussions_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(discussions_list, indent=2)
+            return _truncate_response(result, len(discussions_list))
         
         markdown = f"# Discussions for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Discussions:** {len(data)}\n\n"
+        markdown += f"**Total Discussions:** {len(discussions_list)}\n\n"
         
-        if not data:
+        if not discussions_list:
             markdown += "No discussions found.\n"
         else:
-            for discussion in data:
+            for discussion in discussions_list:
                 markdown += f"## {discussion['title']}\n"
                 markdown += f"- **Number:** {discussion['number']}\n"
                 markdown += f"- **Category:** {discussion.get('category', {}).get('name', 'N/A')}\n"

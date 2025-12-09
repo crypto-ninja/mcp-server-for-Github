@@ -1,6 +1,7 @@
 """Collaborators tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     CheckCollaboratorInput, ListRepoCollaboratorsInput, ListRepoTeamsInput,
@@ -47,24 +48,27 @@ async def github_list_repo_collaborators(params: ListRepoCollaboratorsInput) -> 
         if params.permission:
             params_dict["permission"] = params.permission
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/collaborators",
             token=params.token,
             params=params_dict
         )
         
+        # GitHub API returns a list for collaborators endpoint
+        collaborators_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(collaborators_list, indent=2)
+            return _truncate_response(result, len(collaborators_list))
         
         markdown = f"# Collaborators for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Collaborators:** {len(data)}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} collaborators\n\n"
+        markdown += f"**Total Collaborators:** {len(collaborators_list)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(collaborators_list)} collaborators\n\n"
         
-        if not data:
+        if not collaborators_list:
             markdown += "No collaborators found.\n"
         else:
-            for collaborator in data:
+            for collaborator in collaborators_list:
                 markdown += f"## {collaborator['login']}\n"
                 permissions = collaborator.get('permissions', {})
                 markdown += f"- **Admin:** {permissions.get('admin', False)}\n"

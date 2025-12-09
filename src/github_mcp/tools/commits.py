@@ -1,6 +1,7 @@
 """Commits tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     ListCommitsInput,
@@ -64,11 +65,14 @@ async def github_list_commits(params: ListCommitsInput) -> str:
         if params.until:
             query_params["until"] = params.until
         
-        commits = await _make_github_request(
+        commits_data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/commits",
             token=token,
             params=query_params
         )
+        
+        # GitHub API returns a list for commits endpoint
+        commits: List[Dict[str, Any]] = cast(List[Dict[str, Any]], commits_data) if isinstance(commits_data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(commits, indent=2)
