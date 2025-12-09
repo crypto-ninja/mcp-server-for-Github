@@ -11,7 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_get_workflow,
     github_trigger_workflow,
     github_get_workflow_run,
@@ -25,7 +25,7 @@ from src.github_mcp.tools import (
     github_get_artifact,
     github_delete_artifact,
 )
-from src.github_mcp.models import (
+from src.github_mcp.models import (  # noqa: E402
     GetWorkflowInput,
     TriggerWorkflowInput,
     GetWorkflowRunInput,
@@ -65,7 +65,7 @@ class TestActionsTools:
             workflow_id="12345"
         )
         
-        result = await github_get_workflow(params)
+        await github_get_workflow(params)
         
         mock_github_request.assert_called_once()
         call_args = mock_github_request.call_args
@@ -89,7 +89,7 @@ class TestActionsTools:
             workflow_id="ci.yml"
         )
         
-        result = await github_get_workflow(params)
+        await github_get_workflow(params)
         
         mock_github_request.assert_called_once()
         assert "actions/workflows/ci.yml" in mock_github_request.call_args[0][0]
@@ -133,7 +133,7 @@ class TestActionsTools:
             ref="main"
         )
         
-        result = await github_trigger_workflow(params)
+        await github_trigger_workflow(params)
         
         mock_github_request.assert_called_once()
         call_args = mock_github_request.call_args
@@ -156,7 +156,7 @@ class TestActionsTools:
             inputs={"environment": "production", "debug": "true"}
         )
         
-        result = await github_trigger_workflow(params)
+        await github_trigger_workflow(params)
         
         call_args = mock_github_request.call_args
         body = call_args[1].get("json", {})
@@ -181,7 +181,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_get_workflow_run(params)
+        await github_get_workflow_run(params)
         
         mock_github_request.assert_called_once()
         assert "actions/runs/98765" in mock_github_request.call_args[0][0]
@@ -207,7 +207,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_list_workflow_run_jobs(params)
+        await github_list_workflow_run_jobs(params)
         
         mock_github_request.assert_called_once()
 
@@ -229,7 +229,7 @@ class TestActionsTools:
             filter="latest"
         )
         
-        result = await github_list_workflow_run_jobs(params)
+        await github_list_workflow_run_jobs(params)
         
         call_args = mock_github_request.call_args
         params_dict = call_args[1].get("params", {})
@@ -255,7 +255,7 @@ class TestActionsTools:
             job_id=123
         )
         
-        result = await github_get_job(params)
+        await github_get_job(params)
         
         mock_github_request.assert_called_once()
         assert "actions/jobs/123" in mock_github_request.call_args[0][0]
@@ -299,7 +299,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_cancel_workflow_run(params)
+        await github_cancel_workflow_run(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
@@ -320,7 +320,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_rerun_workflow(params)
+        await github_rerun_workflow(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
@@ -341,7 +341,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_rerun_failed_jobs(params)
+        await github_rerun_failed_jobs(params)
         
         call_args = mock_github_request.call_args
         assert "rerun-failed-jobs" in call_args[0][0]
@@ -366,7 +366,7 @@ class TestActionsTools:
             run_id=98765
         )
         
-        result = await github_list_workflow_run_artifacts(params)
+        await github_list_workflow_run_artifacts(params)
         
         mock_github_request.assert_called_once()
 
@@ -389,7 +389,7 @@ class TestActionsTools:
             artifact_id=123
         )
         
-        result = await github_get_artifact(params)
+        await github_get_artifact(params)
         
         mock_github_request.assert_called_once()
         assert "actions/artifacts/123" in mock_github_request.call_args[0][0]
@@ -408,7 +408,7 @@ class TestActionsTools:
             artifact_id=123
         )
         
-        result = await github_delete_artifact(params)
+        await github_delete_artifact(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "DELETE"

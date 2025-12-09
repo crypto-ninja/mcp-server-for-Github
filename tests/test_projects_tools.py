@@ -10,8 +10,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import github_list_repo_projects, github_list_org_projects, github_get_project, github_create_repo_project, github_create_org_project, github_update_project, github_delete_project, github_list_project_columns, github_create_project_column
-from src.github_mcp.models import ListRepoProjectsInput, ListOrgProjectsInput, GetProjectInput, CreateRepoProjectInput, CreateOrgProjectInput, UpdateProjectInput, DeleteProjectInput, ListProjectColumnsInput, CreateProjectColumnInput
+from src.github_mcp.tools import github_list_repo_projects, github_list_org_projects, github_get_project, github_create_repo_project, github_create_org_project, github_update_project, github_delete_project, github_list_project_columns, github_create_project_column  # noqa: E402
+from src.github_mcp.models import ListRepoProjectsInput, ListOrgProjectsInput, GetProjectInput, CreateRepoProjectInput, CreateOrgProjectInput, UpdateProjectInput, DeleteProjectInput, ListProjectColumnsInput, CreateProjectColumnInput  # noqa: E402
 
 
 class TestProjectsTools:
@@ -32,7 +32,7 @@ class TestProjectsTools:
             repo="test-repo"
         )
         
-        result = await github_list_repo_projects(params)
+        await github_list_repo_projects(params)
         
         mock_github_request.assert_called_once()
         # Should include preview header for Projects API
@@ -52,7 +52,7 @@ class TestProjectsTools:
         
         params = ListOrgProjectsInput(org="test-org")
         
-        result = await github_list_org_projects(params)
+        await github_list_org_projects(params)
         
         mock_github_request.assert_called_once()
         assert "orgs/test-org/projects" in mock_github_request.call_args[0][0]
@@ -71,7 +71,7 @@ class TestProjectsTools:
         
         params = GetProjectInput(project_id=123)
         
-        result = await github_get_project(params)
+        await github_get_project(params)
         
         mock_github_request.assert_called_once()
         assert "projects/123" in mock_github_request.call_args[0][0]
@@ -95,7 +95,7 @@ class TestProjectsTools:
             body="Project description"
         )
         
-        result = await github_create_repo_project(params)
+        await github_create_repo_project(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
@@ -116,7 +116,7 @@ class TestProjectsTools:
             name="Org Project"
         )
         
-        result = await github_create_org_project(params)
+        await github_create_org_project(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"
@@ -140,7 +140,7 @@ class TestProjectsTools:
             state="closed"
         )
         
-        result = await github_update_project(params)
+        await github_update_project(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PATCH"
@@ -155,7 +155,7 @@ class TestProjectsTools:
         
         params = DeleteProjectInput(project_id=123)
         
-        result = await github_delete_project(params)
+        await github_delete_project(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "DELETE"
@@ -174,7 +174,7 @@ class TestProjectsTools:
         
         params = ListProjectColumnsInput(project_id=123)
         
-        result = await github_list_project_columns(params)
+        await github_list_project_columns(params)
         
         assert "projects/123/columns" in mock_github_request.call_args[0][0]
 
@@ -194,7 +194,7 @@ class TestProjectsTools:
             name="Review"
         )
         
-        result = await github_create_project_column(params)
+        await github_create_project_column(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "POST"

@@ -10,13 +10,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_get_discussion,
     github_list_discussions,
     github_list_discussion_categories,
     github_list_discussion_comments,
 )
-from src.github_mcp.models import ListDiscussionsInput, GetDiscussionInput, ListDiscussionCategoriesInput, ListDiscussionCommentsInput
+from src.github_mcp.models import ListDiscussionsInput, GetDiscussionInput, ListDiscussionCategoriesInput, ListDiscussionCommentsInput  # noqa: E402
 
 
 class TestDiscussionsTools:
@@ -37,7 +37,7 @@ class TestDiscussionsTools:
             repo="test-repo"
         )
         
-        result = await github_list_discussions(params)
+        await github_list_discussions(params)
         
         mock_github_request.assert_called_once()
         assert "/discussions" in mock_github_request.call_args[0][0]
@@ -56,7 +56,7 @@ class TestDiscussionsTools:
             category="qa"
         )
         
-        result = await github_list_discussions(params)
+        await github_list_discussions(params)
         
         call_args = mock_github_request.call_args
         params_dict = call_args[1].get("params", {})
@@ -80,7 +80,7 @@ class TestDiscussionsTools:
             discussion_number=1
         )
         
-        result = await github_get_discussion(params)
+        await github_get_discussion(params)
         
         mock_github_request.assert_called_once()
         assert "/discussions/1" in mock_github_request.call_args[0][0]
@@ -101,7 +101,7 @@ class TestDiscussionsTools:
             repo="test-repo"
         )
         
-        result = await github_list_discussion_categories(params)
+        await github_list_discussion_categories(params)
         
         mock_github_request.assert_called_once()
         assert "/discussions/categories" in mock_github_request.call_args[0][0]
@@ -123,7 +123,7 @@ class TestDiscussionsTools:
             discussion_number=1
         )
         
-        result = await github_list_discussion_comments(params)
+        await github_list_discussion_comments(params)
         
         mock_github_request.assert_called_once()
         assert "/discussions/1/comments" in mock_github_request.call_args[0][0]

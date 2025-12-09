@@ -10,7 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_list_dependabot_alerts,
     github_get_dependabot_alert,
     github_update_dependabot_alert,
@@ -25,7 +25,7 @@ from src.github_mcp.tools import (
     github_list_repo_security_advisories,
     github_get_security_advisory,
 )
-from src.github_mcp.models import (
+from src.github_mcp.models import (  # noqa: E402
     ListDependabotAlertsInput,
     GetDependabotAlertInput,
     UpdateDependabotAlertInput,
@@ -61,7 +61,7 @@ class TestDependabotTools:
             repo="test-repo"
         )
         
-        result = await github_list_dependabot_alerts(params)
+        await github_list_dependabot_alerts(params)
         
         mock_github_request.assert_called_once()
         assert "/dependabot/alerts" in mock_github_request.call_args[0][0]
@@ -81,7 +81,7 @@ class TestDependabotTools:
             severity="critical"
         )
         
-        result = await github_list_dependabot_alerts(params)
+        await github_list_dependabot_alerts(params)
         
         call_args = mock_github_request.call_args
         params_dict = call_args[1].get("params", {})
@@ -105,7 +105,7 @@ class TestDependabotTools:
             alert_number=1
         )
         
-        result = await github_get_dependabot_alert(params)
+        await github_get_dependabot_alert(params)
         
         assert "/dependabot/alerts/1" in mock_github_request.call_args[0][0]
 
@@ -125,7 +125,7 @@ class TestDependabotTools:
             dismissed_reason="tolerable_risk"
         )
         
-        result = await github_update_dependabot_alert(params)
+        await github_update_dependabot_alert(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PATCH"
@@ -142,7 +142,7 @@ class TestDependabotTools:
             org="test-org"
         )
         
-        result = await github_list_org_dependabot_alerts(params)
+        await github_list_org_dependabot_alerts(params)
         
         assert "orgs/test-org/dependabot/alerts" in mock_github_request.call_args[0][0]
 
@@ -165,7 +165,7 @@ class TestCodeScanningTools:
             repo="test-repo"
         )
         
-        result = await github_list_code_scanning_alerts(params)
+        await github_list_code_scanning_alerts(params)
         
         assert "/code-scanning/alerts" in mock_github_request.call_args[0][0]
 
@@ -187,7 +187,7 @@ class TestCodeScanningTools:
             alert_number=1
         )
         
-        result = await github_get_code_scanning_alert(params)
+        await github_get_code_scanning_alert(params)
         
         mock_github_request.assert_called_once()
 
@@ -207,7 +207,7 @@ class TestCodeScanningTools:
             dismissed_reason="false_positive"
         )
         
-        result = await github_update_code_scanning_alert(params)
+        await github_update_code_scanning_alert(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PATCH"
@@ -227,7 +227,7 @@ class TestCodeScanningTools:
             repo="test-repo"
         )
         
-        result = await github_list_code_scanning_analyses(params)
+        await github_list_code_scanning_analyses(params)
         
         assert "/code-scanning/analyses" in mock_github_request.call_args[0][0]
 
@@ -250,7 +250,7 @@ class TestSecretScanningTools:
             repo="test-repo"
         )
         
-        result = await github_list_secret_scanning_alerts(params)
+        await github_list_secret_scanning_alerts(params)
         
         assert "/secret-scanning/alerts" in mock_github_request.call_args[0][0]
 
@@ -272,7 +272,7 @@ class TestSecretScanningTools:
             alert_number=1
         )
         
-        result = await github_get_secret_scanning_alert(params)
+        await github_get_secret_scanning_alert(params)
         
         mock_github_request.assert_called_once()
 
@@ -291,7 +291,7 @@ class TestSecretScanningTools:
             state="resolved"
         )
         
-        result = await github_update_secret_scanning_alert(params)
+        await github_update_secret_scanning_alert(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PATCH"
@@ -315,7 +315,7 @@ class TestSecurityAdvisoryTools:
             repo="test-repo"
         )
         
-        result = await github_list_repo_security_advisories(params)
+        await github_list_repo_security_advisories(params)
         
         assert "/security-advisories" in mock_github_request.call_args[0][0]
 
@@ -337,7 +337,7 @@ class TestSecurityAdvisoryTools:
             ghsa_id="GHSA-xxxx-xxxx-xxxx"
         )
         
-        result = await github_get_security_advisory(params)
+        await github_get_security_advisory(params)
         
         assert "/security-advisories/GHSA-xxxx-xxxx-xxxx" in mock_github_request.call_args[0][0]
 
