@@ -1004,7 +1004,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" }
+      workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Workflow details including configuration and status",
     example: `const workflow = await callMCPTool("github_get_workflow", {
@@ -1020,9 +1022,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      workflow_id: { type: "string", required: true, description: "Workflow ID or file name" },
+      workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" },
       ref: { type: "string", required: true, description: "Branch, tag, or commit SHA to trigger workflow on" },
-      inputs: { type: "object", required: false, description: "Input parameters for workflow (key-value pairs)" }
+      inputs: { type: "object", required: false, description: "Input parameters for workflow (key-value pairs)" },
+      token: { type: "string", required: false, description: "GitHub token (required for triggering workflows)" }
     },
     returns: "Success confirmation (202 Accepted)",
     example: `const result = await callMCPTool("github_trigger_workflow", {
@@ -1040,7 +1043,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      run_id: { type: "number", required: true, description: "Workflow run ID" }
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed workflow run information including status, conclusion, timing, and jobs",
     example: `const run = await callMCPTool("github_get_workflow_run", {
@@ -1059,7 +1064,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       run_id: { type: "number", required: true, description: "Workflow run ID" },
       filter: { type: "string", required: false, description: "Filter jobs: 'latest' or 'all'" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of jobs with status, conclusion, steps, and timing",
     example: `const jobs = await callMCPTool("github_list_workflow_run_jobs", {
@@ -1076,7 +1083,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      job_id: { type: "number", required: true, description: "Job ID" }
+      job_id: { type: "number", required: true, description: "Job ID" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed job information including status, conclusion, steps, and runner",
     example: `const job = await callMCPTool("github_get_job", {
@@ -1092,7 +1101,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      job_id: { type: "number", required: true, description: "Job ID" }
+      job_id: { type: "number", required: true, description: "Job ID" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
     },
     returns: "Job logs as plain text (may be truncated if very large)",
     example: `const logs = await callMCPTool("github_get_job_logs", {
@@ -1108,7 +1118,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      run_id: { type: "number", required: true, description: "Workflow run ID" }
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      token: { type: "string", required: false, description: "GitHub token (required for rerunning workflows)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_rerun_workflow", {
@@ -1124,7 +1135,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      run_id: { type: "number", required: true, description: "Workflow run ID" }
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      token: { type: "string", required: false, description: "GitHub token (required for rerunning workflows)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_rerun_failed_jobs", {
@@ -1140,7 +1152,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      run_id: { type: "number", required: true, description: "Workflow run ID" }
+      run_id: { type: "number", required: true, description: "Workflow run ID" },
+      token: { type: "string", required: false, description: "GitHub token (required for canceling workflows)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_cancel_workflow_run", {
@@ -1158,7 +1171,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       run_id: { type: "number", required: true, description: "Workflow run ID" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of artifacts with names, sizes, and download URLs",
     example: `const artifacts = await callMCPTool("github_list_workflow_run_artifacts", {
@@ -1174,7 +1189,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+      artifact_id: { type: "number", required: true, description: "Artifact ID" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Artifact details including name, size, creation date, expiration, and download URL",
     example: `const artifact = await callMCPTool("github_get_artifact", {
@@ -1190,7 +1207,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      artifact_id: { type: "number", required: true, description: "Artifact ID" }
+      artifact_id: { type: "number", required: true, description: "Artifact ID" },
+      token: { type: "string", required: false, description: "GitHub token (required for deleting artifacts)" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_delete_artifact", {
