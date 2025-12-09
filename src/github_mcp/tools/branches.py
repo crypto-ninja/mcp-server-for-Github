@@ -1,6 +1,7 @@
 """Branch management tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     ListBranchesInput,
@@ -52,21 +53,25 @@ async def github_list_branches(params: ListBranchesInput) -> str:
         if params.protected is not None:
             query_params["protected"] = "true" if params.protected else "false"
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             endpoint,
             method="GET",
             token=auth_token,
             params=query_params
         )
         
-        repo_info = await _make_github_request(
+        # GitHub API returns a list for branches endpoint
+        branches_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
+        repo_info: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}",
             method="GET",
             token=auth_token
         )
         default_branch = repo_info.get("default_branch", "main")
         
-        branches = data if isinstance(data, list) else []
+        # GitHub API returns a list for branches endpoint
+        branches: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
             return json.dumps({
@@ -361,7 +366,7 @@ async def github_compare_branches(params: CompareBranchesInput) -> str:
         auth_token = await _get_auth_token_fallback(params.token)
         
         endpoint = f"repos/{params.owner}/{params.repo}/compare/{params.base}...{params.head}"
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             endpoint,
             method="GET",
             token=auth_token

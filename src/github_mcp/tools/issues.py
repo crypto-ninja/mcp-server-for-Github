@@ -2,7 +2,7 @@
 
 import json
 import httpx
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 from ..models.inputs import (
     ListIssuesInput,
