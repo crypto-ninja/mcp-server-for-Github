@@ -2,6 +2,7 @@
 
 import json
 import httpx
+from typing import Dict, Any, List, Optional
 
 from ..models.inputs import (
     ListIssuesInput,
@@ -143,16 +144,16 @@ async def github_create_issue(params: CreateIssueInput) -> str:
         }, indent=2)
     
     try:
-        payload = {
+        payload: Dict[str, Any] = {
             "title": params.title,
         }
         
         if params.body:
             payload["body"] = params.body
         if params.labels:
-            payload["labels"] = params.labels
+            payload["labels"] = params.labels  # type: ignore[assignment]
         if params.assignees:
-            payload["assignees"] = params.assignees
+            payload["assignees"] = params.assignees  # type: ignore[assignment]
         
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",
@@ -237,7 +238,7 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
     
     try:
         # Build update payload
-        update_data = {}
+        update_data: Dict[str, Any] = {}
         if params.state is not None:
             update_data["state"] = params.state
         if params.title is not None:
@@ -245,9 +246,9 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
         if params.body is not None:
             update_data["body"] = params.body
         if params.labels is not None:
-            update_data["labels"] = params.labels
+            update_data["labels"] = params.labels  # type: ignore[assignment]
         if params.assignees is not None:
-            update_data["assignees"] = params.assignees
+            update_data["assignees"] = params.assignees  # type: ignore[assignment]
         if params.milestone is not None:
             update_data["milestone"] = params.milestone
         

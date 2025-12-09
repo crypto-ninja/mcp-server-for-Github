@@ -95,7 +95,7 @@ def register_all_tools() -> None:
     """Register all GitHub tools with the MCP server."""
     # Get tool metadata from original file (we'll extract this properly later)
     # For now, register with default annotations based on tool name patterns
-    tool_metadata = {}
+    tool_metadata: Dict[str, Any] = {}
     
     # Try to extract metadata from git history (original file before refactor)
     # For now, we'll use default annotations based on tool name patterns
@@ -327,11 +327,12 @@ def run(transport: Optional[str] = None, port: Optional[int] = None) -> None:
     Run the MCP server.
     
     Args:
-        transport: Transport type ("stdio", "http", or "sse")
-        port: Port number for HTTP/SSE transport
+        transport: Transport type ("stdio", "sse", or "streamable-http")
+        port: Port number for HTTP/SSE transport (not used by FastMCP.run)
     """
-    if transport in ("http", "sse"):
-        mcp.run(transport=transport, port=(port or 8080))
+    if transport in ("sse", "streamable-http"):
+        # FastMCP.run accepts transport as literal type, not port parameter
+        mcp.run(transport=transport)  # type: ignore[arg-type]
     else:
         mcp.run()
 

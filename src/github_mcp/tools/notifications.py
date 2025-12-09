@@ -1,6 +1,7 @@
 """Notifications tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     GetThreadInput, GetThreadSubscriptionInput, ListNotificationsInput, MarkNotificationsReadInput, MarkThreadReadInput, SetThreadSubscriptionInput,
@@ -60,24 +61,28 @@ async def github_list_notifications(params: ListNotificationsInput) -> str:
         if params.before:
             params_dict["before"] = params.before
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "notifications",
             token=auth_token,
             params=params_dict
         )
         
+        # GitHub API returns a list for notifications endpoint
+        # Type assertion needed because _make_github_request is typed as Dict but can return List
+        notifications_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(notifications_list, indent=2)
+            return _truncate_response(result, len(notifications_list))
         
         markdown = "# Notifications\n\n"
-        markdown += f"**Total Notifications:** {len(data)}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} notifications\n\n"
+        markdown += f"**Total Notifications:** {len(notifications_list)}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(notifications_list)} notifications\n\n"
         
-        if not data:
+        if not notifications_list:
             markdown += "No notifications found.\n"
         else:
-            for notification in data:
+            for notification in notifications_list:
                 unread_emoji = "🔔" if notification.get('unread', False) else "✓"
                 markdown += f"## {unread_emoji} {notification.get('subject', {}).get('title', 'N/A')}\n"
                 markdown += f"- **Type:** {notification.get('subject', {}).get('type', 'N/A')}\n"
@@ -86,7 +91,7 @@ async def github_list_notifications(params: ListNotificationsInput) -> str:
                 markdown += f"- **Updated:** {_format_timestamp(notification['updated_at'])}\n"
                 markdown += f"- **URL:** {notification.get('url', 'N/A')}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(notifications_list))
         
     except Exception as e:
         return _handle_api_error(e)
