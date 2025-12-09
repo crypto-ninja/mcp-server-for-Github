@@ -376,7 +376,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Gists",
     description: "Get the full content and metadata for a specific gist",
     parameters: {
-      gist_id: { type: "string", required: true, description: "ID of the gist to retrieve" }
+      gist_id: { type: "string", required: true, description: "ID of the gist to retrieve" },
+      token: { type: "string", required: false, description: "Optional GitHub token (for private gists)" }
     },
     returns: "Full gist details including files, owner, history, and URLs",
     example: `const gist = await callMCPTool("github_get_gist", {
@@ -390,7 +391,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       description: { type: "string", required: false, description: "Description of the gist" },
       public: { type: "boolean", required: false, description: "Whether the gist is public (default: false)" },
-      files: { type: "object", required: true, description: "Mapping of filename to { content }" }
+      files: { type: "object", required: true, description: "Mapping of filename to file content" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created gist details including id, html_url, and files",
     example: `const gist = await callMCPTool("github_create_gist", {
@@ -408,8 +410,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Update an existing gist's description or files. To delete a file, set its value to null in the files object",
     parameters: {
       gist_id: { type: "string", required: true, description: "ID of the gist to update" },
-      description: { type: "string", required: false, description: "New description" },
-      files: { type: "object", required: false, description: "Files to add/update/delete" }
+      description: { type: "string", required: false, description: "New description for the gist" },
+      files: { type: "object", required: false, description: "Files to add/update/delete. To delete a file, set its value to null." },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Updated gist details including id, html_url, and files",
     example: `const gist = await callMCPTool("github_update_gist", {
@@ -621,7 +624,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       protected: { type: "boolean", required: false, description: "Filter by protected status" },
       per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of branches with names, commit SHAs, protection status, and default branch indicator",
     example: `const branches = await callMCPTool("github_list_branches", {
@@ -638,7 +642,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       branch: { type: "string", required: true, description: "New branch name" },
-      from_ref: { type: "string", required: false, description: "Branch, tag, or commit SHA to branch from (default: 'main')" }
+      from_ref: { type: "string", required: false, description: "Branch, tag, or commit SHA to branch from (default: 'main')" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
     },
     returns: "Success confirmation with branch details and URL",
     example: `const result = await callMCPTool("github_create_branch", {
@@ -656,7 +661,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       branch: { type: "string", required: true, description: "Branch name" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Detailed branch information with commit details and protection status",
     example: `const branch = await callMCPTool("github_get_branch", {
@@ -672,7 +678,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      branch: { type: "string", required: true, description: "Branch name to delete" }
+      branch: { type: "string", required: true, description: "Branch name to delete" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
     },
     returns: "Success confirmation (permanent operation)",
     example: `const result = await callMCPTool("github_delete_branch", {
@@ -688,9 +695,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      base: { type: "string", required: true, description: "Base branch name (usually 'main')" },
+      base: { type: "string", required: true, description: "Base branch name" },
       head: { type: "string", required: true, description: "Head branch name to compare" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown'" }
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "Comparison results with commits ahead/behind and files changed",
     example: `const comparison = await callMCPTool("github_compare_branches", {
