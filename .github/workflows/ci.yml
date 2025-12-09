@@ -26,7 +26,7 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
       - name: Type check (mypy)
-        run: mypy --config-file mypy.ini github_mcp
+        run: mypy --config-file mypy.ini --explicit-package-bases src/github_mcp
       - name: Security audit (pip-audit)
         run: pip-audit -r requirements.txt || true
       - name: Tests
