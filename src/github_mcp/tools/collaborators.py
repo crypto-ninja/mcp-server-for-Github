@@ -76,7 +76,7 @@ async def github_list_repo_collaborators(params: ListRepoCollaboratorsInput) -> 
                 markdown += f"- **Pull:** {permissions.get('pull', False)}\n"
                 markdown += f"- **URL:** {collaborator['html_url']}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(collaborators_list))
         
     except Exception as e:
         return _handle_api_error(e)

@@ -74,7 +74,7 @@ async def github_list_discussions(params: ListDiscussionsInput) -> str:
                 markdown += f"- **Created:** {_format_timestamp(discussion['created_at'])}\n"
                 markdown += f"- **URL:** {discussion['html_url']}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(discussions_list))
         
     except Exception as e:
         return _handle_api_error(e)
