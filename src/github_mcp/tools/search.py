@@ -1,6 +1,7 @@
 """Search tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     SearchCodeInput, SearchIssuesInput, SearchRepositoriesInput,
@@ -68,26 +69,31 @@ async def github_search_code(params: SearchCodeInput) -> str:
         if params.sort:
             params_dict["sort"] = params.sort
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/code",
             token=params.token,
             params=params_dict
         )
         
+        # Search API returns dict with 'items' list
+        search_result: Dict[str, Any] = cast(Dict[str, Any], data) if isinstance(data, dict) else {"total_count": 0, "items": []}
+        items: List[Dict[str, Any]] = search_result.get('items', [])
+        total_count: int = search_result.get('total_count', 0)
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, data['total_count'])
+            result = json.dumps(search_result, indent=2)
+            return _truncate_response(result, total_count)
         
         # Markdown format
         markdown = "# Code Search Results\n\n"
         markdown += f"**Query:** `{params.query}`\n"
-        markdown += f"**Total Results:** {data['total_count']:,}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} files\n\n"
+        markdown += f"**Total Results:** {total_count:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(items)} files\n\n"
         
-        if not data['items']:
+        if not items:
             markdown += "No code found matching your query.\n"
         else:
-            for item in data['items']:
+            for item in items:
                 # Extract repository info
                 repo_name = item['repository']['full_name']
                 file_path = item['path']
@@ -114,7 +120,7 @@ async def github_search_code(params: SearchCodeInput) -> str:
                 
                 markdown += "---\n\n"
         
-        return _truncate_response(markdown, data['total_count'])
+        return _truncate_response(markdown, total_count)
         
     except Exception as e:
         # Return JSON error if response_format is JSON
@@ -179,26 +185,31 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
         if params.sort:
             params_dict["sort"] = params.sort
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/repositories",
             token=params.token,
             params=params_dict
         )
         
+        # Search API returns dict with 'items' list
+        search_result: Dict[str, Any] = cast(Dict[str, Any], data) if isinstance(data, dict) else {"total_count": 0, "items": []}
+        items: List[Dict[str, Any]] = search_result.get('items', [])
+        total_count: int = search_result.get('total_count', 0)
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, data['total_count'])
+            result = json.dumps(search_result, indent=2)
+            return _truncate_response(result, total_count)
         
         # Markdown format
         markdown = "# Repository Search Results\n\n"
         markdown += f"**Query:** {params.query}\n"
-        markdown += f"**Total Results:** {data['total_count']:,}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} repositories\n\n"
+        markdown += f"**Total Results:** {total_count:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(items)} repositories\n\n"
         
-        if not data['items']:
+        if not items:
             markdown += "No repositories found matching your query.\n"
         else:
-            for repo in data['items']:
+            for repo in items:
                 markdown += f"## {repo['full_name']}\n"
                 markdown += f"{repo['description'] or 'No description'}\n\n"
                 markdown += f"- ⭐ **Stars:** {repo['stargazers_count']:,}\n"
@@ -213,7 +224,7 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
                 markdown += f"- **URL:** {repo['html_url']}\n\n"
                 markdown += "---\n\n"
         
-        return _truncate_response(markdown, data['total_count'])
+        return _truncate_response(markdown, total_count)
         
     except Exception as e:
         return _handle_api_error(e)
@@ -281,26 +292,31 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
         if params.sort:
             params_dict["sort"] = params.sort
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/issues",
             token=params.token,
             params=params_dict
         )
         
+        # Search API returns dict with 'items' list
+        search_result: Dict[str, Any] = cast(Dict[str, Any], data) if isinstance(data, dict) else {"total_count": 0, "items": []}
+        items: List[Dict[str, Any]] = search_result.get('items', [])
+        total_count: int = search_result.get('total_count', 0)
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, data['total_count'])
+            result = json.dumps(search_result, indent=2)
+            return _truncate_response(result, total_count)
         
         # Markdown format
         markdown = "# Issue Search Results\n\n"
         markdown += f"**Query:** `{params.query}`\n"
-        markdown += f"**Total Results:** {data['total_count']:,}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data['items'])} issues\n\n"
+        markdown += f"**Total Results:** {total_count:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(items)} issues\n\n"
         
-        if not data['items']:
+        if not items:
             markdown += "No issues found matching your query.\n"
         else:
-            for issue in data['items']:
+            for issue in items:
                 # Status emoji
                 status_emoji = "🟢" if issue['state'] == "open" else "🔴"
                 
@@ -331,7 +347,7 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
                 
                 markdown += "---\n\n"
         
-        return _truncate_response(markdown, data['total_count'])
+        return _truncate_response(markdown, total_count)
         
     except Exception as e:
         return _handle_api_error(e)

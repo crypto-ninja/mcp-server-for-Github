@@ -1,6 +1,6 @@
 """Users tools for GitHub MCP Server."""
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Union, cast
 import json
 
 from ..models.inputs import (
@@ -41,7 +41,7 @@ async def github_get_user_info(params: GetUserInfoInput) -> str:
         - Returns appropriate data for account type
     """
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"users/{params.username}",
             token=params.token
         )
@@ -105,7 +105,7 @@ async def github_get_authenticated_user(params: GetAuthenticatedUserInput) -> st
         }, indent=2)
     
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             "user",
             token=auth_token
         )
@@ -131,11 +131,13 @@ async def github_search_users(params: SearchUsersInput) -> str:
             from enum import Enum
             query_params["order"] = params.order.value if isinstance(params.order, Enum) else params.order
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/users",
             token=params.token,
             params=query_params
         )
-        return json.dumps(data, indent=2)
+        # Search API returns dict with 'items' list
+        search_result: Dict[str, Any] = cast(Dict[str, Any], data) if isinstance(data, dict) else {"total_count": 0, "items": []}
+        return json.dumps(search_result, indent=2)
     except Exception as e:
         return _handle_api_error(e)
