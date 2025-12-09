@@ -837,12 +837,13 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner", example: "facebook" },
       repo: { type: "string", required: true, description: "Repository name", example: "react" },
-      path: { type: "string", required: true, description: "File path in repository", example: "README.md" },
-      old_str: { type: "string", required: true, description: "Exact string to find and replace (must be unique)" },
+      path: { type: "string", required: true, description: "Relative path to file under repository root", example: "README.md" },
+      old_str: { type: "string", required: true, description: "Exact string to find and replace (must be unique match)" },
       new_str: { type: "string", required: true, description: "Replacement string" },
+      description: { type: "string", required: false, description: "Optional description of the change" },
       ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" },
       commit_message: { type: "string", required: false, description: "Custom commit message (auto-generated if not provided)" },
-      description: { type: "string", required: false, description: "Optional description of the change" }
+      token: { type: "string", required: false, description: "Optional GitHub token" }
     },
     returns: "Confirmation message with commit details",
     example: `const result = await callMCPTool("github_str_replace", {
