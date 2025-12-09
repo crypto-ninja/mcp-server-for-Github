@@ -927,16 +927,25 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_workflow_runs",
     category: "GitHub Actions",
-    description: "Get recent workflow runs",
+    description: "Get recent workflow runs with detailed status, conclusions, and timing. Supports filtering by workflow, status, and conclusion.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      workflow_id: { type: "string", required: false, description: "Specific workflow ID" }
+      workflow_id: { type: "string", required: false, description: "Specific workflow ID or name (e.g., 'ci.yml' or numeric ID)" },
+      status: { type: "string", required: false, description: "Filter by run status: 'queued', 'in_progress', 'completed'" },
+      conclusion: { type: "string", required: false, description: "Filter by conclusion: 'success', 'failure', 'cancelled', 'skipped', etc." },
+      limit: { type: "number", required: false, description: "Maximum results to return (1-100, default 20)" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token for authenticated requests" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
-    returns: "List of workflow runs with statuses and timestamps",
+    returns: "List of workflow runs with status, timing, and results",
     example: `const runs = await callMCPTool("github_get_workflow_runs", {
   owner: "facebook",
-  repo: "react"
+  repo: "react",
+  workflow_id: "ci.yml",
+  limit: 10,
+  response_format: "json"
 });`
   },
   {
