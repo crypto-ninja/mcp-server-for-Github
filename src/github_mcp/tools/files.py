@@ -650,8 +650,9 @@ async def github_grep(params: GitHubGrepInput) -> str:
                 for line_num, line in enumerate(lines, 1):
                     if regex.search(line):
                         # Get context lines
-                        start_line = max(1, line_num - params.context_lines)
-                        end_line = min(len(lines), line_num + params.context_lines)
+                        context_lines = params.context_lines or 2  # Default to 2 if None
+                        start_line = max(1, line_num - context_lines)
+                        end_line = min(len(lines), line_num + context_lines)
                         
                         context_before = []
                         context_after = []
@@ -795,6 +796,8 @@ async def github_batch_file_operations(params: BatchFileOperationsInput) -> str:
                     "sha": None
                 })
             else:
+                if op.content is None:
+                    raise ValueError(f"Content is required for operation '{op.operation}' on path '{op.path}'")
                 content_bytes = op.content.encode('utf-8')
                 encoded_content = base64.b64encode(content_bytes).decode('utf-8')
                 blob_data = await _make_github_request(
