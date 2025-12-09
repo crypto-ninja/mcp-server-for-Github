@@ -1,6 +1,7 @@
 """Actions tools for GitHub MCP Server."""
 
 import json
+from typing import Dict, Any, List, Union
 
 from ..models.inputs import (
     CancelWorkflowRunInput, DeleteArtifactInput, GetArtifactInput, GetJobInput, GetJobLogsInput, GetWorkflowInput, GetWorkflowRunInput, GetWorkflowRunsInput, ListWorkflowRunArtifactsInput, ListWorkflowRunJobsInput, ListWorkflowsInput, RerunFailedJobsInput, RerunWorkflowInput, TriggerWorkflowInput, WorkflowSuggestionInput,
@@ -41,23 +42,27 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
         - Provides clear status for each workflow
     """
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/actions/workflows",
             token=params.token
         )
         
+        # Ensure data is a dict with expected structure
+        total_count: int = data.get('total_count', 0) if isinstance(data, dict) else 0
+        workflows: List[Dict[str, Any]] = data.get('workflows', []) if isinstance(data, dict) else []
+        
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
-            return _truncate_response(result, data['total_count'])
+            return _truncate_response(result, total_count)
         
         # Markdown format
         markdown = f"# GitHub Actions Workflows for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Workflows:** {data['total_count']}\n\n"
+        markdown += f"**Total Workflows:** {total_count}\n\n"
         
-        if not data['workflows']:
+        if not workflows:
             markdown += "No workflows found in this repository.\n"
         else:
-            for workflow in data['workflows']:
+            for workflow in workflows:
                 markdown += f"## {workflow['name']}\n"
                 markdown += f"- **ID:** {workflow['id']}\n"
                 markdown += f"- **State:** {workflow['state']}\n"
