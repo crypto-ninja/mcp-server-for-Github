@@ -50,9 +50,14 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     category: "Repository Management",
     description: "Create a new GitHub repository",
     parameters: {
+      owner: { type: "string", required: false, description: "Organization owner (if creating in an org); omit for user repo" },
       name: { type: "string", required: true, description: "Repository name" },
       description: { type: "string", required: false, description: "Repository description" },
-      private: { type: "boolean", required: false, description: "Make repository private", example: "false" }
+      private: { type: "boolean", required: false, description: "Make repository private", example: "false" },
+      auto_init: { type: "boolean", required: false, description: "Initialize with README" },
+      gitignore_template: { type: "string", required: false, description: "Gitignore template name (e.g., 'Python')" },
+      license_template: { type: "string", required: false, description: "License template (e.g., 'mit')" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation with repository URL",
     example: `const result = await callMCPTool("github_create_repository", {
@@ -69,7 +74,15 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       name: { type: "string", required: false, description: "New repository name" },
-      description: { type: "string", required: false, description: "New description" }
+      description: { type: "string", required: false, description: "New description" },
+      homepage: { type: "string", required: false, description: "Homepage URL" },
+      private: { type: "boolean", required: false, description: "Set repository visibility" },
+      has_issues: { type: "boolean", required: false, description: "Enable issues" },
+      has_projects: { type: "boolean", required: false, description: "Enable projects" },
+      has_wiki: { type: "boolean", required: false, description: "Enable wiki" },
+      default_branch: { type: "string", required: false, description: "Set default branch" },
+      archived: { type: "boolean", required: false, description: "Archive/unarchive repository" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_update_repository", {
@@ -84,7 +97,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Delete a GitHub repository (PERMANENT - cannot be undone!)",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_delete_repository", {
@@ -99,7 +113,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Current owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      new_owner: { type: "string", required: true, description: "New owner username or org" }
+      new_owner: { type: "string", required: true, description: "New owner (user or org)" },
+      team_ids: { type: "array", required: false, description: "IDs of teams to add to the repository (org only)" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_transfer_repository", {
@@ -114,7 +130,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Archive a repository (make it read-only)",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      archived: { type: "boolean", required: true, description: "True to archive, False to unarchive" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_archive_repository", {
@@ -132,7 +150,13 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
         required: true, 
         description: "Search query (supports language:, stars:, etc.)",
         example: "machine learning language:python stars:>1000"
-      }
+      },
+      sort: { type: "string", required: false, description: "Sort field: 'stars', 'forks', 'updated', 'help-wanted-issues'" },
+      order: { type: "string", required: false, description: "Sort order: 'asc' or 'desc'" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 20)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "List of matching repositories with details",
     example: `const results = await callMCPTool("github_search_repositories", {
@@ -164,7 +188,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Star a repository for the authenticated user",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation that the repository was starred",
     example: `const result = await callMCPTool("github_star_repository", {
@@ -178,7 +203,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Unstar a repository for the authenticated user",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation that the repository was unstarred",
     example: `const result = await callMCPTool("github_unstar_repository", {
@@ -213,7 +239,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       name: { type: "string", required: true, description: "Label name" },
       color: { type: "string", required: true, description: "6-character hex color code without '#'", example: "ff0000" },
-      description: { type: "string", required: false, description: "Label description" }
+      description: { type: "string", required: false, description: "Label description" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created label details including name, color, and description",
     example: `const label = await callMCPTool("github_create_label", {
@@ -231,7 +258,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      name: { type: "string", required: true, description: "Label name to delete" }
+      name: { type: "string", required: true, description: "Label name to delete" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation message",
     example: `const result = await callMCPTool("github_delete_label", {
@@ -268,7 +296,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       title: { type: "string", required: true, description: "Issue title" },
-      body: { type: "string", required: false, description: "Issue description/body" }
+      body: { type: "string", required: false, description: "Issue description/body in Markdown format" },
+      labels: { type: "array", required: false, description: "List of label names to apply" },
+      assignees: { type: "array", required: false, description: "List of usernames to assign" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created issue details with number and URL",
     example: `const issue = await callMCPTool("github_create_issue", {
@@ -288,8 +319,11 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       issue_number: { type: "number", required: true, description: "Issue number" },
       state: { type: "string", required: false, description: "'open' or 'closed'" },
       title: { type: "string", required: false, description: "New title" },
-      body: { type: "string", required: false, description: "New body" },
-      labels: { type: "array", required: false, description: "Array of label names" }
+      body: { type: "string", required: false, description: "New body/description in Markdown format" },
+      labels: { type: "array", required: false, description: "List of label names to apply (replaces existing)" },
+      assignees: { type: "array", required: false, description: "List of usernames to assign (replaces existing)" },
+      milestone: { type: "number", required: false, description: "Milestone number (use null to remove milestone)" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Updated issue details",
     example: `const result = await callMCPTool("github_update_issue", {
@@ -308,7 +342,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       issue_number: { type: "number", required: true, description: "Issue number to comment on" },
-      body: { type: "string", required: true, description: "Comment content in Markdown format" }
+      body: { type: "string", required: true, description: "Comment content in Markdown format" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created comment details including id, URL, author, timestamps, and body",
     example: `const comment = await callMCPTool("github_add_issue_comment", {
@@ -430,9 +465,12 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       title: { type: "string", required: true, description: "PR title" },
-      body: { type: "string", required: true, description: "PR description" },
       head: { type: "string", required: true, description: "Source branch name" },
-      base: { type: "string", required: true, description: "Target branch (usually 'main' or 'master')" }
+      base: { type: "string", required: true, description: "Target branch name (default: main)" },
+      body: { type: "string", required: false, description: "Pull request description in Markdown format" },
+      draft: { type: "boolean", required: false, description: "Create as draft pull request" },
+      maintainer_can_modify: { type: "boolean", required: false, description: "Allow maintainers to modify the PR" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created PR details with number and URL",
     example: `const pr = await callMCPTool("github_create_pull_request", {
@@ -487,7 +525,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       pull_number: { type: "number", required: true, description: "PR number" },
-      merge_method: { type: "string", required: false, description: "'merge', 'squash', or 'rebase'", example: "squash" }
+      merge_method: { type: "string", required: false, description: "'merge', 'squash', or 'rebase'", example: "squash" },
+      commit_title: { type: "string", required: false, description: "Custom commit title" },
+      commit_message: { type: "string", required: false, description: "Custom commit message" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Merge confirmation",
     example: `const result = await callMCPTool("github_merge_pull_request", {
@@ -504,7 +545,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      pull_number: { type: "number", required: true, description: "PR number" }
+      pull_number: { type: "number", required: true, description: "PR number" },
+      comment: { type: "string", required: false, description: "Optional comment explaining why the PR is being closed" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Close confirmation",
     example: `const result = await callMCPTool("github_close_pull_request", {
@@ -664,9 +707,11 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      path: { type: "string", required: true, description: "File path", example: "docs/new-file.md" },
-      content: { type: "string", required: true, description: "File content" },
-      message: { type: "string", required: true, description: "Commit message" }
+      path: { type: "string", required: true, description: "File path (e.g., 'docs/README.md', 'src/main.py')", example: "docs/new-file.md" },
+      content: { type: "string", required: true, description: "File content (will be base64 encoded automatically)" },
+      message: { type: "string", required: true, description: "Commit message" },
+      branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation with commit SHA",
     example: `const result = await callMCPTool("github_create_file", {
@@ -684,10 +729,12 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      path: { type: "string", required: true, description: "File path" },
+      path: { type: "string", required: true, description: "File path to update" },
       content: { type: "string", required: true, description: "New file content" },
       message: { type: "string", required: true, description: "Commit message" },
-      sha: { type: "string", required: true, description: "Current file SHA (get from github_get_file_content)" }
+      sha: { type: "string", required: true, description: "SHA of the file being replaced (get from github_get_file_content)" },
+      branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation with new commit SHA",
     example: `const result = await callMCPTool("github_update_file", {
@@ -706,9 +753,11 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      path: { type: "string", required: true, description: "File path" },
+      path: { type: "string", required: true, description: "File path to delete" },
       message: { type: "string", required: true, description: "Commit message" },
-      sha: { type: "string", required: true, description: "Current file SHA" }
+      sha: { type: "string", required: true, description: "SHA of the file being deleted (get from github_get_file_content)" },
+      branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
     example: `const result = await callMCPTool("github_delete_file", {
