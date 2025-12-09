@@ -10,7 +10,7 @@ import sys
 import subprocess
 import json
 import inspect
-from typing import Optional, Any, Dict, Callable, Tuple, Type
+from typing import Optional, Any, Dict, Callable, Tuple, Type, cast
 from pydantic import BaseModel
 from mcp.server.fastmcp import FastMCP
 
@@ -164,9 +164,15 @@ def register_all_tools() -> None:
                         sig = inspect.signature(func)
                         first_param = next(iter(sig.parameters.values()))
                         ann = first_param.annotation
-                        if isinstance(ann, type) and issubclass(ann, BaseModel):
-                            model_cls = ann
-                    except Exception:
+                        # Check if annotation is a type (not a string forward reference)
+                        if (ann is not inspect.Parameter.empty and 
+                            isinstance(ann, type)):
+                            # Use cast to help mypy understand this is a type
+                            ann_type = cast(type, ann)
+                            if issubclass(ann_type, BaseModel):
+                                model_cls = cast(Type[BaseModel], ann_type)
+                    except (TypeError, AttributeError, ValueError):
+                        # Annotation might be a string, empty, or not a BaseModel subclass
                         model_cls = None
                     
                     if model_cls and isinstance(params, dict):
