@@ -2,6 +2,7 @@
 
 import json
 import httpx
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     CreateReleaseInput, GetReleaseInput, ListReleasesInput, UpdateReleaseInput,
@@ -23,20 +24,23 @@ async def github_list_releases(params: ListReleasesInput) -> str:
             "per_page": params.limit,
             "page": params.page
         }
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/releases",
             token=params.token,
             params=params_dict
         )
+        # GitHub API returns a list for releases endpoint
+        releases_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(releases_list, indent=2)
+            return _truncate_response(result, len(releases_list))
         markdown = f"# Releases for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data)} releases\n\n"
-        if not data:
+        markdown += f"**Page:** {params.page} | **Showing:** {len(releases_list)} releases\n\n"
+        if not releases_list:
             markdown += "No releases found.\n"
         else:
-            for release in data:
+            for release in releases_list:
                 status = []
                 if release.get('draft'):
                     status.append("🚧 Draft")
@@ -61,9 +65,9 @@ async def github_list_releases(params: ListReleasesInput) -> str:
                         body_preview += "..."
                     markdown += f"{body_preview}\n\n"
                 markdown += "---\n\n"
-            if len(data) == params.limit:
+            if len(releases_list) == params.limit:
                 markdown += f"*Showing page {params.page}. Use `page: {params.page + 1}` to see more.*\n"
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(releases_list))
     except Exception as e:
         return _handle_api_error(e)
 
@@ -77,7 +81,7 @@ async def github_get_release(params: GetReleaseInput) -> str:
             endpoint = f"repos/{params.owner}/{params.repo}/releases/latest"
         else:
             endpoint = f"repos/{params.owner}/{params.repo}/releases/tags/{params.tag}"
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             endpoint,
             token=params.token
         )
@@ -256,7 +260,7 @@ async def github_create_release(params: CreateReleaseInput) -> str:
             body_data["body"] = params.body
         
         # Create the release
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             endpoint,
             method="POST",
             token=auth_token,
@@ -336,7 +340,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         if params.release_id.startswith('v') or '.' in params.release_id:
             # Looks like a tag name, need to get release ID
             get_endpoint = f"repos/{params.owner}/{params.repo}/releases/tags/{params.release_id}"
-            release_data = await _make_github_request(
+            release_data: Dict[str, Any] = await _make_github_request(
                 get_endpoint,
                 method="GET",
                 token=auth_token
@@ -362,7 +366,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             body_data["prerelease"] = params.prerelease
         
         # Update the release
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             endpoint,
             method="PATCH",
             token=auth_token,

@@ -1,6 +1,6 @@
 """Pull Requests tools for GitHub MCP Server."""
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Union, cast
 import json
 import httpx
 
@@ -53,24 +53,27 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
             "page": params.page
         }
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/pulls",
             token=params.token,
             params=params_dict
         )
         
+        # GitHub API returns a list for pulls endpoint
+        prs_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(prs_list, indent=2)
+            return _truncate_response(result, len(prs_list))
         
         # Markdown format
         markdown = f"# Pull Requests for {params.owner}/{params.repo}\n\n"
-        markdown += f"**State:** {params.state.value} | **Page:** {params.page} | **Showing:** {len(data)} PRs\n\n"
+        markdown += f"**State:** {params.state.value} | **Page:** {params.page} | **Showing:** {len(prs_list)} PRs\n\n"
         
-        if not data:
+        if not prs_list:
             markdown += f"No {params.state.value} pull requests found.\n"
         else:
-            for pr in data:
+            for pr in prs_list:
                 markdown += f"## #{pr['number']}: {pr['title']}\n"
                 markdown += f"- **State:** {pr['state']}\n"
                 markdown += f"- **Author:** @{pr['user']['login']}\n"
@@ -94,7 +97,7 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
                 
                 markdown += "---\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(prs_list))
         
     except Exception as e:
         return _handle_api_error(e)
@@ -156,7 +159,7 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
         if params.body:
             payload["body"] = params.body
         
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/pulls",
             method="POST",
             token=auth_token,
@@ -231,7 +234,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
     """
     try:
         # Get PR details
-        pr_data = await _make_github_request(
+        pr_data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/pulls/{params.pull_number}",
             token=params.token
         )
