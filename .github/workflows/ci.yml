@@ -27,7 +27,7 @@ jobs:
         run: ruff check .
       - name: Type check (mypy)
         run: |
-          MYPYPATH=src mypy --config-file mypy.ini github_mcp
+          MYPYPATH=src mypy --config-file mypy.ini src/github_mcp
       - name: Security audit (pip-audit)
         run: pip-audit -r requirements.txt || true
       - name: Tests
