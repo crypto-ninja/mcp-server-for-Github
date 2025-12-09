@@ -10,12 +10,12 @@ import sys
 import subprocess
 import json
 import inspect
-from typing import Optional
+from typing import Optional, Any, Dict, Callable, Tuple, Type
 from pydantic import BaseModel
 from mcp.server.fastmcp import FastMCP
 
 # Check Deno installation
-def check_deno_installed():
+def check_deno_installed() -> Tuple[bool, str]:
     """Check if Deno is installed and accessible."""
     try:
         result = subprocess.run(
@@ -70,14 +70,14 @@ else:
     print(f">> Deno: {deno_info}")
 
 # Conditional tool registration decorator
-def conditional_tool(*args, **kwargs):
+def conditional_tool(*args: Any, **kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Only register tool if not in code-first mode.
     In code-first mode, only execute_code is exposed to Claude Desktop.
     """
     if CODE_FIRST_MODE:
         # Return a no-op decorator that doesn't register the tool
-        def noop_decorator(func):
+        def noop_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             return func
         return noop_decorator
     else:
@@ -91,7 +91,7 @@ from .tools import *  # noqa: E402, F403, F405  # Import all tool functions
 # Register all tools conditionally
 # We'll use a helper to get tool metadata from the original file
 # For now, register with default annotations - we can refine this later
-def register_all_tools():
+def register_all_tools() -> None:
     """Register all GitHub tools with the MCP server."""
     # Get tool metadata from original file (we'll extract this properly later)
     # For now, register with default annotations based on tool name patterns
@@ -104,7 +104,7 @@ def register_all_tools():
     
     # Register each tool
     for tool_name in all_tools:
-        tool_func = globals()[tool_name]
+        tool_func = globals()[tool_name]  # type: ignore[misc]
         metadata = tool_metadata.get(tool_name, {})
         
         # Determine default annotations based on tool name patterns
@@ -122,7 +122,14 @@ def register_all_tools():
         is_open_world = metadata.get("openWorldHint", True)
         
         # Create wrapper function with proper closure
-        def create_tool_wrapper(name, func, readonly, destructive, idempotent, open_world):
+        def create_tool_wrapper(
+            name: str,
+            func: Callable[..., Any],
+            readonly: bool,
+            destructive: bool,
+            idempotent: bool,
+            open_world: bool
+        ) -> Callable[..., Any]:
             """Create a tool wrapper with proper closure."""
             # Special case for github_license_info (no params)
             if name == "github_license_info":
@@ -136,7 +143,7 @@ def register_all_tools():
                         "openWorldHint": open_world
                     }
                 )
-                async def wrapper():
+                async def wrapper() -> Any:
                     return await func()
                 wrapper.__name__ = name
                 return wrapper
@@ -151,8 +158,8 @@ def register_all_tools():
                         "openWorldHint": open_world
                     }
                 )
-                async def wrapper(params):
-                    model_cls = None
+                async def wrapper(params: Dict[str, Any]) -> Any:
+                    model_cls: Optional[Type[BaseModel]] = None
                     try:
                         sig = inspect.signature(func)
                         first_param = next(iter(sig.parameters.values()))
@@ -171,7 +178,7 @@ def register_all_tools():
         # Register the tool
         wrapped = create_tool_wrapper(tool_name, tool_func, is_readonly, is_destructive, is_idempotent, is_open_world)
         # Store in module namespace (the decorator already registered it with FastMCP)
-        globals()[tool_name + "_registered"] = wrapped
+        globals()[tool_name + "_registered"] = wrapped  # type: ignore[misc]
 
 # Register all tools
 register_all_tools()
@@ -263,13 +270,16 @@ async def execute_code(code: str) -> str:
             result = runtime.execute_code(code)
         
         # Handle new format: {error: true/false, message/data: ...}
+        if not isinstance(result, dict):
+            return f"❌ Unexpected error: result is not a dictionary: {type(result)}"
+        
         is_error = result.get("error", True)
         
         if is_error:
             # Format error
             error = result.get("message", "Unknown error")
-            details = result.get("details", {})
-            stack = details.get("stack", "")
+            details: Dict[str, Any] = result.get("details", {})
+            stack = details.get("stack", "") if isinstance(details, dict) else ""
             code = result.get("code", "")
             
             error_msg = "❌ Code execution failed"
@@ -306,7 +316,7 @@ async def execute_code(code: str) -> str:
         return f"❌ Unexpected error during code execution: {str(e)}"
 
 
-def run(transport: Optional[str] = None, port: Optional[int] = None):
+def run(transport: Optional[str] = None, port: Optional[int] = None) -> None:
     """
     Run the MCP server.
     
