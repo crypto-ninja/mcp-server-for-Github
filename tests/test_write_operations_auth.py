@@ -15,7 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_create_file,
     github_update_file,
     github_delete_file,
@@ -28,7 +28,7 @@ from src.github_mcp.tools import (
     github_archive_repository,
     github_merge_pull_request,
 )
-from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, CreateRepositoryInput, DeleteRepositoryInput, UpdateRepositoryInput, TransferRepositoryInput, ArchiveRepositoryInput, MergePullRequestInput
+from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, CreateRepositoryInput, DeleteRepositoryInput, UpdateRepositoryInput, TransferRepositoryInput, ArchiveRepositoryInput, MergePullRequestInput  # noqa: E402
 
 
 class TestWriteOperationsAuthValidation:

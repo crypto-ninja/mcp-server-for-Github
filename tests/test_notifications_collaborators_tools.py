@@ -11,7 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_list_notifications,
     github_get_thread,
     github_mark_thread_read,
@@ -21,7 +21,7 @@ from src.github_mcp.tools import (
     github_list_repo_collaborators,
     github_list_repo_teams,
 )
-from src.github_mcp.models import (
+from src.github_mcp.models import (  # noqa: E402
     ListNotificationsInput,
     GetThreadInput,
     MarkThreadReadInput,
@@ -49,7 +49,7 @@ class TestNotificationsTools:
         
         params = ListNotificationsInput()
         
-        result = await github_list_notifications(params)
+        await github_list_notifications(params)
         
         mock_github_request.assert_called_once()
         assert "notifications" in mock_github_request.call_args[0][0]
@@ -67,7 +67,7 @@ class TestNotificationsTools:
             participating=True
         )
         
-        result = await github_list_notifications(params)
+        await github_list_notifications(params)
         
         call_args = mock_github_request.call_args
         params_dict = call_args[1].get("params", {})
@@ -99,7 +99,7 @@ class TestNotificationsTools:
         
         params = GetThreadInput(thread_id="12345")
         
-        result = await github_get_thread(params)
+        await github_get_thread(params)
         
         assert "notifications/threads/12345" in mock_github_request.call_args[0][0]
 
@@ -113,7 +113,7 @@ class TestNotificationsTools:
         
         params = MarkThreadReadInput(thread_id="12345")
         
-        result = await github_mark_thread_read(params)
+        await github_mark_thread_read(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PATCH"
@@ -128,7 +128,7 @@ class TestNotificationsTools:
         
         params = MarkNotificationsReadInput()
         
-        result = await github_mark_notifications_read(params)
+        await github_mark_notifications_read(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PUT"
@@ -146,7 +146,7 @@ class TestNotificationsTools:
         
         params = GetThreadSubscriptionInput(thread_id="12345")
         
-        result = await github_get_thread_subscription(params)
+        await github_get_thread_subscription(params)
         
         mock_github_request.assert_called_once()
 
@@ -166,7 +166,7 @@ class TestNotificationsTools:
             ignored=True
         )
         
-        result = await github_set_thread_subscription(params)
+        await github_set_thread_subscription(params)
         
         call_args = mock_github_request.call_args
         assert call_args[1]["method"] == "PUT"
@@ -191,7 +191,7 @@ class TestCollaboratorsTools:
             repo="test-repo"
         )
         
-        result = await github_list_repo_collaborators(params)
+        await github_list_repo_collaborators(params)
         
         assert "/collaborators" in mock_github_request.call_args[0][0]
 
@@ -210,7 +210,7 @@ class TestCollaboratorsTools:
             permission="admin"
         )
         
-        result = await github_list_repo_collaborators(params)
+        await github_list_repo_collaborators(params)
         
         call_args = mock_github_request.call_args
         params_dict = call_args[1].get("params", {})
@@ -232,7 +232,7 @@ class TestCollaboratorsTools:
             repo="test-repo"
         )
         
-        result = await github_list_repo_teams(params)
+        await github_list_repo_teams(params)
         
         assert "/teams" in mock_github_request.call_args[0][0]
 

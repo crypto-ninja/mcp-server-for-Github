@@ -12,8 +12,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import github_update_file, github_delete_file, github_create_release, github_update_release, github_update_repository, github_archive_repository, github_delete_repository, github_get_file_content, github_get_release
-from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, UpdateRepositoryInput, ArchiveRepositoryInput, DeleteRepositoryInput, GetFileContentInput, GetReleaseInput
+from src.github_mcp.tools import github_create_file, github_update_file, github_delete_file, github_create_release, github_update_release, github_update_repository, github_archive_repository, github_delete_repository, github_get_file_content, github_get_release  # noqa: E402
+from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, UpdateRepositoryInput, ArchiveRepositoryInput, DeleteRepositoryInput, GetFileContentInput, GetReleaseInput  # noqa: E402
 
 # Test repository configuration
 # Using main repo for testing - we'll use safe test paths

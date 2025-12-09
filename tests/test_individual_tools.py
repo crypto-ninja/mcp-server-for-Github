@@ -17,7 +17,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.tools import (
+from src.github_mcp.tools import (  # noqa: E402
     github_get_repo_info,
     github_list_issues,
     github_create_issue,
@@ -57,8 +57,8 @@ from src.github_mcp.tools import (
     github_grep,
     github_read_file_chunk,
 )
-from src.github_mcp.models import RepoInfoInput, ListIssuesInput, CreateIssueInput, GetFileContentInput, SearchCodeInput, ListCommitsInput, GetPullRequestDetailsInput
-from src.github_mcp.models import ResponseFormat
+from src.github_mcp.models import RepoInfoInput, ListIssuesInput, CreateIssueInput, GetFileContentInput, SearchCodeInput, ListCommitsInput, GetPullRequestDetailsInput  # noqa: E402
+from src.github_mcp.models import ResponseFormat  # noqa: E402
 
 
 def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
