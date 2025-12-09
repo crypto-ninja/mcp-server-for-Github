@@ -1,6 +1,6 @@
 """Repository management tools for GitHub MCP Server."""
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Union, cast
 import json
 import httpx
 
@@ -48,7 +48,7 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
         - Includes actionable suggestions for resolving errors
     """
     try:
-        data = await _make_github_request(
+        data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}",
             token=params.token
         )
@@ -402,12 +402,14 @@ async def github_list_org_repos(params: ListOrgReposInput) -> str:
         if params.page:
             query["page"] = params.page
         
-        data = await _make_github_request(
+        data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"orgs/{params.org}/repos",
             token=params.token,
             params=query
         )
-        return json.dumps(data, indent=2)
+        # GitHub API returns a list for org repos endpoint
+        repos_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        return json.dumps(repos_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 

@@ -1,7 +1,7 @@
 """Type helper utilities for normalizing API responses and type conversions."""
 
 import json
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List
 
 
 def ensure_dict(x: Any) -> Dict[str, Any]:

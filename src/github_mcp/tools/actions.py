@@ -1,7 +1,7 @@
 """Actions tools for GitHub MCP Server."""
 
 import json
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List
 
 from ..models.inputs import (
     CancelWorkflowRunInput, DeleteArtifactInput, GetArtifactInput, GetJobInput, GetJobLogsInput, GetWorkflowInput, GetWorkflowRunInput, GetWorkflowRunsInput, ListWorkflowRunArtifactsInput, ListWorkflowRunJobsInput, ListWorkflowsInput, RerunFailedJobsInput, RerunWorkflowInput, TriggerWorkflowInput, WorkflowSuggestionInput,
