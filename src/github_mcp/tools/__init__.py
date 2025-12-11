@@ -1,4 +1,4 @@
-"""GitHub MCP Tools - All 98 tool functions."""
+"""GitHub MCP Tools - All 109 tool functions."""
 
 from .repositories import (
     github_get_repo_info,

@@ -18,3 +18,5 @@ __all__ = [
     "execute_code",
     "CODE_FIRST_MODE",
 ]
+
+__version__ = "2.5.2"

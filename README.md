@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.5.1-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.1)
+[![Version](https://img.shields.io/badge/version-2.5.2-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.2)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,11 +12,14 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)
+### 🚀 Latest: v2.5.2 - Version Sync & Tool Count (December 11, 2025)
 
-**MAJOR REFACTOR:** Complete modular restructure with connection pooling for 97% latency reduction!
+- 🔄 Synced all version references to v2.5.2
+- 🛠️ Corrected tool count display to 109 everywhere
+- ✅ Continued stability (all 297 tests passing)
 
-**New in v2.5.1:**
+**Previous: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)**
+
 - 🏗️ **Modular Architecture** - `github_mcp.py` reduced from 10,857 to ~50 lines
 - ⚡ **Connection Pooling** - 97% latency reduction (4000ms → 108ms for subsequent calls)
 - 🔧 **Dict→Model Conversion** - `callMCPTool` now works seamlessly with plain JavaScript objects
@@ -107,7 +110,7 @@
 
 **New Architecture:**
 - Single `execute_code` tool exposed to Claude
-- Write TypeScript code calling 41 tools on-demand
+- Write TypeScript code calling 109 tools on-demand
 - 95% faster initialization (45s → 2s)
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
@@ -1101,7 +1104,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.1 with 109 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
+**Current:** v2.5.2 with 109 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
