@@ -166,13 +166,15 @@ async def github_create_file(params: CreateFileInput) -> str:
             json=body
         )
         
-        # Return a wrapper that includes a stable "created" marker while preserving the full API response
-        response = {
+        # Return useful data with path, sha, and url
+        content = data.get("content", {})
+        return json.dumps({
             "success": True,
-            "created": True,
-            "file": data
-        }
-        return json.dumps(response, indent=2)
+            "path": content.get("path") or params.path,
+            "sha": content.get("sha") or data.get("commit", {}).get("sha"),
+            "url": content.get("html_url") or data.get("content", {}).get("html_url") or f"https://github.com/{params.owner}/{params.repo}/blob/{params.branch or 'main'}/{params.path}",
+            "message": f"File '{params.path}' created successfully"
+        }, indent=2)
         
     except Exception as e:
         # Return structured JSON error for programmatic use

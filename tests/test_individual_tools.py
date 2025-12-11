@@ -46,10 +46,8 @@ from src.github_mcp.tools import (  # noqa: E402
     github_update_file,
     github_delete_file,
     github_list_repo_contents,
-    github_transfer_repository,
     github_archive_repository,
     github_create_repository,
-    github_delete_repository,
     github_update_repository,
     github_suggest_workflow,
     github_license_info,
@@ -1750,36 +1748,6 @@ class TestRepositoryTransferArchive:
     @pytest.mark.asyncio
     @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     @patch('src.github_mcp.tools.repositories._make_github_request')
-    async def test_github_transfer_repository(self, mock_request, mock_auth):
-        """Test transferring a repository."""
-        # Mock authentication
-        mock_auth.return_value = "test-token"
-        # Mock transfer response
-        mock_response = {
-            "full_name": "newowner/test-repo",
-            "owner": {
-                "login": "newowner"
-            },
-            "html_url": "https://github.com/newowner/test-repo"
-        }
-        mock_request.return_value = mock_response
-
-        # Call the tool
-        from src.github_mcp.models import TransferRepositoryInput
-        params = TransferRepositoryInput(
-            owner="test",
-            repo="test-repo",
-            new_owner="newowner"
-        )
-        result = await github_transfer_repository(params)
-
-        # Verify
-        assert isinstance(result, str)
-        assert "transferred" in result.lower() or "newowner" in result or "Error" in result
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    @patch('src.github_mcp.tools.repositories._make_github_request')
     async def test_github_archive_repository(self, mock_request, mock_auth):
         """Test archiving a repository."""
         # Mock authentication
@@ -1838,29 +1806,6 @@ class TestRepositoryCreationDeletion:
         # Verify
         assert isinstance(result, str)
         assert "created" in result.lower() or "new-repo" in result or "Error" in result
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    @patch('src.github_mcp.tools.repositories._make_github_request')
-    async def test_github_delete_repository(self, mock_request, mock_auth):
-        """Test deleting a repository."""
-        # Mock authentication
-        mock_auth.return_value = "test-token"
-        # Mock delete response (204 No Content typically)
-        mock_request.return_value = None
-
-        # Call the tool
-        from src.github_mcp.models import DeleteRepositoryInput
-        params = DeleteRepositoryInput(
-            owner="test",
-            repo="test-repo"
-        )
-        result = await github_delete_repository(params)
-
-        # Verify
-        assert isinstance(result, str)
-        assert "deleted" in result.lower() or "removed" in result.lower() or "Error" in result
-
 
 class TestGraphQLOperations:
     """Test GraphQL-based operations."""
@@ -3703,68 +3648,6 @@ class TestUpdateReleaseAdvanced:
         # Verify
         assert isinstance(result, str)
         assert "v1.0.0" in result or "123" in result or "updated" in result.lower() or "Error" in result
-
-
-class TestDeleteRepositoryAdvanced:
-    """Test advanced repository deletion scenarios."""
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    @patch('src.github_mcp.tools.repositories._make_github_request')
-    async def test_github_delete_repository_with_verification(self, mock_request, mock_auth):
-        """Test deleting repository with verification."""
-        # Mock authentication
-        mock_auth.return_value = "test-token"
-        # Mock delete response (204 No Content)
-        mock_request.return_value = None
-
-        # Call the tool
-        from src.github_mcp.models import DeleteRepositoryInput
-        params = DeleteRepositoryInput(
-            owner="test",
-            repo="test-repo"
-        )
-        result = await github_delete_repository(params)
-
-        # Verify
-        assert isinstance(result, str)
-        assert "deleted" in result.lower() or "removed" in result.lower() or "Error" in result
-
-
-class TestTransferRepositoryAdvanced:
-    """Test advanced repository transfer scenarios."""
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    @patch('src.github_mcp.tools.repositories._make_github_request')
-    async def test_github_transfer_repository_to_org(self, mock_request, mock_auth):
-        """Test transferring repository to organization."""
-        # Mock authentication
-        mock_auth.return_value = "test-token"
-        # Mock transfer response
-        mock_response = {
-            "id": 123,
-            "name": "test-repo",
-            "full_name": "new-org/test-repo",
-            "owner": {
-                "login": "new-org",
-                "type": "Organization"
-            }
-        }
-        mock_request.return_value = mock_response
-
-        # Call the tool
-        from src.github_mcp.models import TransferRepositoryInput
-        params = TransferRepositoryInput(
-            owner="test",
-            repo="test-repo",
-            new_owner="new-org"
-        )
-        result = await github_transfer_repository(params)
-
-        # Verify
-        assert isinstance(result, str)
-        assert "new-org" in result or "transferred" in result.lower() or "Error" in result
 
 
 class TestCommitFiltering:

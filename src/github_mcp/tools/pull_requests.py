@@ -171,15 +171,16 @@ async def github_create_pull_request(params: CreatePullRequestInput) -> str:
             json=payload
         )
         
-        # Return a wrapper that includes a stable "created" marker while preserving the full API response
-        # This includes all fields: number, html_url, state, title, etc.
-        # This makes it easy for programmatic use (e.g., TypeScript code)
-        response = {
+        # Return useful data with number, url, title, state, head, base
+        return json.dumps({
             "success": True,
-            "created": True,
-            "pr": data
-        }
-        return json.dumps(response, indent=2)
+            "number": data.get("number"),
+            "url": data.get("html_url"),
+            "title": data.get("title"),
+            "state": data.get("state"),
+            "head": data.get("head", {}).get("ref"),
+            "base": data.get("base", {}).get("ref")
+        }, indent=2)
         
     except Exception as e:
         # Return structured JSON error for programmatic use

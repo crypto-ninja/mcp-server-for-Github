@@ -22,13 +22,11 @@ from src.github_mcp.tools import (  # noqa: E402
     github_create_release,
     github_update_release,
     github_create_repository,
-    github_delete_repository,
     github_update_repository,
-    github_transfer_repository,
     github_archive_repository,
     github_merge_pull_request,
 )
-from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, CreateRepositoryInput, DeleteRepositoryInput, UpdateRepositoryInput, TransferRepositoryInput, ArchiveRepositoryInput, MergePullRequestInput  # noqa: E402
+from src.github_mcp.models import CreateFileInput, UpdateFileInput, DeleteFileInput, CreateReleaseInput, UpdateReleaseInput, CreateRepositoryInput, UpdateRepositoryInput, ArchiveRepositoryInput, MergePullRequestInput  # noqa: E402
 
 
 class TestWriteOperationsAuthValidation:
@@ -181,23 +179,6 @@ class TestWriteOperationsAuthValidation:
 
     @pytest.mark.asyncio
     @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    async def test_github_delete_repository_no_auth(self, mock_get_token):
-        """Test github_delete_repository returns error when no auth token."""
-        mock_get_token.return_value = None
-        
-        params = DeleteRepositoryInput(
-            owner="test",
-            repo="test-repo"
-        )
-        
-        result = await github_delete_repository(params)
-        
-        data = json.loads(result)
-        assert data["error"] == "Authentication required"
-        assert data["success"] is False
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
     async def test_github_update_repository_no_auth(self, mock_get_token):
         """Test github_update_repository returns error when no auth token."""
         mock_get_token.return_value = None
@@ -209,24 +190,6 @@ class TestWriteOperationsAuthValidation:
         )
         
         result = await github_update_repository(params)
-        
-        data = json.loads(result)
-        assert data["error"] == "Authentication required"
-        assert data["success"] is False
-
-    @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._get_auth_token_fallback')
-    async def test_github_transfer_repository_no_auth(self, mock_get_token):
-        """Test github_transfer_repository returns error when no auth token."""
-        mock_get_token.return_value = None
-        
-        params = TransferRepositoryInput(
-            owner="test",
-            repo="test-repo",
-            new_owner="new-owner"
-        )
-        
-        result = await github_transfer_repository(params)
         
         data = json.loads(result)
         assert data["error"] == "Authentication required"

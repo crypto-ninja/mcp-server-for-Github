@@ -158,6 +158,8 @@ class TestToolSchemas:
         """Test that write operations don't have response_format parameter."""
         write_tools = [
             'github_create_release',
+            'github_update_release',
+            'github_delete_release',
             'github_update_file',
             'github_delete_file',
             'github_create_issue',
@@ -168,11 +170,12 @@ class TestToolSchemas:
             'github_create_pr_review',
             'github_create_repository',
             'github_update_repository',
-            'github_delete_repository',
-            'github_transfer_repository',
             'github_archive_repository',
             'github_batch_file_operations',
             'github_str_replace',
+            'github_create_gist',
+            'github_update_gist',
+            'github_delete_gist',
         ]
         
         violations = []

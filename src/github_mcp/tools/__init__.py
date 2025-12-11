@@ -3,9 +3,7 @@
 from .repositories import (
     github_get_repo_info,
     github_create_repository,
-    github_delete_repository,
     github_update_repository,
-    github_transfer_repository,
     github_archive_repository,
     github_list_user_repos,
     github_list_org_repos,
@@ -56,6 +54,7 @@ from .releases import (
     github_get_release,
     github_create_release,
     github_update_release,
+    github_delete_release,
 )
 
 from .actions import (
@@ -137,6 +136,7 @@ from .gists import (
     github_get_gist,
     github_create_gist,
     github_update_gist,
+    github_delete_gist,
 )
 
 from .labels import (
@@ -172,12 +172,10 @@ from .workspace import (
 )
 
 __all__ = [
-    # Repositories (8)
+    # Repositories (6)
     "github_get_repo_info",
     "github_create_repository",
-    "github_delete_repository",
     "github_update_repository",
-    "github_transfer_repository",
     "github_archive_repository",
     "github_list_user_repos",
     "github_list_org_repos",
@@ -211,11 +209,12 @@ __all__ = [
     "github_read_file_chunk",
     # Commits (1)
     "github_list_commits",
-    # Releases (4)
+    # Releases (5)
     "github_list_releases",
     "github_get_release",
     "github_create_release",
     "github_update_release",
+    "github_delete_release",
     # Actions (14)
     "github_list_workflows",
     "github_get_workflow",
@@ -275,11 +274,12 @@ __all__ = [
     "github_get_user_info",
     "github_get_authenticated_user",
     "github_search_users",
-    # Gists (4)
+    # Gists (5)
     "github_list_gists",
     "github_get_gist",
     "github_create_gist",
     "github_update_gist",
+    "github_delete_gist",
     # Labels (3)
     "github_list_labels",
     "github_create_label",

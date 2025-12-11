@@ -164,7 +164,7 @@ async def github_create_branch(params: CreateBranchInput) -> str:
             sha = commit_data["sha"]
         
         create_endpoint = f"repos/{params.owner}/{params.repo}/git/refs"
-        await _make_github_request(
+        result = await _make_github_request(
             create_endpoint,
             method="POST",
             token=auth_token,
@@ -177,10 +177,9 @@ async def github_create_branch(params: CreateBranchInput) -> str:
         return json.dumps({
             "success": True,
             "branch": params.branch,
-            "sha": sha,
-            "from_ref": params.from_ref,
-            "url": f"https://github.com/{params.owner}/{params.repo}/tree/{params.branch}",
-            "message": f"Branch '{params.branch}' created successfully from '{params.from_ref}'"
+            "ref": result.get("ref"),
+            "sha": result.get("object", {}).get("sha") or sha,
+            "url": f"https://github.com/{params.owner}/{params.repo}/tree/{params.branch}"
         }, indent=2)
         
     except Exception as e:

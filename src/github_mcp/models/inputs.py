@@ -178,6 +178,18 @@ class UpdateGistInput(BaseModel):
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
 
+class DeleteGistInput(BaseModel):
+    """Input model for deleting a gist."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    gist_id: str = Field(..., min_length=1, max_length=200, description="Gist ID to delete")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
 class SearchRepositoriesInput(BaseModel):
     """Input model for searching GitHub repositories."""
     model_config = ConfigDict(
@@ -696,6 +708,20 @@ class UpdateReleaseInput(BaseModel):
     prerelease: Optional[bool] = Field(default=None, description="Set pre-release status")
     token: Optional[str] = Field(default=None, description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)")
 
+
+class DeleteReleaseInput(BaseModel):
+    """Input model for deleting a release."""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    release_id: int = Field(..., description="Release ID to delete")
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
 # Workflow Optimization Model
 
 class WorkflowSuggestionInput(BaseModel):
@@ -787,15 +813,6 @@ class CreatePRReviewInput(BaseModel):
         return v
 
 
-class DeleteRepositoryInput(BaseModel):
-    """Input model for deleting a repository."""
-    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
-    
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
-    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    token: Optional[str] = Field(default=None, description="GitHub personal access token")
-
-
 class UpdateRepositoryInput(BaseModel):
     """Input model for updating repository settings."""
     model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
@@ -811,17 +828,6 @@ class UpdateRepositoryInput(BaseModel):
     has_wiki: Optional[bool] = Field(default=None, description="Enable wiki")
     default_branch: Optional[str] = Field(default=None, description="Set default branch")
     archived: Optional[bool] = Field(default=None, description="Archive/unarchive repository")
-    token: Optional[str] = Field(default=None, description="GitHub personal access token")
-
-
-class TransferRepositoryInput(BaseModel):
-    """Input model for transferring repository ownership."""
-    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra='forbid')
-    
-    owner: str = Field(..., description="Current repository owner", min_length=1, max_length=100)
-    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    new_owner: str = Field(..., description="New owner (user or org)", min_length=1, max_length=100)
-    team_ids: Optional[List[int]] = Field(default=None, description="IDs of teams to add to the repository (org only)")
     token: Optional[str] = Field(default=None, description="GitHub personal access token")
 
 

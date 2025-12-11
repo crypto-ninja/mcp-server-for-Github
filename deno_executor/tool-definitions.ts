@@ -92,39 +92,6 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
   {
-    name: "github_delete_repository",
-    category: "Repository Management",
-    description: "Delete a GitHub repository (PERMANENT - cannot be undone!)",
-    parameters: {
-      owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" },
-      token: { type: "string", required: false, description: "GitHub personal access token" }
-    },
-    returns: "Success confirmation",
-    example: `const result = await callMCPTool("github_delete_repository", {
-  owner: "myuser",
-  repo: "old-repo"
-});`
-  },
-  {
-    name: "github_transfer_repository",
-    category: "Repository Management",
-    description: "Transfer repository to another user or organization",
-    parameters: {
-      owner: { type: "string", required: true, description: "Current owner" },
-      repo: { type: "string", required: true, description: "Repository name" },
-      new_owner: { type: "string", required: true, description: "New owner (user or org)" },
-      team_ids: { type: "array", required: false, description: "IDs of teams to add to the repository (org only)" },
-      token: { type: "string", required: false, description: "GitHub personal access token" }
-    },
-    returns: "Success confirmation",
-    example: `const result = await callMCPTool("github_transfer_repository", {
-  owner: "myuser",
-  repo: "myrepo",
-  new_owner: "myorg"
-});`
-  },
-  {
     name: "github_archive_repository",
     category: "Repository Management",
     description: "Archive a repository (make it read-only)",
@@ -422,6 +389,19 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     "hello.py": { content: "print('Updated content')" },
     "old.txt": null
   }
+});`
+  },
+  {
+    name: "github_delete_gist",
+    category: "Gists",
+    description: "Delete a gist",
+    parameters: {
+      gist_id: { type: "string", required: true, description: "Gist ID to delete" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
+    },
+    returns: "Confirmation of deletion",
+    example: `const result = await callMCPTool("github_delete_gist", {
+  gist_id: "abc123"
 });`
   },
   {
@@ -987,6 +967,23 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   repo: "myrepo",
   release_id: "v2.0.0",
   body: "Updated release notes..."
+});`
+  },
+  {
+    name: "github_delete_release",
+    category: "Releases",
+    description: "Delete a release from a repository",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      release_id: { type: "number", required: true, description: "Release ID to delete" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
+    },
+    returns: "Confirmation of deletion",
+    example: `const result = await callMCPTool("github_delete_release", {
+  owner: "user",
+  repo: "repo",
+  release_id: 12345
 });`
   },
 

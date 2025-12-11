@@ -5,7 +5,7 @@ import httpx
 from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
-    CreateReleaseInput, GetReleaseInput, ListReleasesInput, UpdateReleaseInput,
+    CreateReleaseInput, GetReleaseInput, ListReleasesInput, UpdateReleaseInput, DeleteReleaseInput,
 )
 from ..models.enums import (
     ResponseFormat,
@@ -398,6 +398,51 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             error_info["message"] = str(e)
         
         return json.dumps(error_info, indent=2)
+
+
+async def github_delete_release(params: DeleteReleaseInput) -> str:
+    """
+    Delete a release from a GitHub repository.
+    
+    Args:
+        params (DeleteReleaseInput): Validated input parameters containing:
+            - owner (str): Repository owner
+            - repo (str): Repository name
+            - release_id (int): Release ID to delete
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message
+    
+    Examples:
+        - Use when: "Delete release 12345"
+        - Use when: "Remove the v1.0.0 release"
+    
+    Error Handling:
+        - Returns error if release not found (404)
+        - Returns error if authentication fails (401/403)
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting releases. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"repos/{params.owner}/{params.repo}/releases/{params.release_id}",
+            method="DELETE",
+            token=auth_token
+        )
+        return json.dumps({
+            "success": True,
+            "message": f"Release {params.release_id} deleted successfully"
+        }, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
 
 # Phase 2.1: File Management Tools
 

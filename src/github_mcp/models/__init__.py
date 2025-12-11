@@ -17,9 +17,7 @@ from .inputs import (
     # Repository Models
     RepoInfoInput,
     CreateRepositoryInput,
-    DeleteRepositoryInput,
     UpdateRepositoryInput,
-    TransferRepositoryInput,
     ArchiveRepositoryInput,
     ListUserReposInput,
     ListOrgReposInput,
@@ -70,6 +68,7 @@ from .inputs import (
     GetReleaseInput,
     CreateReleaseInput,
     UpdateReleaseInput,
+    DeleteReleaseInput,
     
     # Actions Models
     ListWorkflowsInput,
@@ -143,6 +142,7 @@ from .inputs import (
     CreateGistInput,
     CreateGistFileInput,
     UpdateGistInput,
+    DeleteGistInput,
     
     # Label Models
     ListLabelsInput,
@@ -179,9 +179,7 @@ __all__ = [
     # Input Models (all 108+ models)
     "RepoInfoInput",
     "CreateRepositoryInput",
-    "DeleteRepositoryInput",
     "UpdateRepositoryInput",
-    "TransferRepositoryInput",
     "ArchiveRepositoryInput",
     "ListUserReposInput",
     "ListOrgReposInput",
@@ -220,6 +218,7 @@ __all__ = [
     "GetReleaseInput",
     "CreateReleaseInput",
     "UpdateReleaseInput",
+    "DeleteReleaseInput",
     "ListWorkflowsInput",
     "GetWorkflowRunsInput",
     "GetWorkflowInput",
@@ -277,6 +276,7 @@ __all__ = [
     "CreateGistInput",
     "CreateGistFileInput",
     "UpdateGistInput",
+    "DeleteGistInput",
     "ListLabelsInput",
     "CreateLabelInput",
     "DeleteLabelInput",

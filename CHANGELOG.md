@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.5.3] - 2025-12-11
+
+### Changed
+
+- Removed `github_delete_repository` (requires admin permissions most users don't have)
+- Removed `github_transfer_repository` (requires admin permissions most users don't have)
+- Added `github_delete_release` (completes release CRUD operations)
+- Added `github_delete_gist` (completes gist CRUD operations)
+
+### Fixed
+
+- `github_create_branch` now returns `{ branch, ref, sha, url }`
+- `github_create_file` now returns `{ path, sha, url }`
+- `github_create_pull_request` now returns `{ number, url, title, state, head, base }`
+
+### Testing
+
+- Full test suite passing (297 tests)
+- Tool count: 109 → 109 (no change)
+
+---
+
 ## [2.5.2] - 2025-12-11
 
 ### Changed

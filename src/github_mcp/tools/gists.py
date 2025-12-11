@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any, List, Union, cast
 import json
 
 from ..models.inputs import (
-    CreateGistInput, GetGistInput, ListGistsInput, UpdateGistInput,
+    CreateGistInput, GetGistInput, ListGistsInput, UpdateGistInput, DeleteGistInput,
 )
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
@@ -150,6 +150,49 @@ async def github_update_gist(params: UpdateGistInput) -> str:
         )
         
         return json.dumps(data, indent=2)
+    except Exception as e:
+        return _handle_api_error(e)
+
+
+async def github_delete_gist(params: DeleteGistInput) -> str:
+    """
+    Delete a gist.
+    
+    Args:
+        params (DeleteGistInput): Validated input parameters containing:
+            - gist_id (str): Gist ID to delete
+            - token (Optional[str]): GitHub token
+    
+    Returns:
+        str: Confirmation message
+    
+    Examples:
+        - Use when: "Delete gist abc123"
+        - Use when: "Remove the old gist"
+    
+    Error Handling:
+        - Returns error if gist not found (404)
+        - Returns error if authentication fails (401/403)
+    """
+    auth_token = await _get_auth_token_fallback(params.token)
+    
+    if not auth_token:
+        return json.dumps({
+            "error": "Authentication required",
+            "message": "GitHub token required for deleting gists. Set GITHUB_TOKEN or configure GitHub App authentication.",
+            "success": False
+        }, indent=2)
+    
+    try:
+        await _make_github_request(
+            f"gists/{params.gist_id}",
+            method="DELETE",
+            token=auth_token
+        )
+        return json.dumps({
+            "success": True,
+            "message": f"Gist {params.gist_id} deleted successfully"
+        }, indent=2)
     except Exception as e:
         return _handle_api_error(e)
 

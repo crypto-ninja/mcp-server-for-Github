@@ -7,9 +7,7 @@ import httpx
 from ..models.inputs import (
     RepoInfoInput,
     CreateRepositoryInput,
-    DeleteRepositoryInput,
     UpdateRepositoryInput,
-    TransferRepositoryInput,
     ArchiveRepositoryInput,
     ListUserReposInput,
     ListOrgReposInput,
@@ -152,52 +150,6 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
         return json.dumps(error_info, indent=2)
 
 
-async def github_delete_repository(params: DeleteRepositoryInput) -> str:
-    """
-    Delete a repository. Destructive; requires appropriate permissions.
-    """
-    auth_token = await _get_auth_token_fallback(params.token)
-    
-    # Ensure we have a valid token before proceeding
-    if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for deleting repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
-    try:
-        await _make_github_request(f"repos/{params.owner}/{params.repo}", method="DELETE", token=auth_token)
-        # DELETE operations return 204 No Content (empty response)
-        # Return structured success JSON
-        return json.dumps({
-            "success": True,
-            "message": f"Repository {params.owner}/{params.repo} deleted successfully",
-            "deleted": True
-        }, indent=2)
-    except Exception as e:
-        # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
-        # Extract detailed error info from HTTPStatusError
-        if isinstance(e, httpx.HTTPStatusError):
-            error_info["status_code"] = e.response.status_code
-            try:
-                error_body = e.response.json()
-                error_info["message"] = error_body.get("message", "Unknown error")
-                error_info["errors"] = error_body.get("errors", [])
-            except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
-        else:
-            error_info["message"] = str(e)
-        
-        return json.dumps(error_info, indent=2)
-
-
 async def github_update_repository(params: UpdateRepositoryInput) -> str:
     """
     Update repository settings such as description, visibility, and features.
@@ -244,53 +196,6 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
         return json.dumps(error_info, indent=2)
 
 
-async def github_transfer_repository(params: TransferRepositoryInput) -> str:
-    """
-    Transfer a repository to a new owner (user or organization).
-    """
-    auth_token = await _get_auth_token_fallback(params.token)
-    
-    # Ensure we have a valid token before proceeding
-    if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for transferring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
-    try:
-        body: Dict[str, Any] = {"new_owner": params.new_owner}
-        if params.team_ids:
-            body["team_ids"] = params.team_ids
-        data = await _make_github_request(
-            f"repos/{params.owner}/{params.repo}/transfer",
-            method="POST",
-            token=auth_token,
-            json=body
-        )
-        # Return the FULL GitHub API response as JSON
-        return json.dumps(data, indent=2)
-    except Exception as e:
-        # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
-        # Extract detailed error info from HTTPStatusError
-        if isinstance(e, httpx.HTTPStatusError):
-            error_info["status_code"] = e.response.status_code
-            try:
-                error_body = e.response.json()
-                error_info["message"] = error_body.get("message", "Unknown error")
-                error_info["errors"] = error_body.get("errors", [])
-            except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
-        else:
-            error_info["message"] = str(e)
-        
-        return json.dumps(error_info, indent=2)
 
 
 async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
