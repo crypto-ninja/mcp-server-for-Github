@@ -61,3 +61,10 @@ FEATURE_ROADMAP.md
 
 # Node / Deno client dependencies
 servers/node_modules/
+
+# IDE
+.cursor/
+
+# Temp/debug files
+actual_tools.txt
+test-write-ops-test-file.txt
