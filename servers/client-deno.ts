@@ -264,6 +264,16 @@ export async function callMCPTool<T = string>(
             
             if (content.type === 'text') {
                 const text = content.text;
+        
+        // Tools that must return raw text/markdown (never JSON-parse)
+        const RAW_TEXT_TOOLS = new Set([
+            'github_get_file_content',
+            'github_read_file_chunk',
+            'repo_read_file_chunk',
+        ]);
+        if (RAW_TEXT_TOOLS.has(toolName)) {
+            return text as unknown as T;
+        }
                 
                 // Check if it's an error message (starts with "Error:")
                 // These should not be parsed as JSON even if they look like it
