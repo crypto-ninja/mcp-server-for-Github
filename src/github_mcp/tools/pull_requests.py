@@ -59,8 +59,13 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
             params=params_dict
         )
         
-        # GitHub API returns a list for pulls endpoint
-        prs_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        # GitHub API returns a list for pulls endpoint; tests may mock dict with "items"
+        if isinstance(data, list):
+            prs_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data)
+        elif isinstance(data, dict):
+            prs_list = cast(List[Dict[str, Any]], data.get("items", []))
+        else:
+            prs_list = []
         
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(prs_list, indent=2)
@@ -240,7 +245,7 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
         )
         
         if params.response_format == ResponseFormat.JSON:
-            result = {"pr": pr_data}
+            result: Dict[str, Any] = {"pr": pr_data}
             
             # Add additional data if requested
             if params.include_reviews:

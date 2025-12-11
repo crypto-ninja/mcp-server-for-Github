@@ -161,7 +161,7 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
         - Provides clear status indicators for each run
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.limit,
             "page": params.page
         }
@@ -265,7 +265,7 @@ async def github_trigger_workflow(params: TriggerWorkflowInput) -> str:
         }, indent=2)
     
     try:
-        payload = {
+        payload: Dict[str, Any] = {
             "ref": params.ref
         }
         if params.inputs:
@@ -373,7 +373,7 @@ async def github_list_workflow_run_jobs(params: ListWorkflowRunJobsInput) -> str
         - Use when: "List the latest jobs for this workflow run"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }

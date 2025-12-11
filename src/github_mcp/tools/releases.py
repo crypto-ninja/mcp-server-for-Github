@@ -66,7 +66,8 @@ async def github_list_releases(params: ListReleasesInput) -> str:
                     markdown += f"{body_preview}\n\n"
                 markdown += "---\n\n"
             if len(releases_list) == params.limit:
-                markdown += f"*Showing page {params.page}. Use `page: {params.page + 1}` to see more.*\n"
+                current_page = params.page or 1
+                markdown += f"*Showing page {current_page}. Use `page: {current_page + 1}` to see more.*\n"
         return _truncate_response(markdown, len(releases_list))
     except Exception as e:
         return _handle_api_error(e)
@@ -352,7 +353,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         endpoint = f"repos/{params.owner}/{params.repo}/releases/{release_id}"
         
         # Build request body with only provided fields
-        body_data = {}
+        body_data: Dict[str, Any] = {}
         
         if params.tag_name is not None:
             body_data["tag_name"] = params.tag_name

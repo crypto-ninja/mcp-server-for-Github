@@ -48,7 +48,7 @@ async def github_list_notifications(params: ListNotificationsInput) -> str:
         }, indent=2)
     
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -221,7 +221,7 @@ async def github_mark_notifications_read(params: MarkNotificationsReadInput) -> 
         }, indent=2)
     
     try:
-        payload = {}
+        payload: Dict[str, Any] = {}
         if params.last_read_at:
             payload["last_read_at"] = params.last_read_at
         if params.read is not None:

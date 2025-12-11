@@ -30,7 +30,7 @@ async def _make_github_request(
     method: str = "GET",
     token: Optional[str] = None,
     **kwargs
-) -> Dict[str, Any]:
+) -> Any:
     """
     Reusable function for all GitHub API calls using a shared pooled client.
 
@@ -85,6 +85,6 @@ async def _make_graphql_request(
         token = await get_auth_token()
     
     from graphql_client import GraphQLClient
-    client = GraphQLClient(token)
-    return await client.execute(query, variables)
+    client = GraphQLClient()
+    return await client.query(token, query, variables)
 

@@ -158,7 +158,7 @@ def register_all_tools() -> None:
                         "openWorldHint": open_world
                     }
                 )
-                async def wrapper(params: Dict[str, Any]) -> Any:
+                async def wrapper(params: Any) -> Any:
                     model_cls: Optional[Type[BaseModel]] = None
                     try:
                         sig = inspect.signature(func)
@@ -175,9 +175,10 @@ def register_all_tools() -> None:
                         # Annotation might be a string, empty, or not a BaseModel subclass
                         model_cls = None
                     
+                    parsed_params = params
                     if model_cls and isinstance(params, dict):
-                        params = model_cls(**params)
-                    return await func(params)
+                        parsed_params = model_cls(**params)
+                    return await func(parsed_params)
                 wrapper.__name__ = name
                 return wrapper
         
@@ -192,7 +193,7 @@ register_all_tools()
 # Register execute_code (always exposed)
 @mcp.tool(
     name="execute_code",
-    annotations={
+    annotations={  # type: ignore[arg-type]
         "title": "Execute TypeScript Code",
         "readOnlyHint": False,
         "destructiveHint": False,

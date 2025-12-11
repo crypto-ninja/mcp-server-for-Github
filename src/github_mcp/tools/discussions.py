@@ -39,7 +39,7 @@ async def github_list_discussions(params: ListDiscussionsInput) -> str:
         - Use when: "List discussions in the Q&A category"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
