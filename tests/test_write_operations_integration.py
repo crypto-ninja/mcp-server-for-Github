@@ -21,7 +21,7 @@ TEST_OWNER = "crypto-ninja"
 TEST_REPO = "github-mcp-server"
 TEST_PATH_PREFIX = "test-write-ops-"  # Prefix for all test files
 
-class TestResult:
+class WriteOpResult:
     def __init__(self, name, status, details="", error=""):
         self.name = name
         self.status = status  # "PASS", "FAIL", "SKIP"
@@ -40,17 +40,17 @@ async def test_create_file():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_create_file", "FAIL", 
+            return WriteOpResult("github_create_file", "FAIL", 
                            "Authentication error (expected if no token)", result)
         
         if "created" in result.lower() or "commit" in result.lower():
-            return TestResult("github_create_file", "PASS", 
+            return WriteOpResult("github_create_file", "PASS", 
                            "File created successfully", "")
         else:
-            return TestResult("github_create_file", "FAIL", 
+            return WriteOpResult("github_create_file", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_create_file", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_create_file", "FAIL", "", str(e)[:200])
 
 async def test_update_file():
     """Test 2: github_update_file"""
@@ -83,7 +83,7 @@ async def test_update_file():
                         sha = match.group(1)
         
         if not sha:
-            return TestResult("github_update_file", "SKIP", 
+            return WriteOpResult("github_update_file", "SKIP", 
                            "Could not get file SHA (file may not exist)", "")
         
         result = await github_update_file(UpdateFileInput(
@@ -96,17 +96,17 @@ async def test_update_file():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_update_file", "FAIL", 
+            return WriteOpResult("github_update_file", "FAIL", 
                            "Authentication error", result)
         
         if "updated" in result.lower() or "commit" in result.lower():
-            return TestResult("github_update_file", "PASS", 
+            return WriteOpResult("github_update_file", "PASS", 
                            "File updated successfully", "")
         else:
-            return TestResult("github_update_file", "FAIL", 
+            return WriteOpResult("github_update_file", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_update_file", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_update_file", "FAIL", "", str(e)[:200])
 
 async def test_delete_file():
     """Test 3: github_delete_file"""
@@ -132,7 +132,7 @@ async def test_delete_file():
                     sha = match.group(1)
         
         if not sha:
-            return TestResult("github_delete_file", "SKIP", 
+            return WriteOpResult("github_delete_file", "SKIP", 
                            "Could not get file SHA", "")
         
         result = await github_delete_file(DeleteFileInput(
@@ -144,17 +144,17 @@ async def test_delete_file():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_delete_file", "FAIL", 
+            return WriteOpResult("github_delete_file", "FAIL", 
                            "Authentication error", result)
         
         if "deleted" in result.lower() or "commit" in result.lower():
-            return TestResult("github_delete_file", "PASS", 
+            return WriteOpResult("github_delete_file", "PASS", 
                            "File deleted successfully", "")
         else:
-            return TestResult("github_delete_file", "FAIL", 
+            return WriteOpResult("github_delete_file", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_delete_file", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_delete_file", "FAIL", "", str(e)[:200])
 
 async def test_create_release():
     """Test 4: github_create_release"""
@@ -169,17 +169,17 @@ async def test_create_release():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_create_release", "FAIL", 
+            return WriteOpResult("github_create_release", "FAIL", 
                            "Authentication error", result)
         
         if "release" in result.lower() and ("created" in result.lower() or "v0.0.1-test" in result):
-            return TestResult("github_create_release", "PASS", 
+            return WriteOpResult("github_create_release", "PASS", 
                            "Release created successfully", "")
         else:
-            return TestResult("github_create_release", "FAIL", 
+            return WriteOpResult("github_create_release", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_create_release", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_create_release", "FAIL", "", str(e)[:200])
 
 async def test_update_release():
     """Test 5: github_update_release"""
@@ -206,7 +206,7 @@ async def test_update_release():
                     release_id = match.group(1)
         
         if not release_id:
-            return TestResult("github_update_release", "SKIP", 
+            return WriteOpResult("github_update_release", "SKIP", 
                            "Could not get release ID", "")
         
         result = await github_update_release(UpdateReleaseInput(
@@ -218,17 +218,17 @@ async def test_update_release():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_update_release", "FAIL", 
+            return WriteOpResult("github_update_release", "FAIL", 
                            "Authentication error", result)
         
         if "updated" in result.lower() or "release" in result.lower():
-            return TestResult("github_update_release", "PASS", 
+            return WriteOpResult("github_update_release", "PASS", 
                            "Release updated successfully", "")
         else:
-            return TestResult("github_update_release", "FAIL", 
+            return WriteOpResult("github_update_release", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_update_release", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_update_release", "FAIL", "", str(e)[:200])
 
 async def test_update_repository():
     """Test 6: github_update_repository"""
@@ -240,17 +240,17 @@ async def test_update_repository():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_update_repository", "FAIL", 
+            return WriteOpResult("github_update_repository", "FAIL", 
                            "Authentication error", result)
         
         if "updated" in result.lower() or "repository" in result.lower():
-            return TestResult("github_update_repository", "PASS", 
+            return WriteOpResult("github_update_repository", "PASS", 
                            "Repository updated successfully", "")
         else:
-            return TestResult("github_update_repository", "FAIL", 
+            return WriteOpResult("github_update_repository", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_update_repository", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_update_repository", "FAIL", "", str(e)[:200])
 
 async def test_archive_repository():
     """Test 7: github_archive_repository"""
@@ -262,7 +262,7 @@ async def test_archive_repository():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_archive_repository", "FAIL", 
+            return WriteOpResult("github_archive_repository", "FAIL", 
                            "Authentication error", result)
         
         if "archived" in result.lower() or "updated" in result.lower():
@@ -272,13 +272,13 @@ async def test_archive_repository():
                 repo=TEST_REPO,
                 archived=False
             ))
-            return TestResult("github_archive_repository", "PASS", 
+            return WriteOpResult("github_archive_repository", "PASS", 
                            "Repository archived and unarchived successfully", "")
         else:
-            return TestResult("github_archive_repository", "FAIL", 
+            return WriteOpResult("github_archive_repository", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_archive_repository", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_archive_repository", "FAIL", "", str(e)[:200])
 
 async def test_delete_repository():
     """Test 8: github_delete_repository"""
@@ -289,21 +289,21 @@ async def test_delete_repository():
         ))
         
         if "error" in result.lower() and "authentication" in result.lower():
-            return TestResult("github_delete_repository", "FAIL", 
+            return WriteOpResult("github_delete_repository", "FAIL", 
                            "Authentication error", result)
         
         if "deleted" in result.lower():
-            return TestResult("github_delete_repository", "PASS", 
+            return WriteOpResult("github_delete_repository", "PASS", 
                            "Repository deleted successfully", "")
         else:
-            return TestResult("github_delete_repository", "FAIL", 
+            return WriteOpResult("github_delete_repository", "FAIL", 
                            "Unexpected response", result[:200])
     except Exception as e:
-        return TestResult("github_delete_repository", "FAIL", "", str(e)[:200])
+        return WriteOpResult("github_delete_repository", "FAIL", "", str(e)[:200])
 
 async def test_merge_pull_request():
     """Test 9: github_merge_pull_request - Skip if no PRs available"""
-    return TestResult("github_merge_pull_request", "SKIP", 
+    return WriteOpResult("github_merge_pull_request", "SKIP", 
                      "Requires existing pull request - tested separately if needed", "")
 
 async def test_auth_error_handling():
@@ -322,25 +322,25 @@ async def test_auth_error_handling():
         # Should return JSON error, not crash
         if isinstance(result, str):
             if "authentication" in result.lower() or "401" in result or "403" in result:
-                return TestResult("auth_error_handling", "PASS", 
+                return WriteOpResult("auth_error_handling", "PASS", 
                                "Auth error handled correctly with clear message", "")
             elif "error" in result.lower():
-                return TestResult("auth_error_handling", "PARTIAL", 
+                return WriteOpResult("auth_error_handling", "PARTIAL", 
                                "Got error but message unclear", result[:200])
             else:
-                return TestResult("auth_error_handling", "FAIL", 
+                return WriteOpResult("auth_error_handling", "FAIL", 
                                "Should have failed with invalid token", result[:200])
         else:
-            return TestResult("auth_error_handling", "FAIL", 
+            return WriteOpResult("auth_error_handling", "FAIL", 
                            "Unexpected response type", str(type(result)))
     except Exception as e:
         # Exception is also acceptable if it's an auth error
         error_str = str(e).lower()
         if "authentication" in error_str or "401" in error_str or "403" in error_str:
-            return TestResult("auth_error_handling", "PASS", 
+            return WriteOpResult("auth_error_handling", "PASS", 
                            "Auth error raised as exception (acceptable)", "")
         else:
-            return TestResult("auth_error_handling", "FAIL", 
+            return WriteOpResult("auth_error_handling", "FAIL", 
                            "Unexpected exception", str(e)[:200])
 
 async def main():
