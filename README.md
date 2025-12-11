@@ -1105,7 +1105,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.2 with 109 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
+**Current:** v2.5.3 with 109 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

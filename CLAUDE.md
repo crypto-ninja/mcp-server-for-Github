@@ -204,7 +204,7 @@ const pr = await callMCPTool("github_create_pull_request", {
   head: "feature/new-feature", base: "main"
 });
 
-return { branch: branch.branch, file: file.success, pr_url: pr.pr.html_url };
+return { branch: branch.branch, file: file.success, pr_url: pr.url };
 ```
 
 **Performance Note:** The first `execute_code` call takes ~4000ms (cold start), but subsequent calls within the same session use connection pooling and complete in ~108ms (97% faster!).
