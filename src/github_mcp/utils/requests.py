@@ -29,6 +29,7 @@ async def _make_github_request(
     endpoint: str,
     method: str = "GET",
     token: Optional[str] = None,
+    skip_cache_headers: bool = False,
     **kwargs
 ) -> Any:
     """
@@ -54,6 +55,7 @@ async def _make_github_request(
         headers=headers,
         json=json_body,
         data=data_body,
+        skip_cache_headers=skip_cache_headers,
     )
     # Raise for non-2xx (except we allow 304 to fall through as cache marker)
     if response.status_code == 304:

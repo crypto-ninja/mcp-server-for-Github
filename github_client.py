@@ -55,6 +55,7 @@ class GhClient:
         json: Optional[Dict[str, Any]] = None,
         data: Any = None,
         max_retries: int = 3,
+        skip_cache_headers: bool = False,
     ) -> httpx.Response:
         request_headers: Dict[str, str] = {}
         if token:
@@ -64,8 +65,8 @@ class GhClient:
 
         key = _cache_key(method, path, params)
 
-        # Add conditional headers if we have an ETag
-        if method.upper() == "GET":
+        # Add conditional headers if we have an ETag (unless explicitly skipped)
+        if method.upper() == "GET" and not skip_cache_headers:
             etag = self._etags.get(key)
             if etag:
                 request_headers["If-None-Match"] = etag

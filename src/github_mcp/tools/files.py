@@ -61,19 +61,13 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
         
         # Handle cache marker (304 Not Modified response)
         if isinstance(data, dict) and data.get('_from_cache'):
-            # For 304 responses, we need to make a fresh request without conditional headers
-            # This is a workaround - ideally we'd cache the actual response data
-            # For now, retry without cache to get the actual data
-            client = GhClient.instance()
-            response = await client.request(
-                method="GET",
-                path=f"/repos/{params.owner}/{params.repo}/contents/{params.path}",
+            # Retry once without conditional headers to fetch fresh content
+            data = await _make_github_request(
+                f"repos/{params.owner}/{params.repo}/contents/{params.path}",
                 token=params.token,
                 params=params_dict,
-                headers={"Cache-Control": "no-cache"}  # Force fresh request
+                skip_cache_headers=True,
             )
-            response.raise_for_status()
-            data = response.json()
         
         # Validate that we have the expected structure
         if not isinstance(data, dict) or 'name' not in data:
