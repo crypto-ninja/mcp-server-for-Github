@@ -11,7 +11,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.github_mcp.utils.deno_pool import _pool  # noqa: E402
 from src.github_mcp.tools import (  # noqa: E402
     github_get_workflow,
     github_trigger_workflow,
@@ -45,13 +44,6 @@ from src.github_mcp.models import (  # noqa: E402
 
 class TestActionsTools:
     """Test suite for GitHub Actions tools."""
-
-    @pytest.fixture(autouse=True)
-    async def cleanup_pool(self):
-        """Ensure Deno pool is cleaned up to avoid event loop warnings."""
-        yield
-        if _pool:
-            await _pool.close()
 
     # github_get_workflow tests
     @pytest.mark.asyncio
