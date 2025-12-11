@@ -246,6 +246,10 @@ class DenoConnectionPool:
             self._pool.clear()
         
         logger.info("Deno pool shutdown complete")
+
+    async def close(self):
+        """Alias for shutdown to match typical pool API."""
+        await self.shutdown()
     
     @property
     def stats(self) -> dict:
@@ -285,6 +289,16 @@ async def get_pool() -> DenoConnectionPool:
         )
         await _pool.initialize()
     return _pool
+
+
+async def close_pool():
+    """Close and reset the global pool if it exists."""
+    global _pool
+    if _pool is not None:
+        try:
+            await _pool.shutdown()
+        finally:
+            _pool = None
 
 
 async def execute_with_pool(code: str) -> Dict[str, Any]:
