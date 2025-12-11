@@ -30,6 +30,7 @@ from src.github_mcp.tools import (  # noqa: E402
     github_list_releases,
     github_create_release,
     github_update_release,
+    github_delete_release,
     github_get_user_info,
     github_list_workflows,
     github_get_workflow_runs,
@@ -54,6 +55,7 @@ from src.github_mcp.tools import (  # noqa: E402
     github_get_pr_overview_graphql,
     github_grep,
     github_read_file_chunk,
+    github_delete_gist,
 )
 from src.github_mcp.models import RepoInfoInput, ListIssuesInput, CreateIssueInput, GetFileContentInput, SearchCodeInput, ListCommitsInput, GetPullRequestDetailsInput  # noqa: E402
 from src.github_mcp.models import ResponseFormat  # noqa: E402
@@ -1353,6 +1355,101 @@ class TestAdditionalTools:
         assert "updated" in result.lower() or "v1.0.0" in result or "Release" in result or "Error" in result
 
     @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.releases._make_github_request')
+    async def test_github_delete_release(self, mock_request, mock_auth):
+        """Test deleting a release."""
+        # Mock authentication
+        mock_auth.return_value = "test-token"
+        # DELETE returns None/empty on success
+        mock_request.return_value = None
+
+        # Call the tool
+        from src.github_mcp.models import DeleteReleaseInput
+        params = DeleteReleaseInput(
+            owner="test",
+            repo="test-repo",
+            release_id=12345
+        )
+        result = await github_delete_release(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "success" in result.lower()
+        assert "true" in result.lower() or '"success": true' in result
+        assert "12345" in result or "deleted" in result.lower()
+        # Verify correct endpoint was called
+        mock_request.assert_called_once()
+        call_args = mock_request.call_args
+        assert call_args[0][0] == "repos/test/test-repo/releases/12345"
+        assert call_args[1].get("method") == "DELETE"
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.releases._make_github_request')
+    async def test_github_delete_release_not_found(self, mock_request, mock_auth):
+        """Test deleting non-existent release."""
+        mock_auth.return_value = "test-token"
+        # Mock 404 error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Not Found",
+            request=create_mock_request(),
+            response=create_mock_response(404, "Release not found")
+        )
+
+        from src.github_mcp.models import DeleteReleaseInput
+        params = DeleteReleaseInput(
+            owner="test",
+            repo="test-repo",
+            release_id=99999
+        )
+        result = await github_delete_release(params)
+
+        # Should return error response
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "404" in result or "not found" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.releases._make_github_request')
+    async def test_github_delete_release_with_token(self, mock_request, mock_auth):
+        """Test delete release with custom token."""
+        mock_auth.return_value = "custom-token"
+        mock_request.return_value = None
+
+        from src.github_mcp.models import DeleteReleaseInput
+        params = DeleteReleaseInput(
+            owner="test",
+            repo="test-repo",
+            release_id=12345,
+            token="custom-token"
+        )
+        result = await github_delete_release(params)
+
+        assert isinstance(result, str)
+        assert "success" in result.lower()
+        # Verify token was used
+        mock_auth.assert_called_once_with("custom-token")
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.releases._get_auth_token_fallback')
+    async def test_github_delete_release_no_auth(self, mock_auth):
+        """Test delete release without authentication."""
+        mock_auth.return_value = None
+
+        from src.github_mcp.models import DeleteReleaseInput
+        params = DeleteReleaseInput(
+            owner="test",
+            repo="test-repo",
+            release_id=12345
+        )
+        result = await github_delete_release(params)
+
+        assert isinstance(result, str)
+        assert "authentication" in result.lower() or "token" in result.lower()
+        assert "error" in result.lower() or "required" in result.lower()
+
+    @pytest.mark.asyncio
     @patch('src.github_mcp.tools.releases._make_github_request')
     async def test_github_close_pull_request(self, mock_request):
         """Test closing a pull request."""
@@ -1410,6 +1507,120 @@ class TestAdditionalTools:
         # Verify
         assert isinstance(result, str)
         assert "review" in result.lower() or "approved" in result.lower() or "12345" in result or "Error" in result
+
+
+class TestGistOperations:
+    """Test gist operations."""
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.gists._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.gists._make_github_request')
+    async def test_github_delete_gist(self, mock_request, mock_auth):
+        """Test deleting a gist."""
+        # Mock authentication
+        mock_auth.return_value = "test-token"
+        # DELETE returns None/empty on success
+        mock_request.return_value = None
+
+        # Call the tool
+        from src.github_mcp.models import DeleteGistInput
+        params = DeleteGistInput(
+            gist_id="abc123def456"
+        )
+        result = await github_delete_gist(params)
+
+        # Verify
+        assert isinstance(result, str)
+        assert "success" in result.lower()
+        assert "true" in result.lower() or '"success": true' in result
+        assert "abc123def456" in result or "deleted" in result.lower()
+        # Verify correct endpoint was called
+        mock_request.assert_called_once()
+        call_args = mock_request.call_args
+        assert call_args[0][0] == "gists/abc123def456"
+        assert call_args[1]["method"] == "DELETE"
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.gists._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.gists._make_github_request')
+    async def test_github_delete_gist_not_found(self, mock_request, mock_auth):
+        """Test deleting non-existent gist."""
+        mock_auth.return_value = "test-token"
+        # Mock 404 error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Not Found",
+            request=create_mock_request(),
+            response=create_mock_response(404, "Gist not found")
+        )
+
+        from src.github_mcp.models import DeleteGistInput
+        params = DeleteGistInput(
+            gist_id="nonexistent"
+        )
+        result = await github_delete_gist(params)
+
+        # Should return error response
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "404" in result or "not found" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.gists._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.gists._make_github_request')
+    async def test_github_delete_gist_with_token(self, mock_request, mock_auth):
+        """Test delete gist with custom token."""
+        mock_auth.return_value = "custom-token"
+        mock_request.return_value = None
+
+        from src.github_mcp.models import DeleteGistInput
+        params = DeleteGistInput(
+            gist_id="abc123",
+            token="custom-token"
+        )
+        result = await github_delete_gist(params)
+
+        assert isinstance(result, str)
+        assert "success" in result.lower()
+        # Verify token was used
+        mock_auth.assert_called_once_with("custom-token")
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.gists._get_auth_token_fallback')
+    @patch('src.github_mcp.tools.gists._make_github_request')
+    async def test_github_delete_gist_unauthorized(self, mock_request, mock_auth):
+        """Test deleting gist without proper permissions."""
+        mock_auth.return_value = "test-token"
+        # Mock 403 error
+        mock_request.side_effect = httpx.HTTPStatusError(
+            "Forbidden",
+            request=create_mock_request(),
+            response=create_mock_response(403, "Forbidden")
+        )
+
+        from src.github_mcp.models import DeleteGistInput
+        params = DeleteGistInput(
+            gist_id="someone-elses-gist"
+        )
+        result = await github_delete_gist(params)
+
+        # Should return error response
+        assert isinstance(result, str)
+        assert "error" in result.lower() or "403" in result or "forbidden" in result.lower()
+
+    @pytest.mark.asyncio
+    @patch('src.github_mcp.tools.gists._get_auth_token_fallback')
+    async def test_github_delete_gist_no_auth(self, mock_auth):
+        """Test delete gist without authentication."""
+        mock_auth.return_value = None
+
+        from src.github_mcp.models import DeleteGistInput
+        params = DeleteGistInput(
+            gist_id="abc123"
+        )
+        result = await github_delete_gist(params)
+
+        assert isinstance(result, str)
+        assert "authentication" in result.lower() or "token" in result.lower()
+        assert "error" in result.lower() or "required" in result.lower()
 
 
 class TestSearchRepositories:
