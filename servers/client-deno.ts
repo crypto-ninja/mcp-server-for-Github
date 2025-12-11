@@ -264,7 +264,7 @@ export async function callMCPTool<T = string>(
             
             if (content.type === 'text') {
                 const text = content.text;
-        
+                
         // Tools that must return raw text/markdown (never JSON-parse)
         const RAW_TEXT_TOOLS = new Set([
             'github_get_file_content',

@@ -22,6 +22,7 @@ wheels/
 
 # Virtual environments
 venv/
+.venv/
 env/
 ENV/
 env.bak/
@@ -30,6 +31,7 @@ venv.bak/
 # IDE
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
@@ -61,10 +63,3 @@ FEATURE_ROADMAP.md
 
 # Node / Deno client dependencies
 servers/node_modules/
-
-# IDE
-.cursor/
-
-# Temp/debug files
-actual_tools.txt
-test-write-ops-test-file.txt
