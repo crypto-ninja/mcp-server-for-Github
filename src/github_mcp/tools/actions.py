@@ -42,9 +42,14 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
         - Provides clear status for each workflow
     """
     try:
+        query: Dict[str, Any] = {
+            "per_page": params.per_page,
+            "page": params.page,
+        }
         data: Dict[str, Any] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/actions/workflows",
-            token=params.token
+            token=params.token,
+            params=query,
         )
         
         # Ensure data is a dict with expected structure
@@ -76,7 +81,7 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
                 
                 markdown += "---\n\n"
         
-        return _truncate_response(markdown, data['total_count'])
+        return _truncate_response(markdown, total_count)
         
     except Exception as e:
         return _handle_api_error(e)

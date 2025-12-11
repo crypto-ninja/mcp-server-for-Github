@@ -910,7 +910,11 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "List releases in a repository",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" },
     },
     returns: "List of releases with tags, dates, and descriptions",
     example: `const releases = await callMCPTool("github_list_releases", {
@@ -993,7 +997,11 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "List GitHub Actions workflows in a repository",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
-      repo: { type: "string", required: true, description: "Repository name" }
+      repo: { type: "string", required: true, description: "Repository name" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" },
     },
     returns: "List of workflow files with IDs and paths",
     example: `const workflows = await callMCPTool("github_list_workflows", {

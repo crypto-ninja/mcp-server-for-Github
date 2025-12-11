@@ -6,6 +6,10 @@ export interface GithubListWorkflowsInput {
   owner: string;
   /** Repository name */
   repo: string;
+  /** Results per page (1-100, default 30) */
+  per_page?: number | undefined;
+  /** Page number (default 1) */
+  page?: number | undefined;
   /** Optional GitHub token */
   token?: string | undefined;
   /** Output format */

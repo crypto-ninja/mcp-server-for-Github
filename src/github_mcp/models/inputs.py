@@ -363,6 +363,8 @@ class ListWorkflowsInput(BaseModel):
     
     owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    per_page: Optional[int] = Field(default=30, ge=1, le=100, description="Results per page (1-100, default 30)")
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
 
@@ -478,7 +480,7 @@ class ListReleasesInput(BaseModel):
     
     owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    limit: Optional[int] = Field(default=DEFAULT_LIMIT, description="Maximum results (1-100)", ge=1, le=100)
+    per_page: Optional[int] = Field(default=30, description="Results per page (1-100)", ge=1, le=100)
     page: Optional[int] = Field(default=1, description="Page number", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(default=ResponseFormat.MARKDOWN, description="Output format")
