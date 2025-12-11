@@ -99,13 +99,13 @@ const display = await callMCPTool("github_list_branches", {
 | Security & Dependabot | 13 | list_dependabot_alerts, get_dependabot_alert, update_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
 | File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
 | Projects & Boards | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
-| Repository Management | 8 | get_repo_info, create_repository, delete_repository, update_repository, transfer_repository, archive_repository, list_user_repos, list_org_repos |
+| Repository Management | 6 | get_repo_info, create_repository, update_repository, archive_repository, list_user_repos, list_org_repos |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, get_pr_overview_graphql, create_pr_review |
 | Notifications | 6 | list_notifications, get_thread, mark_thread_read, mark_notifications_read, get_subscription, set_subscription |
 | Branch Management | 5 | list/create/get/delete/compare_branches |
-| Gists | 4 | list_gists, get_gist, create_gist, update_gist |
+| Gists | 5 | list_gists, get_gist, create_gist, update_gist, delete_gist |
 | Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |
-| Releases | 4 | list/get/create/update_release |
+| Releases | 5 | list/get/create/update/delete_release |
 | Search | 3 | search_code, search_repositories, search_issues |
 | Collaborators | 3 | list_collaborators, check_collaborator, list_teams |
 | Issues | 3 | list/create/update_issue |

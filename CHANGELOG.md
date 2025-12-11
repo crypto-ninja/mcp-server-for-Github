@@ -17,7 +17,8 @@
 
 ### Testing
 
-- Full test suite passing (297 tests)
+- Full test suite passing (299 tests)
+- Added comprehensive tests for delete_release and delete_gist
 - Tool count: 109 → 109 (no change)
 
 ---

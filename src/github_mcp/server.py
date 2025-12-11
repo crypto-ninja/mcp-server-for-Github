@@ -61,11 +61,11 @@ mcp = FastMCP("github_mcp")
 
 # Print startup message based on mode
 if CODE_FIRST_MODE:
-    print(">> GitHub MCP Server v2.5.2 - Code-First Mode (execute_code only)")
+    print(">> GitHub MCP Server v2.5.3 - Code-First Mode (execute_code only)")
     print(">> Token usage: ~800 tokens (98% savings!)")
     print(f">> Deno: {deno_info}")
 else:
-    print(">> GitHub MCP Server v2.5.2 - Internal Mode (all internal tools)")
+    print(">> GitHub MCP Server v2.5.3 - Internal Mode (all internal tools)")
     print(">> Used by Deno runtime for tool execution")
     print(f">> Deno: {deno_info}")
 

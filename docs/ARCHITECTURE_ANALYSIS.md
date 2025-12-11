@@ -1,7 +1,7 @@
-# GitHub MCP Server - Architecture Analysis v2.5.2
+# GitHub MCP Server - Architecture Analysis v2.5.3
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
-**Version:** 2.5.2  
+**Version:** 2.5.3  
 **Last Updated:** 2025-12-11
 
 ---
@@ -17,7 +17,7 @@ The GitHub MCP Server is a **code-first MCP implementation** that provides 109 G
 - **108 internal tools** (GitHub API + workspace operations)
 - **21 tool modules** organized by domain
 - **97% latency reduction** with connection pooling (~4000ms → ~108ms)
-- **297+ tests** with comprehensive coverage
+- **299 tests** with comprehensive coverage
 - **Dual authentication** (GitHub App + PAT fallback)
 
 ### Core Innovations
@@ -43,19 +43,19 @@ github-mcp-server/
 │   ├── cli.py                 # CLI utilities for diagnostics
 │   ├── tools/                 # 20 tool modules (105 GitHub tools)
 │   │   ├── __init__.py        # Tool exports
-│   │   ├── repositories.py    # 8 tools
+│   │   ├── repositories.py    # 6 tools
 │   │   ├── branches.py        # 5 tools
 │   │   ├── issues.py          # 3 tools
 │   │   ├── pull_requests.py   # 7 tools
 │   │   ├── files.py           # 9 tools
 │   │   ├── actions.py         # 15 tools
-│   │   ├── releases.py        # 4 tools
+│   │   ├── releases.py        # 5 tools
 │   │   ├── search.py          # 3 tools
 │   │   ├── security.py        # 13 tools
 │   │   ├── projects.py        # 9 tools
 │   │   ├── notifications.py   # 6 tools
 │   │   ├── collaborators.py  # 3 tools
-│   │   ├── gists.py           # 4 tools
+│   │   ├── gists.py           # 5 tools
 │   │   ├── discussions.py     # 4 tools
 │   │   ├── labels.py          # 3 tools
 │   │   ├── stargazers.py      # 3 tools
@@ -89,7 +89,7 @@ github-mcp-server/
 ├── servers/                    # MCP client implementation
 │   ├── client-deno.ts         # Deno-side MCP client
 │   └── client.ts              # Node.js MCP client (legacy)
-├── tests/                      # Test suite (297+ tests)
+├── tests/                      # Test suite (299 tests)
 │   ├── test_individual_tools.py      # Per-tool unit tests
 │   ├── test_execute_code.py          # execute_code integration
 │   ├── test_execute_code_mcp.py      # MCP bridge tests
@@ -1065,7 +1065,7 @@ MCP_WORKSPACE_ROOT=/path/to/workspace
 ### Architecture Strengths
 
 - **Highly Extensible:** Adding tools is straightforward
-- **Well-Tested:** 297+ tests with live integration
+- **Well-Tested:** 299 tests with live integration
 - **Performance-Optimized:** Connection pooling for 35x speedup
 - **Token-Efficient:** 98% reduction vs traditional MCP
 - **Robust Error Handling:** Structured errors with codes
@@ -1087,7 +1087,7 @@ The GitHub MCP Server v2.5.2 represents a **mature, production-ready code-first 
 - **109 tools** across 21 categories
 - **98% token reduction** through code-first architecture
 - **97% latency reduction** through connection pooling
-- **297+ tests** with comprehensive coverage
+- **299 tests** with comprehensive coverage
 - **Dual authentication** for flexibility and reliability
 - **Modular structure** for maintainability
 

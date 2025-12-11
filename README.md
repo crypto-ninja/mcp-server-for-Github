@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/Tools-109-brightgreen.svg)](#-available-tools)
-[![Version](https://img.shields.io/badge/version-2.5.2-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.2)
+[![Version](https://img.shields.io/badge/version-2.5.3-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.3)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
@@ -12,11 +12,12 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.5.2 - Version Sync & Tool Count (December 11, 2025)
+### 🚀 Latest: v2.5.3 - Tool Refactor & Test Expansion (December 11, 2025)
 
-- 🔄 Synced all version references to v2.5.2
-- 🛠️ Corrected tool count display to 109 everywhere
-- ✅ Continued stability (all 297 tests passing)
+- 🔄 Removed admin-only tools (delete_repository, transfer_repository)
+- ➕ Added delete tools (delete_release, delete_gist)
+- 🔧 Fixed return data for create_branch, create_file, create_pull_request
+- ✅ Test coverage expanded (290 → 299 tests)
 
 **Previous: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)**
 
@@ -24,7 +25,7 @@
 - ⚡ **Connection Pooling** - 97% latency reduction (4000ms → 108ms for subsequent calls)
 - 🔧 **Dict→Model Conversion** - `callMCPTool` now works seamlessly with plain JavaScript objects
 - 📝 **Multiline Code Support** - Fixed truncation issues, full JSON protocol support
-- ✅ **Live Integration Tests** - 15/15 passing, 297 total tests
+- ✅ **Live Integration Tests** - 15/15 passing, 299 total tests
 - 📦 **21 Tool Modules** - Clean organization: tools/, models/, utils/, auth/
 
 **Previous: v2.5.0 - Phase 2 Full Send (December 4, 2025)**

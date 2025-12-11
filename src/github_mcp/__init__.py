@@ -19,4 +19,4 @@ __all__ = [
     "CODE_FIRST_MODE",
 ]
 
-__version__ = "2.5.2"
+__version__ = "2.5.3"
