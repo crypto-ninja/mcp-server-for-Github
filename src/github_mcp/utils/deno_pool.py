@@ -246,7 +246,7 @@ class DenoConnectionPool:
             self._pool.clear()
         
         logger.info("Deno pool shutdown complete")
-
+    
     async def close(self):
         """Alias for shutdown to match typical pool API."""
         await self.shutdown()
