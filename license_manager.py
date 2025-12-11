@@ -30,7 +30,7 @@ LICENSE_CHECK_INTERVAL = 86400  # 24 hours in seconds
 LICENSE_CACHE_FILE = Path.home() / ".github_mcp_license_cache.json"
 
 # License tier information
-LICENSE_TIERS = {
+LICENSE_TIERS: Dict[str, Dict[str, Any]] = {
     "free": {
         "name": "Open Source (AGPL v3)",
         "max_developers": None,

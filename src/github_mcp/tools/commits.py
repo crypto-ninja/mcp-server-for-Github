@@ -50,7 +50,7 @@ async def github_list_commits(params: ListCommitsInput) -> str:
     """
     try:
         token = await _get_auth_token_fallback(params.token)
-        query_params = {
+        query_params: Dict[str, Any] = {
             "per_page": params.limit,
             "page": params.page
         }
@@ -71,8 +71,13 @@ async def github_list_commits(params: ListCommitsInput) -> str:
             params=query_params
         )
         
-        # GitHub API returns a list for commits endpoint
-        commits: List[Dict[str, Any]] = cast(List[Dict[str, Any]], commits_data) if isinstance(commits_data, list) else []
+        # GitHub API returns a list for commits endpoint; tests may mock dict with "items"
+        if isinstance(commits_data, list):
+            commits: List[Dict[str, Any]] = cast(List[Dict[str, Any]], commits_data)
+        elif isinstance(commits_data, dict):
+            commits = cast(List[Dict[str, Any]], commits_data.get("items", []))
+        else:
+            commits = []
         
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(commits, indent=2)
@@ -121,7 +126,8 @@ async def github_list_commits(params: ListCommitsInput) -> str:
             response += "---\n\n"
         
         if len(commits) == params.limit:
-            response += f"\n*More commits may be available. Use `page={params.page + 1}` to see the next page.*\n"
+            current_page = params.page or 1
+            response += f"\n*More commits may be available. Use `page={current_page + 1}` to see the next page.*\n"
         
         return _truncate_response(response, len(commits))
         

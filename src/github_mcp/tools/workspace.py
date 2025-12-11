@@ -126,7 +126,7 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
                         case_sensitive: bool, max_results: int, context_lines: int,
                         gitignore_patterns: List[re.Pattern], base_dir: Path) -> List[Dict[str, Any]]:
     """Python-based grep search as fallback."""
-    matches = []
+    matches: List[Dict[str, Any]] = []
     compiled_pattern = re.compile(pattern, re.IGNORECASE if not case_sensitive else 0)
 
     # Convert file_pattern glob to regex
@@ -243,7 +243,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
         gitignore_patterns = _load_gitignore(base_dir)
 
         # Try ripgrep first, then grep, then Python fallback
-        matches = []
+        matches: List[Dict[str, Any]] = []
         files_searched = 0
 
         # Try ripgrep
@@ -257,11 +257,11 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
                 cmd.extend(['--glob', params.file_pattern])
             cmd.extend([params.pattern, str(search_path)])
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
-            if result.returncode == 0:
+            if proc.returncode == 0:
                 # Parse ripgrep JSON output
-                for line in result.stdout.strip().split('\n'):
+                for line in proc.stdout.strip().split('\n'):
                     if not line:
                         continue
                     try:
@@ -344,13 +344,13 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
             # Group by file
             by_file: Dict[str, List[Dict[str, Any]]] = {}
             for match in matches:
-                file_path = match['file']
-                if file_path not in by_file:
-                    by_file[file_path] = []
-                by_file[file_path].append(match)
+                file_key = match['file']
+                if file_key not in by_file:
+                    by_file[file_key] = []
+                by_file[file_key].append(match)
 
-            for file_path, file_matches in by_file.items():
-                markdown += f"## {file_path}\n\n"
+            for file_key, file_matches in by_file.items():
+                markdown += f"## {file_key}\n\n"
                 for match in file_matches:
                     line_num = match['line_number']
                     line_text = match['line']
@@ -379,8 +379,8 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
 
         markdown += "\n**Summary:**\n"
         if matches:
-            by_file = {match['file'] for match in matches}
-            markdown += f"- {len(by_file)} files with matches\n"
+            files_with_matches = {match['file'] for match in matches}
+            markdown += f"- {len(files_with_matches)} files with matches\n"
         else:
             markdown += "- 0 files with matches\n"
         markdown += f"- {len(matches)} total occurrences\n"

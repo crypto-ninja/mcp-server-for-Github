@@ -1,6 +1,7 @@
 """Security tools for GitHub MCP Server."""
 
 import json
+from typing import Any, Dict, List, cast
 
 from ..models.inputs import (
     GetCodeScanningAlertInput, GetDependabotAlertInput, GetSecretScanningAlertInput, GetSecurityAdvisoryInput, ListCodeScanningAlertsInput, ListCodeScanningAnalysesInput, ListDependabotAlertsInput, ListOrgDependabotAlertsInput, ListRepoSecurityAdvisoriesInput, ListSecretScanningAlertsInput, UpdateCodeScanningAlertInput, UpdateDependabotAlertInput, UpdateSecretScanningAlertInput,
@@ -40,7 +41,7 @@ async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> st
         - Use when: "List critical security vulnerabilities"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -56,18 +57,19 @@ async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> st
             token=params.token,
             params=params_dict
         )
+        alerts: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
         
         markdown = f"# Dependabot Alerts for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        markdown += f"**Total Alerts:** {len(alerts)}\n\n"
         
-        if not data:
+        if not alerts:
             markdown += "No Dependabot alerts found.\n"
         else:
-            for alert in data:
+            for alert in alerts:
                 severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
                 
                 markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['dependency']['package']['name']}\n"
@@ -221,7 +223,7 @@ async def github_list_org_dependabot_alerts(params: ListOrgDependabotAlertsInput
         - Use when: "List all open Dependabot alerts across our repos"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -237,18 +239,19 @@ async def github_list_org_dependabot_alerts(params: ListOrgDependabotAlertsInput
             token=params.token,
             params=params_dict
         )
+        alerts: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
         
         markdown = f"# Dependabot Alerts for Organization: {params.org}\n\n"
-        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        markdown += f"**Total Alerts:** {len(alerts)}\n\n"
         
-        if not data:
+        if not alerts:
             markdown += "No Dependabot alerts found.\n"
         else:
-            for alert in data:
+            for alert in alerts:
                 severity_emoji = "🔴" if alert['security_vulnerability']['severity'] == "critical" else "🟠" if alert['security_vulnerability']['severity'] == "high" else "🟡" if alert['security_vulnerability']['severity'] == "medium" else "🟢"
                 
                 markdown += f"## {severity_emoji} {alert['repository']['full_name']} - Alert #{alert['number']}\n"
@@ -291,7 +294,7 @@ async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) 
         - Use when: "List critical code scanning issues"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -307,18 +310,19 @@ async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) 
             token=params.token,
             params=params_dict
         )
+        alerts: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
         
         markdown = f"# Code Scanning Alerts for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        markdown += f"**Total Alerts:** {len(alerts)}\n\n"
         
-        if not data:
+        if not alerts:
             markdown += "No code scanning alerts found.\n"
         else:
-            for alert in data:
+            for alert in alerts:
                 severity_emoji = "🔴" if alert.get('rule', {}).get('severity') == "error" else "🟠" if alert.get('rule', {}).get('severity') == "warning" else "🟡"
                 
                 markdown += f"## {severity_emoji} Alert #{alert['number']}: {alert['rule']['name']}\n"
@@ -467,7 +471,7 @@ async def github_list_code_scanning_analyses(params: ListCodeScanningAnalysesInp
         - Use when: "List recent code scanning runs"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -481,25 +485,26 @@ async def github_list_code_scanning_analyses(params: ListCodeScanningAnalysesInp
             token=params.token,
             params=params_dict
         )
+        analyses: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(analyses, indent=2)
+            return _truncate_response(result, len(analyses))
         
         markdown = f"# Code Scanning Analyses for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Analyses:** {len(data)}\n\n"
+        markdown += f"**Total Analyses:** {len(analyses)}\n\n"
         
-        if not data:
+        if not analyses:
             markdown += "No code scanning analyses found.\n"
         else:
-            for analysis in data:
+            for analysis in analyses:
                 markdown += f"## Analysis: {analysis.get('tool', {}).get('name', 'N/A')}\n"
                 markdown += f"- **Ref:** {analysis.get('ref', 'N/A')}\n"
                 markdown += f"- **Commit SHA:** {analysis.get('commit_sha', 'N/A')[:8]}\n"
                 markdown += f"- **Created:** {_format_timestamp(analysis['created_at'])}\n"
                 markdown += f"- **URL:** {analysis.get('url', 'N/A')}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(analyses))
         
     except Exception as e:
         return _handle_api_error(e)
@@ -532,7 +537,7 @@ async def github_list_secret_scanning_alerts(params: ListSecretScanningAlertsInp
         - Use when: "List exposed API keys"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -546,25 +551,26 @@ async def github_list_secret_scanning_alerts(params: ListSecretScanningAlertsInp
             token=params.token,
             params=params_dict
         )
+        alerts: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
         
         markdown = f"# Secret Scanning Alerts for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Alerts:** {len(data)}\n\n"
+        markdown += f"**Total Alerts:** {len(alerts)}\n\n"
         
-        if not data:
+        if not alerts:
             markdown += "No secret scanning alerts found.\n"
         else:
-            for alert in data:
+            for alert in alerts:
                 markdown += f"## 🔐 Alert #{alert['number']}\n"
                 markdown += f"- **State:** {alert['state']}\n"
                 markdown += f"- **Secret Type:** {alert.get('secret_type', 'N/A')}\n"
                 markdown += f"- **Created:** {_format_timestamp(alert['created_at'])}\n"
                 markdown += f"- **URL:** {alert['html_url']}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(alerts))
         
     except Exception as e:
         return _handle_api_error(e)
@@ -694,7 +700,7 @@ async def github_list_repo_security_advisories(params: ListRepoSecurityAdvisorie
         - Use when: "List published GHSA advisories"
     """
     try:
-        params_dict = {
+        params_dict: Dict[str, Any] = {
             "per_page": params.per_page,
             "page": params.page
         }
@@ -706,25 +712,26 @@ async def github_list_repo_security_advisories(params: ListRepoSecurityAdvisorie
             token=params.token,
             params=params_dict
         )
+        advisories: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(advisories, indent=2)
+            return _truncate_response(result, len(advisories))
         
         markdown = f"# Security Advisories for {params.owner}/{params.repo}\n\n"
-        markdown += f"**Total Advisories:** {len(data)}\n\n"
+        markdown += f"**Total Advisories:** {len(advisories)}\n\n"
         
-        if not data:
+        if not advisories:
             markdown += "No security advisories found.\n"
         else:
-            for advisory in data:
+            for advisory in advisories:
                 markdown += f"## {advisory.get('ghsa_id', 'N/A')}: {advisory.get('summary', 'N/A')}\n"
                 markdown += f"- **State:** {advisory.get('state', 'N/A')}\n"
                 markdown += f"- **Severity:** {advisory.get('severity', 'N/A')}\n"
                 markdown += f"- **Published:** {_format_timestamp(advisory['published_at']) if advisory.get('published_at') else 'Not published'}\n"
                 markdown += f"- **URL:** {advisory.get('html_url', 'N/A')}\n\n"
         
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(advisories))
         
     except Exception as e:
         return _handle_api_error(e)

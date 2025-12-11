@@ -48,7 +48,7 @@ async def github_list_branches(params: ListBranchesInput) -> str:
         auth_token = await _get_auth_token_fallback(params.token)
         
         endpoint = f"repos/{params.owner}/{params.repo}/branches"
-        query_params = {"per_page": params.per_page}
+        query_params: Dict[str, Any] = {"per_page": params.per_page}
         
         if params.protected is not None:
             query_params["protected"] = "true" if params.protected else "false"

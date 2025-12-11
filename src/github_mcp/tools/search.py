@@ -59,15 +59,17 @@ async def github_search_code(params: SearchCodeInput) -> str:
         - Provides clear guidance for complex queries
     """
     try:
+        order_value = params.order.value if params.order is not None and hasattr(params.order, "value") else params.order
+        sort_value = params.sort.value if params.sort is not None and hasattr(params.sort, "value") else params.sort
         params_dict = {
             "q": params.query,
             "per_page": params.limit,
-            "page": params.page,
-            "order": params.order.value
+            "page": params.page
         }
-        
-        if params.sort:
-            params_dict["sort"] = params.sort
+        if order_value is not None:
+            params_dict["order"] = order_value
+        if sort_value is not None:
+            params_dict["sort"] = sort_value
         
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/code",
@@ -175,15 +177,18 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
         - Provides clear error messages for all failures
     """
     try:
+        order_value = params.order.value if params.order is not None and hasattr(params.order, "value") else params.order
+        sort_value = params.sort.value if params.sort is not None and hasattr(params.sort, "value") else params.sort
         params_dict = {
             "q": params.query,
             "per_page": params.limit,
-            "page": params.page,
-            "order": params.order.value
+            "page": params.page
         }
         
-        if params.sort:
-            params_dict["sort"] = params.sort
+        if order_value is not None:
+            params_dict["order"] = order_value
+        if sort_value is not None:
+            params_dict["sort"] = sort_value
         
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/repositories",
@@ -282,15 +287,18 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
         - Provides clear guidance for complex queries
     """
     try:
+        order_value = params.order.value if params.order is not None and hasattr(params.order, "value") else params.order
+        sort_value = params.sort.value if params.sort is not None and hasattr(params.sort, "value") else params.sort
         params_dict = {
             "q": params.query,
             "per_page": params.limit,
-            "page": params.page,
-            "order": params.order.value
+            "page": params.page
         }
         
-        if params.sort:
-            params_dict["sort"] = params.sort
+        if order_value is not None:
+            params_dict["order"] = order_value
+        if sort_value is not None:
+            params_dict["sort"] = sort_value
         
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             "search/issues",

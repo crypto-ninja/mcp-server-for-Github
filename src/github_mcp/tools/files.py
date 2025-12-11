@@ -671,10 +671,12 @@ async def github_grep(params: GitHubGrepInput) -> str:
                             "context_after": context_after
                         })
                         
-                        if len(matches) >= params.max_results:
+                        max_results = params.max_results or 50
+                        if len(matches) >= max_results:
                             break
                 
-                if len(matches) >= params.max_results:
+                max_results = params.max_results or 50
+                if len(matches) >= max_results:
                     break
                     
             except Exception:
@@ -682,11 +684,12 @@ async def github_grep(params: GitHubGrepInput) -> str:
                 continue
         
         # Limit results
-        matches = matches[:params.max_results]
+        max_results = params.max_results or 50
+        matches = matches[:max_results]
         
         # Format results
         if params.response_format == ResponseFormat.JSON:
-            result = {
+            result_dict: Dict[str, Any] = {
                 "pattern": params.pattern,
                 "repository": f"{params.owner}/{params.repo}",
                 "ref": params.ref or "default branch",
@@ -694,7 +697,7 @@ async def github_grep(params: GitHubGrepInput) -> str:
                 "files_searched": files_searched,
                 "results": matches
             }
-            return json.dumps(result, indent=2)
+            return json.dumps(result_dict, indent=2)
         else:
             # Markdown format
             result = f"# Search Results: '{params.pattern}'\n\n"
