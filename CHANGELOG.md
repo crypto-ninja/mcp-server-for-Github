@@ -395,7 +395,7 @@ When you use this MCP server, you're using tools that have:
 - Dynamic tool discovery via `listAvailableTools()`
 - Search tools via `searchTools(query)`
 - Get detailed tool info via `getToolInfo(toolName)`
-- Complete schemas for all 109 tools
+- Complete schemas for all 42 tools (no change in total count)
 - No extra tokens loaded into Claude's context!
 
 ### 💡 How It Works
@@ -459,16 +459,16 @@ const issue = await callMCPTool("github_create_issue", {...});
 **New Architecture: Code-First MCP**
 
 - Single `execute_code` tool exposed to Claude Desktop
-- Write TypeScript code that calls 109 GitHub tools on-demand
-- 98.9% token reduction (185,000 → 800 tokens)
-- Significant cost reduction (per-conversation spend drops from full tool load to code-first)
+- Write TypeScript code that calls 41 GitHub tools on-demand
+- 98.9% token reduction (70,000 → 800 tokens)
+- 98.1% cost reduction ($1.05 → $0.01 per conversation)
 - 95% faster initialization (45s → 2s)
 
 **New Tools (4 total):**
 
 1. **execute_code** - Execute TypeScript with GitHub MCP tool access
    - Revolutionary code-first workflow
-   - Access to all 109 GitHub tools via `callMCPTool()`
+   - Access to all 41 GitHub tools via `callMCPTool()`
    - Supports loops, conditionals, complex logic
    - Secure Deno sandbox execution
    - 30-second timeout protection
@@ -477,14 +477,14 @@ const issue = await callMCPTool("github_create_issue", {...});
 
 2. **Deno Runtime** - Secure TypeScript execution environment
 3. **MCP Client Bridge** - TypeScript ↔ Python MCP server bridge
-4. **TypeScript Wrappers** - Type-safe interfaces for all 109 tools
+4. **TypeScript Wrappers** - Type-safe interfaces for all 41 tools
 
 #### 📊 Performance Comparison
 
 **Traditional MCP Server:**
 ```
-Load: 109 tools × 1,700 tokens ≈ 185,000 tokens
-Cost: High due to full tool load
+Load: 41 tools × 1,700 tokens = 70,000 tokens
+Cost: ~$1.05 per conversation
 Init: ~45 seconds
 ```
 
@@ -506,7 +506,7 @@ Init: ~2 seconds
 ```
 "Get info about facebook/react"
 → Claude calls github_get_repo_info directly
-→ All 109 tools loaded in context (≈185,000 tokens)
+→ All 41 tools loaded in context (70,000 tokens)
 ```
 
 **New Way (Code-First MCP):**
@@ -533,13 +533,13 @@ Python MCP Server
     ↓ 
 Deno Runtime
     ↓ (CODE_FIRST_MODE=false internally)
-Python MCP Server (all 109 tools available)
+Python MCP Server (all 41 tools available)
     ↓
 GitHub API
 
 Two-Tier System:
 External (Claude): Sees only execute_code → token savings
-Internal (Deno): Has all 109 tools → full functionality
+Internal (Deno): Has all 41 tools → full functionality
 ```
 
 #### 🛠️ Technical Implementation
@@ -757,7 +757,7 @@ Built with passion by the MCP Labs team through systematic dogfooding and iterat
 - Phase 2.5: Workspace Architecture implementation
 - Resolves #30
 
-**Total Tools (current):** 109 🏆
+**Total Tools (current):** 39 🏆
 
 ---
 
