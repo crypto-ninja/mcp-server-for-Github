@@ -2,6 +2,7 @@
 
 from typing import Optional
 from datetime import datetime
+import json
 
 # Character limit for responses
 CHARACTER_LIMIT = 50000
@@ -29,6 +30,20 @@ def _truncate_response(response: str, data_count: Optional[int] = None) -> str:
     """
     if len(response) <= CHARACTER_LIMIT:
         return response
+    
+    # If this looks like JSON, return a small structured warning instead of truncating
+    # to avoid emitting invalid JSON that downstream clients try to parse.
+    stripped = response.lstrip()
+    if stripped.startswith("{") or stripped.startswith("["):
+        warning = {
+            "error": True,
+            "message": "Response truncated due to size. Use pagination or filters to reduce result size.",
+            "truncated": True,
+            "character_limit": CHARACTER_LIMIT,
+        }
+        if data_count is not None:
+            warning["data_count"] = data_count
+        return json.dumps(warning, indent=2)
     
     truncated = response[:CHARACTER_LIMIT]
     truncation_notice = (
