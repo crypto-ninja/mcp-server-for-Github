@@ -51,6 +51,7 @@ exclude = [
     ".github",
     "*.yml",
     "*.yaml",
+    "test_pkg",
 ]
 
 [tool.ruff.lint]
