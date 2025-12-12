@@ -1,6 +1,6 @@
 """Pydantic input models for GitHub MCP tools."""
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 # Import enums and constants
@@ -1065,7 +1065,7 @@ class UpdateReleaseInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    release_id: str = Field(..., description="Release ID or tag name (e.g., 'v1.2.0')")
+    release_id: Union[int, str] = Field(..., description="Release ID (numeric) or tag name (e.g., 'v1.2.0')")
     tag_name: Optional[str] = Field(
         default=None, description="New tag name (use carefully!)"
     )

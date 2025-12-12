@@ -974,7 +974,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      release_id: { type: "string", required: true, description: "Release ID or tag name (e.g., 'v1.2.0')" },
+      release_id: { type: "string", required: true, description: "Release ID (numeric, can be int or string) or tag name (e.g., 'v1.2.0')" },
       tag_name: { type: "string", required: false, description: "New tag name (use carefully!)" },
       name: { type: "string", required: false, description: "New release title" },
       body: { type: "string", required: false, description: "New release notes/description in Markdown format" },

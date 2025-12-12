@@ -326,7 +326,7 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         params (UpdateReleaseInput): Validated input parameters containing:
             - owner (str): Repository owner
             - repo (str): Repository name
-            - release_id (str): Release ID or tag name
+            - release_id (Union[int, str]): Release ID (numeric) or tag name (e.g., 'v1.2.0')
             - tag_name (Optional[str]): New tag name
             - name (Optional[str]): New title
             - body (Optional[str]): New release notes
@@ -361,18 +361,22 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
         )
 
     try:
+        # Convert release_id to string for processing
+        release_id_str = str(params.release_id)
+        
         # First, get the release to find its ID if tag name was provided
-        if params.release_id.startswith("v") or "." in params.release_id:
+        if isinstance(params.release_id, str) and (release_id_str.startswith("v") or "." in release_id_str):
             # Looks like a tag name, need to get release ID
             get_endpoint = (
-                f"repos/{params.owner}/{params.repo}/releases/tags/{params.release_id}"
+                f"repos/{params.owner}/{params.repo}/releases/tags/{release_id_str}"
             )
             release_data: Dict[str, Any] = await _make_github_request(
                 get_endpoint, method="GET", token=auth_token
             )
             release_id = release_data["id"]
         else:
-            release_id = params.release_id
+            # It's a numeric ID (int or numeric string)
+            release_id = int(params.release_id) if isinstance(params.release_id, str) else params.release_id
 
         endpoint = f"repos/{params.owner}/{params.repo}/releases/{release_id}"
 
