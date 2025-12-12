@@ -307,6 +307,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       labels: { type: "array", required: false, description: "List of label names to apply (replaces existing)" },
       assignees: { type: "array", required: false, description: "List of usernames to assign (replaces existing)" },
       milestone: { type: "number", required: false, description: "Milestone number (use null to remove milestone)" },
+      state_reason: { type: "string", required: false, description: "Reason for state change: 'completed', 'not_planned', or 'reopened'" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Updated issue details",
@@ -726,6 +727,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       content: { type: "string", required: true, description: "File content (will be base64 encoded automatically)" },
       message: { type: "string", required: true, description: "Commit message" },
       branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      committer: { type: "object", required: false, description: "Custom committer info: {name: string, email: string}" },
+      author: { type: "object", required: false, description: "Custom author info: {name: string, email: string}" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation with commit SHA",
@@ -749,6 +752,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       message: { type: "string", required: true, description: "Commit message" },
       sha: { type: "string", required: true, description: "SHA of the file being replaced (get from github_get_file_content)" },
       branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      committer: { type: "object", required: false, description: "Custom committer info: {name: string, email: string}" },
+      author: { type: "object", required: false, description: "Custom author info: {name: string, email: string}" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation with new commit SHA",
@@ -772,6 +777,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       message: { type: "string", required: true, description: "Commit message" },
       sha: { type: "string", required: true, description: "SHA of the file being deleted (get from github_get_file_content)" },
       branch: { type: "string", required: false, description: "Branch name (defaults to repository's default branch)" },
+      committer: { type: "object", required: false, description: "Custom committer info: {name: string, email: string}" },
+      author: { type: "object", required: false, description: "Custom author info: {name: string, email: string}" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Success confirmation",
@@ -980,6 +987,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       body: { type: "string", required: false, description: "New release notes/description in Markdown format" },
       draft: { type: "boolean", required: false, description: "Set draft status" },
       prerelease: { type: "boolean", required: false, description: "Set pre-release status" },
+      generate_release_notes: { type: "boolean", required: false, description: "Auto-generate release notes from merged PRs and commits since last release" },
+      discussion_category_name: { type: "string", required: false, description: "Create a linked discussion in this category (e.g., 'Announcements')" },
+      make_latest: { type: "string", required: false, description: "Control 'Latest' badge: 'true', 'false', or 'legacy'" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Updated release details with confirmation",

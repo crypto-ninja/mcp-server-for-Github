@@ -219,6 +219,7 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
             - labels (Optional[List[str]]): Label names
             - assignees (Optional[List[str]]): Usernames to assign
             - milestone (Optional[int]): Milestone number
+            - state_reason (Optional[str]): Reason for state change ('completed', 'not_planned', 'reopened')
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -266,6 +267,8 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
             update_data["assignees"] = params.assignees  # type: ignore[assignment]
         if params.milestone is not None:
             update_data["milestone"] = params.milestone
+        if params.state_reason is not None:
+            update_data["state_reason"] = params.state_reason
 
         # Make request
         data = await _make_github_request(

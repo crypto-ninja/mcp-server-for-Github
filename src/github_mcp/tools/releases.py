@@ -332,6 +332,9 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             - body (Optional[str]): New release notes
             - draft (Optional[bool]): Draft status
             - prerelease (Optional[bool]): Pre-release status
+            - generate_release_notes (Optional[bool]): Auto-generate release notes
+            - discussion_category_name (Optional[str]): Create linked discussion
+            - make_latest (Optional[str]): Control 'Latest' badge ('true', 'false', 'legacy')
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -393,6 +396,12 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             body_data["draft"] = params.draft
         if params.prerelease is not None:
             body_data["prerelease"] = params.prerelease
+        if params.generate_release_notes is not None:
+            body_data["generate_release_notes"] = params.generate_release_notes
+        if params.discussion_category_name is not None:
+            body_data["discussion_category_name"] = params.discussion_category_name
+        if params.make_latest is not None:
+            body_data["make_latest"] = params.make_latest
 
         # Update the release
         data: Dict[str, Any] = await _make_github_request(

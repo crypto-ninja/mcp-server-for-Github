@@ -145,6 +145,10 @@ class UpdateIssueInput(BaseModel):
     milestone: Optional[int] = Field(
         None, description="Milestone number (use null to remove milestone)"
     )
+    state_reason: Optional[str] = Field(
+        None,
+        description="Reason for state change: 'completed', 'not_planned', or 'reopened'",
+    )
     token: Optional[str] = Field(
         None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
@@ -1077,6 +1081,18 @@ class UpdateReleaseInput(BaseModel):
     prerelease: Optional[bool] = Field(
         default=None, description="Set pre-release status"
     )
+    generate_release_notes: Optional[bool] = Field(
+        default=None,
+        description="Auto-generate release notes from merged PRs and commits since last release",
+    )
+    discussion_category_name: Optional[str] = Field(
+        default=None,
+        description="Create a linked discussion in this category (e.g., 'Announcements')",
+    )
+    make_latest: Optional[str] = Field(
+        default=None,
+        description="Control 'Latest' badge: 'true', 'false', or 'legacy'",
+    )
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
@@ -1392,6 +1408,13 @@ class ClosePullRequestInput(BaseModel):
 # Phase 2.1: File Management Models
 
 
+class GitUserInfo(BaseModel):
+    """Git user information for commits."""
+
+    name: str = Field(..., description="Name of the user", min_length=1)
+    email: str = Field(..., description="Email of the user", min_length=1)
+
+
 class CreateFileInput(BaseModel):
     """Input model for creating files in a repository."""
 
@@ -1418,6 +1441,14 @@ class CreateFileInput(BaseModel):
     branch: Optional[str] = Field(
         default=None,
         description="Branch name (defaults to repository's default branch)",
+    )
+    committer: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom committer info (name and email)",
+    )
+    author: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom author info (name and email)",
     )
     token: Optional[str] = Field(
         default=None,
@@ -1451,6 +1482,14 @@ class UpdateFileInput(BaseModel):
         default=None,
         description="Branch name (defaults to repository's default branch)",
     )
+    committer: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom committer info (name and email)",
+    )
+    author: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom author info (name and email)",
+    )
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
@@ -1481,6 +1520,14 @@ class DeleteFileInput(BaseModel):
     branch: Optional[str] = Field(
         default=None,
         description="Branch name (defaults to repository's default branch)",
+    )
+    committer: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom committer info (name and email)",
+    )
+    author: Optional["GitUserInfo"] = Field(
+        default=None,
+        description="Custom author info (name and email)",
     )
     token: Optional[str] = Field(
         default=None,

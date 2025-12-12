@@ -14,6 +14,7 @@ from ..models.inputs import (
     CreateFileInput,
     DeleteFileInput,
     GetFileContentInput,
+    GitUserInfo,  # noqa: F401 - Used in type hints via Pydantic models
     GitHubGrepInput,
     GitHubReadFileChunkInput,
     GitHubStrReplaceInput,
@@ -130,6 +131,8 @@ async def github_create_file(params: CreateFileInput) -> str:
             - content (str): File content
             - message (str): Commit message
             - branch (Optional[str]): Target branch
+            - committer (Optional[GitUserInfo]): Custom committer info
+            - author (Optional[GitUserInfo]): Custom author info
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -164,10 +167,14 @@ async def github_create_file(params: CreateFileInput) -> str:
         content_base64 = base64.b64encode(content_bytes).decode("utf-8")
 
         # Prepare request body
-        body = {"message": params.message, "content": content_base64}
+        body: Dict[str, Any] = {"message": params.message, "content": content_base64}
 
         if params.branch:
             body["branch"] = params.branch
+        if params.committer:
+            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+        if params.author:
+            body["author"] = {"name": params.author.name, "email": params.author.email}
 
         # Make API request
         data = await _make_github_request(
@@ -235,6 +242,8 @@ async def github_update_file(params: UpdateFileInput) -> str:
             - message (str): Commit message
             - sha (str): Current file SHA (required)
             - branch (Optional[str]): Target branch
+            - committer (Optional[GitUserInfo]): Custom committer info
+            - author (Optional[GitUserInfo]): Custom author info
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -269,10 +278,14 @@ async def github_update_file(params: UpdateFileInput) -> str:
         content_base64 = base64.b64encode(content_bytes).decode("utf-8")
 
         # Prepare request body
-        body = {"message": params.message, "content": content_base64, "sha": params.sha}
+        body: Dict[str, Any] = {"message": params.message, "content": content_base64, "sha": params.sha}
 
         if params.branch:
             body["branch"] = params.branch
+        if params.committer:
+            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+        if params.author:
+            body["author"] = {"name": params.author.name, "email": params.author.email}
 
         # Make API request
         data = await _make_github_request(
@@ -331,6 +344,8 @@ async def github_delete_file(params: DeleteFileInput) -> str:
             - message (str): Commit message explaining deletion
             - sha (str): Current file SHA (required for safety)
             - branch (Optional[str]): Target branch
+            - committer (Optional[GitUserInfo]): Custom committer info
+            - author (Optional[GitUserInfo]): Custom author info
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -366,10 +381,14 @@ async def github_delete_file(params: DeleteFileInput) -> str:
 
     try:
         # Prepare request body
-        body = {"message": params.message, "sha": params.sha}
+        body: Dict[str, Any] = {"message": params.message, "sha": params.sha}
 
         if params.branch:
             body["branch"] = params.branch
+        if params.committer:
+            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+        if params.author:
+            body["author"] = {"name": params.author.name, "email": params.author.email}
 
         # Make API request
         data = await _make_github_request(
