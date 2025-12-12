@@ -145,21 +145,45 @@ def load_private_key_from_file(key_path: str) -> Optional[str]:
         return None
 
 
+def _get_env_with_fallback(*names: str) -> Optional[str]:
+    """Return the first non-empty environment variable from the provided names."""
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return None
+
+
 def _has_app_config() -> bool:
     """
     Check if GitHub App configuration is present in environment.
+    
+    Accepts both the current names (GITHUB_APP_*) and legacy alternates
+    (GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY, GITHUB_PRIVATE_KEY_PATH).
     
     Returns:
         True if App ID, Installation ID, and at least one key source are configured
     """
     app_id = os.getenv("GITHUB_APP_ID")
-    installation_id = os.getenv("GITHUB_APP_INSTALLATION_ID")
+    installation_id = _get_env_with_fallback(
+        "GITHUB_APP_INSTALLATION_ID",
+        "GITHUB_INSTALLATION_ID",
+    )
     
     if not app_id or not installation_id:
         return False
     
     # Check if we have at least one key source configured
-    has_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY")) or bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"))
+    has_key = bool(
+        _get_env_with_fallback(
+            "GITHUB_APP_PRIVATE_KEY",
+            "GITHUB_PRIVATE_KEY",
+        )
+        or _get_env_with_fallback(
+            "GITHUB_APP_PRIVATE_KEY_PATH",
+            "GITHUB_PRIVATE_KEY_PATH",
+        )
+    )
     
     return has_key
 
@@ -176,17 +200,26 @@ async def get_installation_token_from_env() -> Optional[str]:
         Installation token if configured, None otherwise
     """
     app_id = os.getenv("GITHUB_APP_ID")
-    installation_id = os.getenv("GITHUB_APP_INSTALLATION_ID")
+    installation_id = _get_env_with_fallback(
+        "GITHUB_APP_INSTALLATION_ID",
+        "GITHUB_INSTALLATION_ID",
+    )
     
     if not app_id or not installation_id:
         return None
     
     # Try private key from environment variable first
-    private_key = os.getenv("GITHUB_APP_PRIVATE_KEY")
+    private_key = _get_env_with_fallback(
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_PRIVATE_KEY",
+    )
     
     # If not found, try loading from file path
     if not private_key:
-        key_path = os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")
+        key_path = _get_env_with_fallback(
+            "GITHUB_APP_PRIVATE_KEY_PATH",
+            "GITHUB_PRIVATE_KEY_PATH",
+        )
         if key_path:
             private_key = load_private_key_from_file(key_path)
     
