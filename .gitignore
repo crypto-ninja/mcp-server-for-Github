@@ -41,6 +41,7 @@ venv.bak/
 .env
 .env.local
 .env.*.local
+.secrets
 
 # Logs
 *.log
