@@ -108,6 +108,9 @@ from .discussions import (
     github_get_discussion,
     github_list_discussion_categories,
     github_list_discussion_comments,
+    github_create_discussion,
+    github_update_discussion,
+    github_add_discussion_comment,
 )
 
 from .notifications import (
@@ -259,6 +262,9 @@ __all__ = [
     "github_get_discussion",
     "github_list_discussion_categories",
     "github_list_discussion_comments",
+    "github_create_discussion",
+    "github_update_discussion",
+    "github_add_discussion_comment",
     # Notifications (6)
     "github_list_notifications",
     "github_get_thread",

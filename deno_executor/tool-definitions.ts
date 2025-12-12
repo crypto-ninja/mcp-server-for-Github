@@ -1778,6 +1778,69 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   discussion_number: 123
 });`
   },
+  {
+    name: "github_create_discussion",
+    category: "Discussions",
+    description: "Create a new discussion in a repository (uses GraphQL)",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      category_id: { type: "string", required: true, description: "Discussion category node_id (from github_list_discussion_categories)" },
+      title: { type: "string", required: true, description: "Discussion title" },
+      body: { type: "string", required: true, description: "Discussion body (markdown)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
+    },
+    returns: "Created discussion details with number and URL",
+    example: `const discussion = await callMCPTool("github_create_discussion", {
+  owner: "myuser",
+  repo: "myrepo",
+  category_id: "DIC_kwDO...",
+  title: "New Feature Discussion",
+  body: "Let's discuss implementing feature X..."
+});`
+  },
+  {
+    name: "github_update_discussion",
+    category: "Discussions",
+    description: "Update an existing discussion (uses GraphQL). Only provided fields will be updated",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" },
+      title: { type: "string", required: false, description: "New title" },
+      body: { type: "string", required: false, description: "New body (markdown)" },
+      category_id: { type: "string", required: false, description: "Move to different category (node_id)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
+    },
+    returns: "Updated discussion details",
+    example: `const result = await callMCPTool("github_update_discussion", {
+  owner: "myuser",
+  repo: "myrepo",
+  discussion_number: 123,
+  title: "Updated Title",
+  body: "Updated content..."
+});`
+  },
+  {
+    name: "github_add_discussion_comment",
+    category: "Discussions",
+    description: "Add a comment to a discussion (uses GraphQL). Can optionally reply to a specific comment",
+    parameters: {
+      owner: { type: "string", required: true, description: "Repository owner" },
+      repo: { type: "string", required: true, description: "Repository name" },
+      discussion_number: { type: "number", required: true, description: "Discussion number" },
+      body: { type: "string", required: true, description: "Comment body (markdown)" },
+      reply_to_id: { type: "string", required: false, description: "Reply to a specific comment (comment node_id)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" }
+    },
+    returns: "Created comment details with ID and URL",
+    example: `const comment = await callMCPTool("github_add_discussion_comment", {
+  owner: "myuser",
+  repo: "myrepo",
+  discussion_number: 123,
+  body: "This is a great idea!"
+});`
+  },
 
   // NOTIFICATIONS (6 tools)
   {

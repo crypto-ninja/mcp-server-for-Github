@@ -2599,6 +2599,60 @@ class ListDiscussionCommentsInput(BaseModel):
     )
 
 
+class CreateDiscussionInput(BaseModel):
+    """Input model for creating a discussion."""
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
+    )
+
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    category_id: str = Field(
+        ...,
+        description="Discussion category node_id (from github_list_discussion_categories)",
+        min_length=1,
+    )
+    title: str = Field(..., description="Discussion title", min_length=1, max_length=200)
+    body: str = Field(..., description="Discussion body (markdown)", min_length=1)
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
+class UpdateDiscussionInput(BaseModel):
+    """Input model for updating a discussion."""
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
+    )
+
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    discussion_number: int = Field(..., description="Discussion number", ge=1)
+    title: Optional[str] = Field(None, description="New title", min_length=1, max_length=200)
+    body: Optional[str] = Field(None, description="New body (markdown)")
+    category_id: Optional[str] = Field(
+        None, description="Move to different category (node_id)"
+    )
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
+class AddDiscussionCommentInput(BaseModel):
+    """Input model for adding a comment to a discussion."""
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
+    )
+
+    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    discussion_number: int = Field(..., description="Discussion number", ge=1)
+    body: str = Field(..., description="Comment body (markdown)", min_length=1)
+    reply_to_id: Optional[str] = Field(
+        None, description="Reply to a specific comment (comment node_id)"
+    )
+    token: Optional[str] = Field(default=None, description="Optional GitHub token")
+
+
 # Discussions Tools
 
 
