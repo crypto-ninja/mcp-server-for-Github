@@ -15,10 +15,18 @@
 - `github_create_file` now returns `{ path, sha, url }`
 - `github_create_pull_request` now returns `{ number, url, title, state, head, base }`
 
+### Enhanced
+
+- `github_create_release` now supports:
+  - `generate_release_notes` - Auto-generate changelog from merged PRs
+  - `discussion_category_name` - Create linked discussion for release
+  - `make_latest` - Control "Latest" badge (`true`, `false`, `legacy`)
+
 ### Testing
 
-- Full test suite passing (299 tests)
+- Full test suite passing (302 tests)
 - Added comprehensive tests for delete_release and delete_gist
+- Added tests for new create_release parameters (generate_release_notes, discussion_category_name, make_latest)
 - Tool count: 109 → 109 (no change)
 
 ---
