@@ -573,7 +573,7 @@ async def github_get_job_logs(params: GetJobLogsInput) -> str:
     """
     try:
         # Job logs endpoint returns plain text, not JSON
-        from src.github_mcp.github_client import GhClient
+        from github_client import GhClient
 
         auth_token = await _get_auth_token_fallback(params.token)
         if not auth_token:
