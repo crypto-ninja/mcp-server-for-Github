@@ -115,11 +115,21 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
             "description": params.description,
             "private": params.private,
             "auto_init": params.auto_init,
+            "allow_squash_merge": params.allow_squash_merge,
+            "allow_merge_commit": params.allow_merge_commit,
+            "allow_rebase_merge": params.allow_rebase_merge,
+            "delete_branch_on_merge": params.delete_branch_on_merge,
+            "allow_auto_merge": params.allow_auto_merge,
+            "allow_update_branch": params.allow_update_branch,
         }
         if params.gitignore_template:
             body["gitignore_template"] = params.gitignore_template
         if params.license_template:
             body["license_template"] = params.license_template
+        if params.squash_merge_commit_title:
+            body["squash_merge_commit_title"] = params.squash_merge_commit_title
+        if params.squash_merge_commit_message:
+            body["squash_merge_commit_message"] = params.squash_merge_commit_message
 
         if params.owner:
             endpoint = f"orgs/{params.owner}/repos"
@@ -181,6 +191,14 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
             "has_wiki",
             "default_branch",
             "archived",
+            "allow_squash_merge",
+            "allow_merge_commit",
+            "allow_rebase_merge",
+            "delete_branch_on_merge",
+            "allow_auto_merge",
+            "allow_update_branch",
+            "squash_merge_commit_title",
+            "squash_merge_commit_message",
         ]:
             value = getattr(params, field)
             if value is not None:

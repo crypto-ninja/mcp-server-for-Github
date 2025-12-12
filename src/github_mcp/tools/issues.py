@@ -126,6 +126,7 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             - body (Optional[str]): Issue description in Markdown
             - labels (Optional[List[str]]): Label names to apply
             - assignees (Optional[List[str]]): Usernames to assign
+            - milestone (Optional[int]): Milestone number to associate with this issue
             - token (Optional[str]): GitHub token (optional - uses GITHUB_TOKEN env var if not provided)
 
     Returns:
@@ -165,6 +166,8 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             payload["labels"] = params.labels  # type: ignore[assignment]
         if params.assignees:
             payload["assignees"] = params.assignees  # type: ignore[assignment]
+        if params.milestone:
+            payload["milestone"] = params.milestone
 
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",

@@ -513,6 +513,7 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
             - merge_method (Optional[str]): 'merge', 'squash', or 'rebase' (default: squash)
             - commit_title (Optional[str]): Custom commit title
             - commit_message (Optional[str]): Custom commit message
+            - sha (Optional[str]): SHA of head commit that must match (prevents race conditions)
             - token (Optional[str]): GitHub token
 
     Returns:
@@ -551,6 +552,8 @@ async def github_merge_pull_request(params: MergePullRequestInput) -> str:
             merge_data["commit_title"] = params.commit_title
         if params.commit_message:
             merge_data["commit_message"] = params.commit_message
+        if params.sha:
+            merge_data["sha"] = params.sha
 
         # Merge the pull request
         result = await _make_github_request(

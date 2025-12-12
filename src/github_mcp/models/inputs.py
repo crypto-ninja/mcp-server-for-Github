@@ -101,6 +101,9 @@ class CreateIssueInput(BaseModel):
     assignees: Optional[List[str]] = Field(
         default=None, description="List of usernames to assign", max_length=10
     )
+    milestone: Optional[int] = Field(
+        default=None, description="Milestone number to associate with this issue", ge=1
+    )
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
@@ -1159,6 +1162,30 @@ class CreateRepositoryInput(BaseModel):
     license_template: Optional[str] = Field(
         default=None, description="License template (e.g., 'mit')"
     )
+    allow_squash_merge: Optional[bool] = Field(
+        default=True, description="Allow squash merging of pull requests"
+    )
+    allow_merge_commit: Optional[bool] = Field(
+        default=True, description="Allow merge commits for pull requests"
+    )
+    allow_rebase_merge: Optional[bool] = Field(
+        default=True, description="Allow rebase merging of pull requests"
+    )
+    delete_branch_on_merge: Optional[bool] = Field(
+        default=False, description="Automatically delete head branch when pull requests are merged"
+    )
+    allow_auto_merge: Optional[bool] = Field(
+        default=False, description="Allow auto-merge for pull requests"
+    )
+    allow_update_branch: Optional[bool] = Field(
+        default=False, description="Allow pull request head branch to be updated even if it's behind base branch"
+    )
+    squash_merge_commit_title: Optional[str] = Field(
+        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+    )
+    squash_merge_commit_message: Optional[str] = Field(
+        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+    )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
     )
@@ -1264,6 +1291,30 @@ class UpdateRepositoryInput(BaseModel):
     archived: Optional[bool] = Field(
         default=None, description="Archive/unarchive repository"
     )
+    allow_squash_merge: Optional[bool] = Field(
+        default=None, description="Allow squash merging of pull requests"
+    )
+    allow_merge_commit: Optional[bool] = Field(
+        default=None, description="Allow merge commits for pull requests"
+    )
+    allow_rebase_merge: Optional[bool] = Field(
+        default=None, description="Allow rebase merging of pull requests"
+    )
+    delete_branch_on_merge: Optional[bool] = Field(
+        default=None, description="Automatically delete head branch when pull requests are merged"
+    )
+    allow_auto_merge: Optional[bool] = Field(
+        default=None, description="Allow auto-merge for pull requests"
+    )
+    allow_update_branch: Optional[bool] = Field(
+        default=None, description="Allow pull request head branch to be updated even if it's behind base branch"
+    )
+    squash_merge_commit_title: Optional[str] = Field(
+        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+    )
+    squash_merge_commit_message: Optional[str] = Field(
+        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+    )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
     )
@@ -1306,6 +1357,10 @@ class MergePullRequestInput(BaseModel):
     )
     commit_message: Optional[str] = Field(
         default=None, description="Custom commit message for merge commit"
+    )
+    sha: Optional[str] = Field(
+        default=None,
+        description="SHA of the head commit that must match the pull request's head (prevents race conditions)",
     )
     token: Optional[str] = Field(
         default=None,
