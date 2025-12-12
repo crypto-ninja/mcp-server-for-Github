@@ -16,7 +16,7 @@ The GitHub MCP Server uses a revolutionary **code-first architecture** that redu
 ### Traditional MCP Servers
 
 ```
-Load 109 tools → ~185,000 tokens → much higher per-conversation cost
+Load 112 tools → ~190,400 tokens → much higher per-conversation cost
 ```
 
 ### GitHub MCP Server v2.0 (Code-First)
@@ -35,7 +35,7 @@ Claude Desktop
 GitHub MCP Server
     ↓
 Deno Runtime (executes TypeScript)
-    ↓ (has access to: all 109 tools internally)
+    ↓ (has access to: all 112 tools internally)
 MCP Tool Bridge
     ↓
 GitHub API
@@ -177,7 +177,7 @@ const result = await callMCPTool("tool_name", {
 });
 ```
 
-### All 109 Tools Available
+### All 112 Tools Available
 
 - Repository management (7 tools)
 - Issue tracking (4 tools)
@@ -314,7 +314,7 @@ const result = await callMCPTool(info.name, {
 ### Traditional MCP
 
 ```
-Initial load: 109 tools × 1,700 tokens/tool ≈ 185,000 tokens
+Initial load: 112 tools × 1,700 tokens/tool ≈ 190,400 tokens
 User query: ~50 tokens
 Tool call: ~100 tokens
 Response: ~500 tokens
