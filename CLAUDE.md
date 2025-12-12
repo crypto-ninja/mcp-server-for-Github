@@ -2,7 +2,7 @@
 
 ## What You Have
 
-**109 GitHub tools** accessed through a single `execute_code` tool.
+**112 GitHub tools** accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
 ## Tool Discovery
@@ -91,31 +91,28 @@ const display = await callMCPTool("github_list_branches", {
 });
 ```
 
-## Tool Categories (109 total across 21 categories)
+## Tool Categories (112 total)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|
-| GitHub Actions | 15 | list_workflows, get_workflow_runs, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact, suggest_workflow |
-| Security & Dependabot | 13 | list_dependabot_alerts, get_dependabot_alert, update_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
+| GitHub Actions | 14 | list_workflows, get_workflow_runs, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact |
+| Security | 13 | list_dependabot_alerts, get_dependabot_alert, update_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
 | File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
-| Projects & Boards | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
-| Repository Management | 6 | get_repo_info, create_repository, update_repository, archive_repository, list_user_repos, list_org_repos |
+| Projects | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
+| Repository Management | 8 | get_repo_info, create_repository, update_repository, list_user_repos, list_org_repos, list_collaborators, check_collaborator, list_teams |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, get_pr_overview_graphql, create_pr_review |
+| **Discussions** | **7** | list_discussions, get_discussion, list_categories, list_comments, **create_discussion, update_discussion, add_discussion_comment** |
 | Notifications | 6 | list_notifications, get_thread, mark_thread_read, mark_notifications_read, get_subscription, set_subscription |
 | Branch Management | 5 | list/create/get/delete/compare_branches |
 | Gists | 5 | list_gists, get_gist, create_gist, update_gist, delete_gist |
-| Discussions | 4 | list_discussions, get_discussion, list_categories, list_comments |
 | Releases | 5 | list/get/create/update/delete_release |
-| Search | 3 | search_code, search_repositories, search_issues |
-| Collaborators | 3 | list_collaborators, check_collaborator, list_teams |
-| Issues | 3 | list/create/update_issue |
+| Issues | 5 | list/create/update_issue, add_issue_comment |
+| Users | 5 | get_user_info, get_authenticated_user, search_users, list_user_repos, list_org_repos |
 | Labels | 3 | list_labels, create_label, delete_label |
 | Stargazers | 3 | list_stargazers, star_repository, unstar_repository |
-| Users | 3 | get_user_info, get_authenticated_user, search_users |
-| Workspace (Local Files) | 3 | repo_read_file_chunk, workspace_grep, str_replace |
+| Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |
+| Search | 1 | search_code |
 | Commits | 1 | list_commits |
-| Comments | 1 | add_issue_comment |
-| Miscellaneous | 1 | license_info |
 
 ## Authentication
 
@@ -208,6 +205,40 @@ return { branch: branch.branch, file: file.success, pr_url: pr.url };
 ```
 
 **Performance Note:** The first `execute_code` call takes ~4000ms (cold start), but subsequent calls within the same session use connection pooling and complete in ~108ms (97% faster!).
+
+## GraphQL Tools
+
+Some GitHub operations require GraphQL instead of REST. The server handles this automatically:
+
+**Discussion Write Operations (GraphQL):**
+```typescript
+// Create a new discussion
+const discussion = await callMCPTool("github_create_discussion", {
+    owner: "org",
+    repo: ".github",
+    category_id: "DIC_xxx",  // Get from github_list_discussion_categories
+    title: "New Feature Request",
+    body: "Description of the feature..."
+});
+
+// Update an existing discussion
+await callMCPTool("github_update_discussion", {
+    owner: "org",
+    repo: ".github",
+    discussion_number: 123,
+    body: "Updated content..."
+});
+
+// Add a comment to a discussion
+await callMCPTool("github_add_discussion_comment", {
+    owner: "org",
+    repo: ".github",
+    discussion_number: 123,
+    body: "Great idea! Here's my feedback..."
+});
+```
+
+**Note:** To create a discussion, you first need the `category_id` from `github_list_discussion_categories`.
 
 ## Performance
 
