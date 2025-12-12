@@ -3,7 +3,7 @@
 import json
 from typing import Dict, Any, List, Union, cast
 
-from graphql_client import GraphQLClient
+from ..utils.graphql_client import GraphQLClient
 
 from ..models.inputs import (
     AddDiscussionCommentInput,

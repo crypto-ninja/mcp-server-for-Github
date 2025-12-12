@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Union, cast
 import json
 import httpx
 
-from graphql_client import GraphQLClient
+from ..utils.graphql_client import GraphQLClient
 from ..models.inputs import (
     ClosePullRequestInput,
     CreatePRReviewInput,
