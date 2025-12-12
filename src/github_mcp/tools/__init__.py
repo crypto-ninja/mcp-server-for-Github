@@ -1,4 +1,4 @@
-"""GitHub MCP Tools - All 109 tool functions."""
+"""GitHub MCP Tools - All 112 tool functions."""
 
 from .repositories import (
     github_get_repo_info,
@@ -257,7 +257,7 @@ __all__ = [
     "github_delete_project",
     "github_list_project_columns",
     "github_create_project_column",
-    # Discussions (4)
+    # Discussions (7)
     "github_list_discussions",
     "github_get_discussion",
     "github_list_discussion_categories",
