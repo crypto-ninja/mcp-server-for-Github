@@ -62,5 +62,8 @@ Thumbs.db
 # Personal planning docs (keep local only)
 FEATURE_ROADMAP.md
 
+# Claude-generated files (untracked)
+claude/
+
 # Node / Deno client dependencies
 servers/node_modules/
