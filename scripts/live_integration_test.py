@@ -13,10 +13,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Load .env file
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
     token_status = "SET" if os.environ.get("GITHUB_TOKEN") else "NOT SET"
     app_status = "SET" if os.environ.get("GITHUB_APP_ID") else "NOT SET"
-    print(f"Environment loaded - GITHUB_TOKEN: {token_status}, GITHUB_APP_ID: {app_status}")
+    print(
+        f"Environment loaded - GITHUB_TOKEN: {token_status}, GITHUB_APP_ID: {app_status}"
+    )
 except ImportError:
     print("Warning: python-dotenv not installed")
 
@@ -52,7 +55,9 @@ async def test_get_repo_info():
 
     start = time.perf_counter()
     try:
-        params = RepoInfoInput(owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON)
+        params = RepoInfoInput(
+            owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON
+        )
         result = await github_get_repo_info(params)
         duration = (time.perf_counter() - start) * 1000
 
@@ -73,7 +78,9 @@ async def test_list_branches():
 
     start = time.perf_counter()
     try:
-        params = ListBranchesInput(owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON)
+        params = ListBranchesInput(
+            owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON
+        )
         result = await github_list_branches(params)
         duration = (time.perf_counter() - start) * 1000
 
@@ -254,7 +261,9 @@ async def test_get_user_info():
 
     start = time.perf_counter()
     try:
-        params = GetUserInfoInput(username="crypto-ninja", response_format=ResponseFormat.JSON)
+        params = GetUserInfoInput(
+            username="crypto-ninja", response_format=ResponseFormat.JSON
+        )
         result = await github_get_user_info(params)
         duration = (time.perf_counter() - start) * 1000
 
@@ -275,7 +284,9 @@ async def test_list_workflows():
 
     start = time.perf_counter()
     try:
-        params = ListWorkflowsInput(owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON)
+        params = ListWorkflowsInput(
+            owner=TEST_OWNER, repo=TEST_REPO, response_format=ResponseFormat.JSON
+        )
         result = await github_list_workflows(params)
         duration = (time.perf_counter() - start) * 1000
 
@@ -328,7 +339,10 @@ async def test_execute_code_list_tools():
             tool_count = data.get("toolCount", 0) if isinstance(data, dict) else 0
             categories = data.get("categories", 0) if isinstance(data, dict) else 0
             log_result(
-                "execute_code (list tools)", True, duration, f"{tool_count} tools, {categories} categories"
+                "execute_code (list tools)",
+                True,
+                duration,
+                f"{tool_count} tools, {categories} categories",
             )
             return True
         else:
@@ -387,11 +401,11 @@ async def test_connection_pooling():
             duration = (time.perf_counter() - start) * 1000
             times.append(duration)
             status = "[OK]" if result.get("error") is not True else "[ERR]"
-            print(f"    Call {i+1}: {duration:.0f}ms {status}")
+            print(f"    Call {i + 1}: {duration:.0f}ms {status}")
         except Exception as e:
             duration = (time.perf_counter() - start) * 1000
             times.append(duration)
-            print(f"    Call {i+1}: {duration:.0f}ms [ERR] {str(e)[:50]}")
+            print(f"    Call {i + 1}: {duration:.0f}ms [ERR] {str(e)[:50]}")
 
     if times:
         avg = sum(times) / len(times)
@@ -451,7 +465,10 @@ async def test_create_and_close_issue():
                 close_result = await github_update_issue(close_params)
                 close_duration = (time.perf_counter() - start) * 1000
 
-                if isinstance(close_result, str) and "error" not in close_result.lower():
+                if (
+                    isinstance(close_result, str)
+                    and "error" not in close_result.lower()
+                ):
                     print(f"    Closed issue #{issue_number} ({close_duration:.0f}ms)")
                     log_result(
                         "create_and_close_issue",
@@ -469,10 +486,20 @@ async def test_create_and_close_issue():
                     )
                     return False
             except json.JSONDecodeError:
-                log_result("create_and_close_issue", False, create_duration, "Failed to parse response")
+                log_result(
+                    "create_and_close_issue",
+                    False,
+                    create_duration,
+                    "Failed to parse response",
+                )
                 return False
         else:
-            log_result("create_and_close_issue", False, create_duration, str(create_result)[:100])
+            log_result(
+                "create_and_close_issue",
+                False,
+                create_duration,
+                str(create_result)[:100],
+            )
             return False
     except Exception as e:
         duration = (time.perf_counter() - start) * 1000
@@ -536,7 +563,7 @@ async def main():
     print(f"  Passed:    {passed}")
     print(f"  Failed:    {failed}")
     print(f"  Avg Time:  {avg_time:.0f}ms")
-    print(f"\n  Pass Rate: {passed/total*100:.1f}%")
+    print(f"\n  Pass Rate: {passed / total * 100:.1f}%")
 
     if failed > 0:
         print("\n  Failed Tests:")
@@ -552,4 +579,3 @@ async def main():
 if __name__ == "__main__":
     success = asyncio.run(main())
     raise SystemExit(0 if success else 1)
-

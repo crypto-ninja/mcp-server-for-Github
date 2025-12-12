@@ -22,17 +22,18 @@ class PooledProcessState(Enum):
 @dataclass
 class PooledDenoProcess:
     """A pooled Deno subprocess."""
+
     process: asyncio.subprocess.Process
     state: PooledProcessState = PooledProcessState.IDLE
     created_at: float = field(default_factory=time.time)
     last_used: float = field(default_factory=time.time)
     request_count: int = 0
     mcp_connected: bool = False  # Track MCP connection state (set by executor)
-    
+
     @property
     def age_seconds(self) -> float:
         return time.time() - self.created_at
-    
+
     @property
     def idle_seconds(self) -> float:
         return time.time() - self.last_used
@@ -40,13 +41,13 @@ class PooledDenoProcess:
 
 class DenoConnectionPool:
     """Connection pool for Deno subprocesses."""
-    
+
     def __init__(
         self,
         min_size: int = 1,
         max_size: int = 5,
         max_idle_time: float = 300.0,  # 5 minutes
-        max_lifetime: float = 3600.0,   # 1 hour
+        max_lifetime: float = 3600.0,  # 1 hour
         max_requests_per_process: int = 1000,
         health_check_interval: float = 30.0,
     ):
@@ -56,34 +57,34 @@ class DenoConnectionPool:
         self.max_lifetime = max_lifetime
         self.max_requests_per_process = max_requests_per_process
         self.health_check_interval = health_check_interval
-        
+
         # Get project root (go up from src/github_mcp/utils/ to project root)
         project_root = Path(__file__).parent.parent.parent.parent
         self.deno_executor_path = project_root / "deno_executor" / "mod.ts"
         self.project_root = project_root
-        
+
         self._pool: List[PooledDenoProcess] = []
         self._lock = asyncio.Lock()
         self._initialized = False
         self._shutdown = False
         self._health_check_task: Optional[asyncio.Task] = None
         self._waiting_requests: List[asyncio.Future] = []
-    
+
     async def initialize(self):
         """Initialize the pool with minimum processes."""
         if self._initialized:
             return
-            
+
         async with self._lock:
             for _ in range(self.min_size):
                 process = await self._create_process()
                 if process:
                     self._pool.append(process)
-            
+
             self._initialized = True
             self._health_check_task = asyncio.create_task(self._health_check_loop())
             logger.info(f"Deno pool initialized with {len(self._pool)} processes")
-    
+
     async def _create_process(self) -> Optional[PooledDenoProcess]:
         """Create a new Deno subprocess."""
         try:
@@ -95,16 +96,18 @@ class DenoConnectionPool:
                 logger.debug(f"Using pooled executor: {executor_path}")
             else:
                 executor_path = self.deno_executor_path
-                logger.warning(f"Pooled executor not found, using regular executor: {executor_path}")
-            
+                logger.warning(
+                    f"Pooled executor not found, using regular executor: {executor_path}"
+                )
+
             # Start Deno process with the MCP bridge
             process = await asyncio.create_subprocess_exec(
                 "deno",
                 "run",
                 "--allow-read",  # Read MCP server files
-                "--allow-run",   # Spawn MCP server process
-                "--allow-env",   # Access environment variables
-                "--allow-net",   # Network access for GitHub API
+                "--allow-run",  # Spawn MCP server process
+                "--allow-env",  # Access environment variables
+                "--allow-net",  # Network access for GitHub API
                 str(executor_path),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
@@ -112,15 +115,17 @@ class DenoConnectionPool:
                 cwd=str(self.project_root),
                 env={
                     **os.environ,
-                    "MCP_WORKSPACE_ROOT": os.environ.get("MCP_WORKSPACE_ROOT", str(self.project_root)),
-                }
+                    "MCP_WORKSPACE_ROOT": os.environ.get(
+                        "MCP_WORKSPACE_ROOT", str(self.project_root)
+                    ),
+                },
             )
-            
+
             return PooledDenoProcess(process=process)
         except Exception as e:
             logger.error(f"Failed to create Deno process: {e}")
             return None
-    
+
     async def acquire(self) -> Optional[PooledDenoProcess]:
         """Acquire a process from the pool."""
         async with self._lock:
@@ -136,7 +141,7 @@ class DenoConnectionPool:
                         # Remove unhealthy process
                         await self._terminate_process(pooled)
                         self._pool.remove(pooled)
-            
+
             # No idle process available, create new if under max
             if len(self._pool) < self.max_size:
                 new_process = await self._create_process()
@@ -145,10 +150,10 @@ class DenoConnectionPool:
                     new_process.request_count = 1
                     self._pool.append(new_process)
                     return new_process
-            
+
             # Pool exhausted, wait for one to become available
             return None
-    
+
     async def release(self, pooled: PooledDenoProcess):
         """Release a process back to the pool."""
         async with self._lock:
@@ -156,7 +161,7 @@ class DenoConnectionPool:
                 if self._is_process_healthy(pooled):
                     pooled.state = PooledProcessState.IDLE
                     pooled.last_used = time.time()
-                    
+
                     # Notify waiting requests
                     if self._waiting_requests:
                         future = self._waiting_requests.pop(0)
@@ -165,29 +170,29 @@ class DenoConnectionPool:
                 else:
                     await self._terminate_process(pooled)
                     self._pool.remove(pooled)
-                    
+
                     # Maintain minimum pool size
                     if len(self._pool) < self.min_size:
                         new_process = await self._create_process()
                         if new_process:
                             self._pool.append(new_process)
-    
+
     def _is_process_healthy(self, pooled: PooledDenoProcess) -> bool:
         """Check if a process is healthy."""
         # Check if process is still running
         if pooled.process.returncode is not None:
             return False
-        
+
         # Check lifetime
         if pooled.age_seconds > self.max_lifetime:
             return False
-        
+
         # Check request count
         if pooled.request_count >= self.max_requests_per_process:
             return False
-        
+
         return True
-    
+
     async def _terminate_process(self, pooled: PooledDenoProcess):
         """Terminate a process."""
         try:
@@ -202,7 +207,7 @@ class DenoConnectionPool:
                     await pooled.process.wait()
         except Exception as e:
             logger.error(f"Error terminating process: {e}")
-    
+
     async def _health_check_loop(self):
         """Periodic health check loop."""
         while not self._shutdown:
@@ -213,7 +218,7 @@ class DenoConnectionPool:
                 break
             except Exception as e:
                 logger.error(f"Error in health check loop: {e}")
-    
+
     async def _cleanup_idle_processes(self):
         """Clean up idle processes that have been idle too long."""
         async with self._lock:
@@ -223,34 +228,36 @@ class DenoConnectionPool:
                     if pooled.idle_seconds > self.max_idle_time:
                         if len(self._pool) - len(to_remove) > self.min_size:
                             to_remove.append(pooled)
-            
+
             for pooled in to_remove:
                 await self._terminate_process(pooled)
                 self._pool.remove(pooled)
-                logger.info(f"Removed idle Deno process (idle for {pooled.idle_seconds:.1f}s)")
-    
+                logger.info(
+                    f"Removed idle Deno process (idle for {pooled.idle_seconds:.1f}s)"
+                )
+
     async def shutdown(self):
         """Shutdown the pool."""
         self._shutdown = True
-        
+
         if self._health_check_task:
             self._health_check_task.cancel()
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
                 pass
-        
+
         async with self._lock:
             for pooled in self._pool:
                 await self._terminate_process(pooled)
             self._pool.clear()
-        
+
         logger.info("Deno pool shutdown complete")
-    
+
     async def close(self):
         """Alias for shutdown to match typical pool API."""
         await self.shutdown()
-    
+
     @property
     def stats(self) -> dict:
         """Get pool statistics."""
@@ -279,7 +286,7 @@ async def get_pool() -> DenoConnectionPool:
         max_idle_time = float(os.environ.get("DENO_POOL_MAX_IDLE_TIME", "300"))
         max_lifetime = float(os.environ.get("DENO_POOL_MAX_LIFETIME", "3600"))
         max_requests = int(os.environ.get("DENO_POOL_MAX_REQUESTS", "1000"))
-        
+
         _pool = DenoConnectionPool(
             min_size=min_size,
             max_size=max_size,
@@ -305,14 +312,14 @@ async def execute_with_pool(code: str) -> Dict[str, Any]:
     """Execute code using a pooled Deno process."""
     pool = await get_pool()
     pooled = await pool.acquire()
-    
+
     if pooled is None:
         return {
             "error": True,
             "message": "No available Deno processes in pool (pool exhausted)",
-            "code": "POOL_EXHAUSTED"
+            "code": "POOL_EXHAUSTED",
         }
-    
+
     try:
         # Send code to process and get result
         result = await _execute_on_process(pooled, code)
@@ -325,39 +332,39 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
     """Execute code on a specific pooled process."""
     try:
         process = pooled.process
-        
+
         # Check if process is still alive
         if process.returncode is not None:
             return {
                 "error": True,
                 "message": f"Deno process terminated (exit code: {process.returncode})",
-                "code": "PROCESS_TERMINATED"
+                "code": "PROCESS_TERMINATED",
             }
-        
+
         # Write code to stdin
         if not process.stdin:
             return {
                 "error": True,
                 "message": "Process stdin is closed",
-                "code": "STDIN_CLOSED"
+                "code": "STDIN_CLOSED",
             }
-        
+
         # Send code as JSON line to support multiline snippets
         request = json.dumps({"code": code}) + "\n"
-        code_bytes = request.encode('utf-8')
+        code_bytes = request.encode("utf-8")
         process.stdin.write(code_bytes)
         await process.stdin.drain()
-        
+
         logger.debug(f"Sent code to pooled process: {len(code_bytes)} bytes")
-        
+
         # Read response from stdout with timeout
         if not process.stdout:
             return {
                 "error": True,
                 "message": "Process stdout is closed",
-                "code": "STDOUT_CLOSED"
+                "code": "STDOUT_CLOSED",
             }
-        
+
         # Read output line by line until we get JSON
         # The Deno executor outputs JSON to stdout
         # Stderr messages go to stderr (MCP connection logs)
@@ -365,10 +372,11 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
         timeout = 60.0  # 60 second timeout
         start_time = time.time()
         last_json_line = None
-        
+
         # Read stderr in background to prevent blocking (MCP logs go here)
         stderr_task = None
         if process.stderr:
+
             async def read_stderr():
                 try:
                     while True:
@@ -376,16 +384,19 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
                         if not line:
                             break
                         # Just consume stderr, don't process it
-                        logger.debug(f"Stderr: {line.decode('utf-8', errors='replace').strip()[:100]}")
+                        logger.debug(
+                            f"Stderr: {line.decode('utf-8', errors='replace').strip()[:100]}"
+                        )
                 except Exception as e:
                     logger.debug(f"Stderr reader error: {e}")
+
             stderr_task = asyncio.create_task(read_stderr())
-        
+
         # Give the process a moment to start processing
         # The pooled executor initializes MCP connection at startup, which may take time
         # Wait a bit longer for first execution
         await asyncio.sleep(0.1)
-        
+
         while True:
             if time.time() - start_time > timeout:
                 if stderr_task and not stderr_task.done():
@@ -393,55 +404,59 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
                 return {
                     "error": True,
                     "message": "Code execution timed out (60s limit)",
-                    "code": "TIMEOUT"
+                    "code": "TIMEOUT",
                 }
-            
+
             try:
                 # Read a line with timeout
-                line = await asyncio.wait_for(
-                    process.stdout.readline(),
-                    timeout=1.0
-                )
-                
+                line = await asyncio.wait_for(process.stdout.readline(), timeout=1.0)
+
                 if not line:
                     # No more data immediately, wait a bit for buffered output
                     await asyncio.sleep(0.2)
                     # Try one more read
                     try:
                         line = await asyncio.wait_for(
-                            process.stdout.readline(),
-                            timeout=0.3
+                            process.stdout.readline(), timeout=0.3
                         )
                     except asyncio.TimeoutError:
                         # Really no more data, check if we have a JSON line
                         if last_json_line:
                             try:
                                 result = json.loads(last_json_line)
-                                logger.debug(f"Found JSON after EOF: {last_json_line[:100]}")
+                                logger.debug(
+                                    f"Found JSON after EOF: {last_json_line[:100]}"
+                                )
                                 if stderr_task and not stderr_task.done():
                                     stderr_task.cancel()
                                 return result
                             except json.JSONDecodeError:
                                 pass
                         break
-                
-                line_text = line.decode('utf-8', errors='replace').strip()
+
+                line_text = line.decode("utf-8", errors="replace").strip()
                 if not line_text:
                     continue
-                
+
                 output_lines.append(line_text)
                 logger.debug(f"Read line: {line_text[:100]}")
-                
+
                 # Check if this line is JSON (starts with { or [)
-                if line_text and (line_text.startswith('{') or line_text.startswith('[')):
+                if line_text and (
+                    line_text.startswith("{") or line_text.startswith("[")
+                ):
                     try:
                         # Try to parse as JSON
                         result = json.loads(line_text)
                         last_json_line = line_text
-                        logger.debug(f"Parsed JSON successfully: {result.get('error', 'success')}")
+                        logger.debug(
+                            f"Parsed JSON successfully: {result.get('error', 'success')}"
+                        )
                         # This looks like valid JSON, wait a tiny bit to see if there's more
                         try:
-                            await asyncio.wait_for(process.stdout.readline(), timeout=0.1)
+                            await asyncio.wait_for(
+                                process.stdout.readline(), timeout=0.1
+                            )
                         except (asyncio.TimeoutError, Exception):
                             # No more data, return this result
                             pass
@@ -452,13 +467,15 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
                         # Not valid JSON, continue
                         logger.debug(f"JSON parse error: {e}, line: {line_text[:100]}")
                         continue
-                        
+
             except asyncio.TimeoutError:
                 # Timeout reading, check if we have a JSON result
                 if last_json_line:
                     try:
                         result = json.loads(last_json_line)
-                        logger.debug(f"Found JSON after timeout: {last_json_line[:100]}")
+                        logger.debug(
+                            f"Found JSON after timeout: {last_json_line[:100]}"
+                        )
                         if stderr_task and not stderr_task.done():
                             stderr_task.cancel()
                         return result
@@ -483,9 +500,9 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
                 return {
                     "error": True,
                     "message": f"Error reading from process: {str(e)}",
-                    "code": "READ_ERROR"
+                    "code": "READ_ERROR",
                 }
-        
+
         # Cancel stderr reader if still running
         if stderr_task and not stderr_task.done():
             stderr_task.cancel()
@@ -493,29 +510,33 @@ async def _execute_on_process(pooled: PooledDenoProcess, code: str) -> Dict[str,
                 await stderr_task
             except asyncio.CancelledError:
                 pass
-        
+
         # If we get here, we didn't find JSON
-        output_text = '\n'.join(output_lines)
+        output_text = "\n".join(output_lines)
         if last_json_line:
             try:
                 return json.loads(last_json_line)
             except json.JSONDecodeError:
                 pass
-        
+
         # Debug: log what we actually received
-        logger.debug(f"Pool execution - No JSON found. Lines: {len(output_lines)}, Output: {output_text[:200]}")
-        
+        logger.debug(
+            f"Pool execution - No JSON found. Lines: {len(output_lines)}, Output: {output_text[:200]}"
+        )
+
         return {
             "error": True,
             "message": f"No JSON output found. Output: {output_text[:500]}",
             "code": "NO_JSON_OUTPUT",
-            "details": {"raw_output": output_text[:1000], "line_count": len(output_lines)}
+            "details": {
+                "raw_output": output_text[:1000],
+                "line_count": len(output_lines),
+            },
         }
-        
+
     except Exception as e:
         return {
             "error": True,
             "message": f"Execution error: {str(e)}",
-            "code": "EXECUTION_ERROR"
+            "code": "EXECUTION_ERROR",
         }
-

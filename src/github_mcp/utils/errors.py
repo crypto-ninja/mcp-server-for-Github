@@ -6,10 +6,10 @@ import httpx
 def _handle_api_error(e: Exception) -> str:
     """
     Consistent error formatting across all tools.
-    
+
     Args:
         e: The exception that occurred
-    
+
     Returns:
         User-friendly error message
     """
@@ -60,4 +60,3 @@ def _handle_api_error(e: Exception) -> str:
     elif isinstance(e, httpx.NetworkError):
         return "Error: Network error occurred. Please check your connection."
     return f"Error: Unexpected error occurred: {str(e)}"
-

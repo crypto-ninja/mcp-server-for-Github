@@ -19,44 +19,46 @@ USE_CONNECTION_POOL = os.environ.get("DENO_POOL_ENABLED", "true").lower() == "tr
 
 class DenoRuntime:
     """Manages Deno subprocess for executing TypeScript code."""
-    
+
     def __init__(self):
         # Get project root (assuming this file is in src/github_mcp/)
         project_root = Path(__file__).parent.parent.parent
         self.deno_executor_path = project_root / "deno_executor" / "mod.ts"
         self.servers_path = project_root / "servers"
         self.project_root = project_root
-        
+
     async def execute_code_async(self, code: str) -> Dict[str, Any]:
         """
         Execute TypeScript code in Deno runtime (async version with pooling support).
-        
+
         Args:
             code: TypeScript code to execute
-            
+
         Returns:
             Dict with 'error', 'message'/'data', and optional 'code' keys
         """
         if USE_CONNECTION_POOL:
             try:
                 from .utils.deno_pool import execute_with_pool
+
                 return await execute_with_pool(code)
             except ImportError:
                 # Fallback to non-pooled execution if pool not available
                 pass
-        
+
         # Fallback to synchronous execution (wrap in async)
         import asyncio
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.execute_code, code)
-        
+
     def execute_code(self, code: str) -> Dict[str, Any]:
         """
         Execute TypeScript code in Deno runtime.
-        
+
         Args:
             code: TypeScript code to execute
-            
+
         Returns:
             Dict with 'success', 'result', and optional 'error' keys
         """
@@ -69,25 +71,27 @@ class DenoRuntime:
                     "deno",
                     "run",
                     "--allow-read",  # Read MCP server files
-                    "--allow-run",   # Spawn MCP server process
-                    "--allow-env",   # Access environment variables
-                    "--allow-net",   # Network access for GitHub API
-                    str(self.deno_executor_path)
+                    "--allow-run",  # Spawn MCP server process
+                    "--allow-env",  # Access environment variables
+                    "--allow-net",  # Network access for GitHub API
+                    str(self.deno_executor_path),
                 ],
                 input=code,  # Pass code via stdin instead of command-line args
                 capture_output=True,
                 text=True,
-                encoding='utf-8',
-                errors='replace',  # Replace invalid characters instead of failing
+                encoding="utf-8",
+                errors="replace",  # Replace invalid characters instead of failing
                 timeout=60,  # 60 second timeout
                 cwd=str(self.project_root),  # Run from project root
                 env={
                     **os.environ,  # Pass through all environment variables (includes GitHub auth)
                     # Ensure workspace root is set
-                    "MCP_WORKSPACE_ROOT": os.environ.get("MCP_WORKSPACE_ROOT", str(self.project_root)),
-                }
+                    "MCP_WORKSPACE_ROOT": os.environ.get(
+                        "MCP_WORKSPACE_ROOT", str(self.project_root)
+                    ),
+                },
             )
-            
+
             # Parse JSON output
             if result.returncode == 0:
                 try:
@@ -97,21 +101,21 @@ class DenoRuntime:
                         return {
                             "error": True,
                             "message": "No output from Deno execution",
-                            "code": "NO_OUTPUT"
+                            "code": "NO_OUTPUT",
                         }
-                    
-                    output_lines = stdout_text.split('\n')
+
+                    output_lines = stdout_text.split("\n")
                     # Find the last line that looks like JSON (the result)
                     json_output = None
                     for line in reversed(output_lines):
                         line = line.strip()
-                        if line and (line.startswith('{') or line.startswith('[')):
+                        if line and (line.startswith("{") or line.startswith("[")):
                             try:
                                 json_output = json.loads(line)
                                 break
                             except json.JSONDecodeError:
                                 continue
-                    
+
                     if json_output:
                         # Return new format as-is: {error: true/false, message/data: ...}
                         return json_output
@@ -121,7 +125,7 @@ class DenoRuntime:
                             "error": True,
                             "message": f"No JSON output found. stdout: {stdout_text[:500]}",
                             "code": "NO_JSON_OUTPUT",
-                            "details": {"raw_stdout": stdout_text[:1000]}
+                            "details": {"raw_stdout": stdout_text[:1000]},
                         }
                 except Exception as e:
                     return {
@@ -130,8 +134,8 @@ class DenoRuntime:
                         "code": "PARSE_ERROR",
                         "details": {
                             "stdout": result.stdout[:500] if result.stdout else None,
-                            "stderr": result.stderr[:500] if result.stderr else None
-                        }
+                            "stderr": result.stderr[:500] if result.stderr else None,
+                        },
                     }
             else:
                 # Non-zero exit code - try to parse error from stderr
@@ -142,27 +146,27 @@ class DenoRuntime:
                     "code": "EXECUTION_FAILED",
                     "details": {
                         "stderr": result.stderr[:500] if result.stderr else None,
-                        "stdout": result.stdout[:500] if result.stdout else None
-                    }
+                        "stdout": result.stdout[:500] if result.stdout else None,
+                    },
                 }
-                
+
         except subprocess.TimeoutExpired:
             return {
                 "error": True,
                 "message": "Code execution timed out (60s limit)",
-                "code": "TIMEOUT"
+                "code": "TIMEOUT",
             }
         except FileNotFoundError:
             return {
                 "error": True,
                 "message": "Deno not found. Please install Deno: https://deno.land",
-                "code": "DENO_NOT_FOUND"
+                "code": "DENO_NOT_FOUND",
             }
         except Exception as e:
             return {
                 "error": True,
                 "message": f"Execution error: {str(e)}",
-                "code": "EXECUTION_ERROR"
+                "code": "EXECUTION_ERROR",
             }
 
     async def execute(self, code: str) -> Dict[str, Any]:
@@ -180,4 +184,3 @@ def get_runtime() -> DenoRuntime:
     if _runtime is None:
         _runtime = DenoRuntime()
     return _runtime
-

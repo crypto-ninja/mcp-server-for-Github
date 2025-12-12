@@ -21,25 +21,25 @@ from ..utils.formatting import _format_timestamp, _truncate_response
 async def github_get_repo_info(params: RepoInfoInput) -> str:
     """
     Retrieve detailed information about a GitHub repository.
-    
+
     This tool fetches comprehensive metadata about a repository including description,
     statistics, languages, and ownership information. It does NOT modify the repository.
-    
+
     Args:
         params (RepoInfoInput): Validated input parameters containing:
             - owner (str): Repository owner username or organization
             - repo (str): Repository name
             - token (Optional[str]): GitHub token for authenticated requests
             - response_format (ResponseFormat): Output format preference
-    
+
     Returns:
         str: Repository information in requested format (JSON or Markdown)
-    
+
     Examples:
         - Use when: "Tell me about the tensorflow repository"
         - Use when: "What's the license for facebook/react?"
         - Use when: "Get details on microsoft/vscode"
-    
+
     Error Handling:
         - Returns error if repository doesn't exist (404)
         - Returns error if authentication required but not provided (403)
@@ -47,48 +47,47 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
     """
     try:
         data: Dict[str, Any] = await _make_github_request(
-            f"repos/{params.owner}/{params.repo}",
-            token=params.token
+            f"repos/{params.owner}/{params.repo}", token=params.token
         )
-        
+
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result)
-        
-        # Markdown format
-        markdown = f"""# {data['full_name']}
 
-**Description:** {data['description'] or 'No description provided'}
+        # Markdown format
+        markdown = f"""# {data["full_name"]}
+
+**Description:** {data["description"] or "No description provided"}
 
 ## Statistics
-- ⭐ Stars: {data['stargazers_count']:,}
-- 🍴 Forks: {data['forks_count']:,}
-- 👁️ Watchers: {data['watchers_count']:,}
-- 🐛 Open Issues: {data['open_issues_count']:,}
+- ⭐ Stars: {data["stargazers_count"]:,}
+- 🍴 Forks: {data["forks_count"]:,}
+- 👁️ Watchers: {data["watchers_count"]:,}
+- 🐛 Open Issues: {data["open_issues_count"]:,}
 
 ## Details
-- **Owner:** {data['owner']['login']} ({data['owner']['type']})
-- **Created:** {_format_timestamp(data['created_at'])}
-- **Last Updated:** {_format_timestamp(data['updated_at'])}
-- **Default Branch:** {data['default_branch']}
-- **Language:** {data['language'] or 'Not specified'}
-- **License:** {data['license']['name'] if data.get('license') else 'No license'}
-- **Topics:** {', '.join(data.get('topics', [])) or 'None'}
+- **Owner:** {data["owner"]["login"]} ({data["owner"]["type"]})
+- **Created:** {_format_timestamp(data["created_at"])}
+- **Last Updated:** {_format_timestamp(data["updated_at"])}
+- **Default Branch:** {data["default_branch"]}
+- **Language:** {data["language"] or "Not specified"}
+- **License:** {data["license"]["name"] if data.get("license") else "No license"}
+- **Topics:** {", ".join(data.get("topics", [])) or "None"}
 
 ## URLs
-- **Homepage:** {data['homepage'] or 'None'}
-- **Clone URL:** {data['clone_url']}
-- **Repository:** {data['html_url']}
+- **Homepage:** {data["homepage"] or "None"}
+- **Clone URL:** {data["clone_url"]}
+- **Repository:** {data["html_url"]}
 
 ## Status
-- Archived: {'Yes' if data['archived'] else 'No'}
-- Disabled: {'Yes' if data['disabled'] else 'No'}
-- Private: {'Yes' if data['private'] else 'No'}
-- Fork: {'Yes' if data['fork'] else 'No'}
+- Archived: {"Yes" if data["archived"] else "No"}
+- Disabled: {"Yes" if data["disabled"] else "No"}
+- Private: {"Yes" if data["private"] else "No"}
+- Fork: {"Yes" if data["fork"] else "No"}
 """
-        
+
         return _truncate_response(markdown)
-        
+
     except Exception as e:
         return _handle_api_error(e)
 
@@ -98,15 +97,18 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
     Create a new repository for the authenticated user or in an organization.
     """
     auth_token = await _get_auth_token_fallback(params.token)
-    
+
     # Ensure we have a valid token before proceeding
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for creating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for creating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         body = {
             "name": params.name,
@@ -124,17 +126,15 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
         else:
             endpoint = "user/repos"
 
-        data = await _make_github_request(endpoint, method="POST", token=auth_token, json=body)
+        data = await _make_github_request(
+            endpoint, method="POST", token=auth_token, json=body
+        )
         # Return the FULL GitHub API response as JSON
         return json.dumps(data, indent=2)
     except Exception as e:
         # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
+        error_info = {"success": False, "error": str(e), "type": type(e).__name__}
+
         # Extract detailed error info from HTTPStatusError
         if isinstance(e, httpx.HTTPStatusError):
             error_info["status_code"] = e.response.status_code
@@ -143,10 +143,12 @@ async def github_create_repository(params: CreateRepositoryInput) -> str:
                 error_info["message"] = error_body.get("message", "Unknown error")
                 error_info["errors"] = error_body.get("errors", [])
             except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+                error_info["message"] = (
+                    e.response.text[:200] if e.response.text else "Unknown error"
+                )
         else:
             error_info["message"] = str(e)
-        
+
         return json.dumps(error_info, indent=2)
 
 
@@ -155,32 +157,46 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
     Update repository settings such as description, visibility, and features.
     """
     auth_token = await _get_auth_token_fallback(params.token)
-    
+
     # Ensure we have a valid token before proceeding
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for updating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for updating repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         body: Dict[str, Any] = {}
-        for field in ["name", "description", "homepage", "private", "has_issues", "has_projects", "has_wiki", "default_branch", "archived"]:
+        for field in [
+            "name",
+            "description",
+            "homepage",
+            "private",
+            "has_issues",
+            "has_projects",
+            "has_wiki",
+            "default_branch",
+            "archived",
+        ]:
             value = getattr(params, field)
             if value is not None:
                 body[field] = value
-        data = await _make_github_request(f"repos/{params.owner}/{params.repo}", method="PATCH", token=auth_token, json=body)
+        data = await _make_github_request(
+            f"repos/{params.owner}/{params.repo}",
+            method="PATCH",
+            token=auth_token,
+            json=body,
+        )
         # Return the FULL GitHub API response as JSON
         return json.dumps(data, indent=2)
     except Exception as e:
         # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
+        error_info = {"success": False, "error": str(e), "type": type(e).__name__}
+
         # Extract detailed error info from HTTPStatusError
         if isinstance(e, httpx.HTTPStatusError):
             error_info["status_code"] = e.response.status_code
@@ -189,13 +205,13 @@ async def github_update_repository(params: UpdateRepositoryInput) -> str:
                 error_info["message"] = error_body.get("message", "Unknown error")
                 error_info["errors"] = error_body.get("errors", [])
             except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+                error_info["message"] = (
+                    e.response.text[:200] if e.response.text else "Unknown error"
+                )
         else:
             error_info["message"] = str(e)
-        
+
         return json.dumps(error_info, indent=2)
-
-
 
 
 async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
@@ -203,33 +219,32 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
     Archive or unarchive a repository by toggling the archived flag.
     """
     auth_token = await _get_auth_token_fallback(params.token)
-    
+
     # Ensure we have a valid token before proceeding
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for archiving repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for archiving repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         body = {"archived": params.archived}
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}",
             method="PATCH",
             token=auth_token,
-            json=body
+            json=body,
         )
         # Return the FULL GitHub API response as JSON
         return json.dumps(data, indent=2)
     except Exception as e:
         # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
+        error_info = {"success": False, "error": str(e), "type": type(e).__name__}
+
         # Extract detailed error info from HTTPStatusError
         if isinstance(e, httpx.HTTPStatusError):
             error_info["status_code"] = e.response.status_code
@@ -238,10 +253,12 @@ async def github_archive_repository(params: ArchiveRepositoryInput) -> str:
                 error_info["message"] = error_body.get("message", "Unknown error")
                 error_info["errors"] = error_body.get("errors", [])
             except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+                error_info["message"] = (
+                    e.response.text[:200] if e.response.text else "Unknown error"
+                )
         else:
             error_info["message"] = str(e)
-        
+
         return json.dumps(error_info, indent=2)
 
 
@@ -254,14 +271,17 @@ async def github_list_user_repos(params: ListUserReposInput) -> str:
     if params.username is None:
         auth_token = await _get_auth_token_fallback(params.token)
         if not auth_token:
-            return json.dumps({
-                "error": "Authentication required",
-                "message": "GitHub token required for listing your own repositories. Set GITHUB_TOKEN or pass a token, or provide a username to list public repos.",
-                "success": False
-            }, indent=2)
+            return json.dumps(
+                {
+                    "error": "Authentication required",
+                    "message": "GitHub token required for listing your own repositories. Set GITHUB_TOKEN or pass a token, or provide a username to list public repos.",
+                    "success": False,
+                },
+                indent=2,
+            )
     else:
         auth_token = params.token
-    
+
     try:
         query: Dict[str, Any] = {}
         if params.type:
@@ -274,17 +294,13 @@ async def github_list_user_repos(params: ListUserReposInput) -> str:
             query["per_page"] = params.per_page
         if params.page:
             query["page"] = params.page
-        
+
         if params.username:
             endpoint = f"users/{params.username}/repos"
         else:
             endpoint = "user/repos"
-        
-        data = await _make_github_request(
-            endpoint,
-            token=auth_token,
-            params=query
-        )
+
+        data = await _make_github_request(endpoint, token=auth_token, params=query)
         return json.dumps(data, indent=2)
     except Exception as e:
         return _handle_api_error(e)
@@ -306,15 +322,14 @@ async def github_list_org_repos(params: ListOrgReposInput) -> str:
             query["per_page"] = params.per_page
         if params.page:
             query["page"] = params.page
-        
+
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
-            f"orgs/{params.org}/repos",
-            token=params.token,
-            params=query
+            f"orgs/{params.org}/repos", token=params.token, params=query
         )
         # GitHub API returns a list for org repos endpoint
-        repos_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        repos_list: List[Dict[str, Any]] = (
+            cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        )
         return json.dumps(repos_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
-

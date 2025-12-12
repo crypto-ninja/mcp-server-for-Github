@@ -16,4 +16,3 @@ __all__ = [
     "_format_timestamp",
     "_truncate_response",
 ]
-

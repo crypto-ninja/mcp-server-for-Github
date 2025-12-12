@@ -12,6 +12,7 @@ from unittest.mock import patch, MagicMock
 # Import the MCP server
 import sys
 from pathlib import Path
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -24,17 +25,19 @@ from src.github_mcp.models import RepoInfoInput, ListIssuesInput, SearchCodeInpu
 from src.github_mcp.models import ResponseFormat  # noqa: E402
 
 
-def create_mock_response(status_code: int, text: str = "", json_data: dict = None, headers: dict = None):
+def create_mock_response(
+    status_code: int, text: str = "", json_data: dict = None, headers: dict = None
+):
     """
     Create a properly mockable httpx response object that returns serializable values.
-    
+
     This prevents MagicMock serialization errors when error responses are converted to JSON.
     """
     mock_response = MagicMock()
     mock_response.status_code = status_code
     mock_response.text = text
     mock_response.headers = headers or {}
-    
+
     # Make json() return actual dict, not MagicMock
     if json_data is not None:
         mock_response.json.return_value = json_data
@@ -42,9 +45,9 @@ def create_mock_response(status_code: int, text: str = "", json_data: dict = Non
         # Default error response structure
         mock_response.json.return_value = {
             "message": text or f"Error {status_code}",
-            "errors": []
+            "errors": [],
         }
-    
+
     return mock_response
 
 
@@ -60,23 +63,19 @@ class TestResponseFormatting:
     """Test different response formats."""
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._make_github_request')
+    @patch("src.github_mcp.tools.repositories._make_github_request")
     async def test_json_response_formatting(self, mock_request):
         """Test JSON response formatting."""
         data = {
             "name": "test-repo",
             "key": "value",
             "number": 123,
-            "nested": {
-                "inner": "data"
-            }
+            "nested": {"inner": "data"},
         }
         mock_request.return_value = data
 
         params = RepoInfoInput(
-            owner="test",
-            repo="test-repo",
-            response_format=ResponseFormat.JSON
+            owner="test", repo="test-repo", response_format=ResponseFormat.JSON
         )
         result = await github_get_repo_info(params)
 
@@ -89,7 +88,7 @@ class TestResponseFormatting:
         assert parsed["nested"]["inner"] == "data"
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._make_github_request')
+    @patch("src.github_mcp.tools.repositories._make_github_request")
     async def test_markdown_response_formatting(self, mock_request):
         """Test Markdown response formatting."""
         data = {
@@ -109,33 +108,33 @@ class TestResponseFormatting:
             "homepage": None,
             "clone_url": "https://github.com/test/test-repo.git",
             "html_url": "https://github.com/test/test-repo",
-            "owner": {
-                "login": "test",
-                "type": "User"
-            }
+            "owner": {"login": "test", "type": "User"},
         }
         mock_request.return_value = data
 
         params = RepoInfoInput(
-            owner="test",
-            repo="test-repo",
-            response_format=ResponseFormat.MARKDOWN
+            owner="test", repo="test-repo", response_format=ResponseFormat.MARKDOWN
         )
         result = await github_get_repo_info(params)
 
         # Should contain markdown elements or at least the data
         assert isinstance(result, str)
         # If there's an error due to missing fields, that's okay - we're testing the function works
-        assert "test-repo" in result or "100" in result or "50" in result or "Error" in result
+        assert (
+            "test-repo" in result
+            or "100" in result
+            or "50" in result
+            or "Error" in result
+        )
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.issues._make_github_request')
+    @patch("src.github_mcp.tools.issues._make_github_request")
     async def test_json_list_response_formatting(self, mock_request):
         """Test JSON formatting for list responses."""
         data = [
             {"number": 1, "title": "Issue 1"},
             {"number": 2, "title": "Issue 2"},
-            {"number": 3, "title": "Issue 3"}
+            {"number": 3, "title": "Issue 3"},
         ]
         mock_request.return_value = data
 
@@ -143,7 +142,7 @@ class TestResponseFormatting:
             owner="test",
             repo="test-repo",
             state="open",
-            response_format=ResponseFormat.JSON
+            response_format=ResponseFormat.JSON,
         )
         result = await github_list_issues(params)
 
@@ -155,7 +154,7 @@ class TestResponseFormatting:
         assert parsed[0]["number"] == 1
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.issues._make_github_request')
+    @patch("src.github_mcp.tools.issues._make_github_request")
     async def test_markdown_list_response_formatting(self, mock_request):
         """Test Markdown formatting for list responses."""
         data = [
@@ -169,7 +168,7 @@ class TestResponseFormatting:
                 "html_url": "https://github.com/test/test-repo/issues/1",
                 "comments": 0,
                 "labels": [],
-                "assignees": []
+                "assignees": [],
             },
             {
                 "number": 2,
@@ -181,8 +180,8 @@ class TestResponseFormatting:
                 "html_url": "https://github.com/test/test-repo/issues/2",
                 "comments": 0,
                 "labels": [],
-                "assignees": []
-            }
+                "assignees": [],
+            },
         ]
         mock_request.return_value = data
 
@@ -190,7 +189,7 @@ class TestResponseFormatting:
             owner="test",
             repo="test-repo",
             state="all",
-            response_format=ResponseFormat.MARKDOWN
+            response_format=ResponseFormat.MARKDOWN,
         )
         result = await github_list_issues(params)
 
@@ -200,7 +199,7 @@ class TestResponseFormatting:
         assert "Issue 1" in result or "Issue 2" in result or "1" in result
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._make_github_request')
+    @patch("src.github_mcp.tools.repositories._make_github_request")
     async def test_default_markdown_format(self, mock_request):
         """Test that default format is Markdown."""
         data = {
@@ -220,18 +219,12 @@ class TestResponseFormatting:
             "homepage": None,
             "clone_url": "https://github.com/test/test-repo.git",
             "html_url": "https://github.com/test/test-repo",
-            "owner": {
-                "login": "test",
-                "type": "User"
-            }
+            "owner": {"login": "test", "type": "User"},
         }
         mock_request.return_value = data
 
         # Don't specify response_format - should default to Markdown
-        params = RepoInfoInput(
-            owner="test",
-            repo="test-repo"
-        )
+        params = RepoInfoInput(owner="test", repo="test-repo")
         result = await github_get_repo_info(params)
 
         # Should be markdown (string, not JSON)
@@ -247,7 +240,7 @@ class TestResponseFormatting:
             assert "test-repo" in result or "Test" in result or "Error" in result
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.search._make_github_request')
+    @patch("src.github_mcp.tools.search._make_github_request")
     async def test_search_results_json_format(self, mock_request):
         """Test search results in JSON format."""
         data = {
@@ -256,21 +249,18 @@ class TestResponseFormatting:
                 {
                     "name": "file1.py",
                     "path": "src/file1.py",
-                    "repository": {"full_name": "test/repo"}
+                    "repository": {"full_name": "test/repo"},
                 },
                 {
                     "name": "file2.py",
                     "path": "src/file2.py",
-                    "repository": {"full_name": "test/repo"}
-                }
-            ]
+                    "repository": {"full_name": "test/repo"},
+                },
+            ],
         }
         mock_request.return_value = data
 
-        params = SearchCodeInput(
-            query="test",
-            response_format=ResponseFormat.JSON
-        )
+        params = SearchCodeInput(query="test", response_format=ResponseFormat.JSON)
         result = await github_search_code(params)
 
         # Should be valid JSON
@@ -287,51 +277,54 @@ class TestErrorResponseFormatting:
     """Test error response formatting."""
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._make_github_request')
+    @patch("src.github_mcp.tools.repositories._make_github_request")
     async def test_error_response_json_format(self, mock_request):
         """Test error response in JSON format."""
         # Mock error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not Found",
             request=create_mock_request(),
-            response=create_mock_response(404, "Not Found")
+            response=create_mock_response(404, "Not Found"),
         )
 
         params = RepoInfoInput(
-            owner="test",
-            repo="nonexistent",
-            response_format=ResponseFormat.JSON
+            owner="test", repo="nonexistent", response_format=ResponseFormat.JSON
         )
         result = await github_get_repo_info(params)
 
         # Error should be formatted
         assert isinstance(result, str)
         # Should contain error information
-        assert "error" in result.lower() or "not found" in result.lower() or "404" in result
+        assert (
+            "error" in result.lower()
+            or "not found" in result.lower()
+            or "404" in result
+        )
 
     @pytest.mark.asyncio
-    @patch('src.github_mcp.tools.repositories._make_github_request')
+    @patch("src.github_mcp.tools.repositories._make_github_request")
     async def test_error_response_markdown_format(self, mock_request):
         """Test error response in Markdown format."""
         # Mock error
         mock_request.side_effect = httpx.HTTPStatusError(
             "Permission denied",
             request=create_mock_request(),
-            response=create_mock_response(403, "Permission denied")
+            response=create_mock_response(403, "Permission denied"),
         )
 
         params = RepoInfoInput(
-            owner="test",
-            repo="test-repo",
-            response_format=ResponseFormat.MARKDOWN
+            owner="test", repo="test-repo", response_format=ResponseFormat.MARKDOWN
         )
         result = await github_get_repo_info(params)
 
         # Error should be formatted as markdown
         assert isinstance(result, str)
-        assert "error" in result.lower() or "permission" in result.lower() or "403" in result
+        assert (
+            "error" in result.lower()
+            or "permission" in result.lower()
+            or "403" in result
+        )
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -5,12 +5,14 @@ from enum import Enum
 
 class ResponseFormat(str, Enum):
     """Output format for tool responses."""
+
     MARKDOWN = "markdown"
     JSON = "json"
 
 
 class IssueState(str, Enum):
     """GitHub issue state."""
+
     OPEN = "open"
     CLOSED = "closed"
     ALL = "all"
@@ -18,6 +20,7 @@ class IssueState(str, Enum):
 
 class PullRequestState(str, Enum):
     """GitHub pull request state."""
+
     OPEN = "open"
     CLOSED = "closed"
     ALL = "all"
@@ -25,12 +28,14 @@ class PullRequestState(str, Enum):
 
 class SortOrder(str, Enum):
     """Sort order for results."""
+
     ASC = "asc"
     DESC = "desc"
 
 
 class WorkflowRunStatus(str, Enum):
     """GitHub workflow run status."""
+
     QUEUED = "queued"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -41,6 +46,7 @@ class WorkflowRunStatus(str, Enum):
 
 class WorkflowRunConclusion(str, Enum):
     """GitHub workflow run conclusion."""
+
     SUCCESS = "success"
     FAILURE = "failure"
     NEUTRAL = "neutral"
@@ -52,6 +58,7 @@ class WorkflowRunConclusion(str, Enum):
 
 class PRMergeMethod(str, Enum):
     """GitHub pull request merge method."""
+
     MERGE = "merge"
     SQUASH = "squash"
     REBASE = "rebase"
@@ -59,9 +66,9 @@ class PRMergeMethod(str, Enum):
 
 class PRReviewState(str, Enum):
     """GitHub pull request review state."""
+
     APPROVED = "APPROVED"
     CHANGES_REQUESTED = "CHANGES_REQUESTED"
     COMMENTED = "COMMENTED"
     DISMISSED = "DISMISSED"
     PENDING = "PENDING"
-

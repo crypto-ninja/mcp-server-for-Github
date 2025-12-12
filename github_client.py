@@ -6,7 +6,9 @@ import httpx
 import os
 
 
-def _cache_key(method: str, url_path: str, params: Optional[Dict[str, Any]]) -> Tuple[str, str, str]:
+def _cache_key(
+    method: str, url_path: str, params: Optional[Dict[str, Any]]
+) -> Tuple[str, str, str]:
     """Build a stable cache key for conditional requests.
 
     Uses sorted params to avoid ordering differences; params are hashed to keep the key compact.
@@ -28,11 +30,17 @@ class GhClient:
 
     _instance: Optional["GhClient"] = None
 
-    def __init__(self, base_url: str = "https://api.github.com", timeout: float = 30.0) -> None:
-        self._client = httpx.AsyncClient(base_url=base_url, timeout=timeout, headers={
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        })
+    def __init__(
+        self, base_url: str = "https://api.github.com", timeout: float = 30.0
+    ) -> None:
+        self._client = httpx.AsyncClient(
+            base_url=base_url,
+            timeout=timeout,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        )
         # (method, path, paramsHash) -> etag / last-modified
         self._etags: Dict[Tuple[str, str, str], str] = {}
         self._last_modified: Dict[Tuple[str, str, str], str] = {}
@@ -94,7 +102,9 @@ class GhClient:
                         "remaining": resp.headers.get("X-RateLimit-Remaining"),
                         "reset": resp.headers.get("X-RateLimit-Reset"),
                     }
-                    print(f"[github-client] {method} {path} -> {resp.status_code} rate={rl}")
+                    print(
+                        f"[github-client] {method} {path} -> {resp.status_code} rate={rl}"
+                    )
 
                 # Store new ETag on successful responses
                 if resp.status_code == 200 and method.upper() == "GET":
@@ -136,5 +146,3 @@ class GhClient:
         if last_exc:
             raise last_exc
         raise RuntimeError("Retry budget exceeded for GitHub request")
-
-

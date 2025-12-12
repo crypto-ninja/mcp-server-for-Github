@@ -26,7 +26,7 @@ class GitHubAppAuth:
 
     def clear_token_cache(self) -> None:
         """Manually clear the cached installation token.
-        
+
         Call this after:
         - Updating GitHub App permissions
         - Re-installing the app
@@ -36,35 +36,39 @@ class GitHubAppAuth:
         self._expires_at = 0.0
 
     async def get_installation_token(
-        self, *, app_id: str, private_key_pem: str, installation_id: str, force_refresh: bool = False
+        self,
+        *,
+        app_id: str,
+        private_key_pem: str,
+        installation_id: str,
+        force_refresh: bool = False,
     ) -> str:
         """
         Get installation access token with 1-hour caching.
-        
+
         Args:
             app_id: GitHub App ID
             private_key_pem: Private key in PEM format (string)
             installation_id: Installation ID
             force_refresh: If True, clear cache and get fresh token
-            
+
         Returns:
             Installation access token
         """
         if force_refresh:
             self.clear_token_cache()
-            
+
         now = time.time()
         async with self._lock:
             # Refresh 60 seconds before expiry (tokens last ~1 hour)
             if self._token and now < self._expires_at - 60:
                 return self._token
-            
+
             # Generate JWT and request new installation token
             jwt_token = self._generate_jwt(app_id, private_key_pem)
-            
+
             async with httpx.AsyncClient(
-                timeout=30.0,
-                headers={"Accept": "application/vnd.github+json"}
+                timeout=30.0, headers={"Accept": "application/vnd.github+json"}
             ) as client:
                 response = await client.post(
                     f"https://api.github.com/app/installations/{installation_id}/access_tokens",
@@ -72,21 +76,21 @@ class GitHubAppAuth:
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 self._token = data["token"]
                 # GitHub tokens expire in 1 hour; cache for 55 minutes to be safe
                 self._expires_at = now + (55 * 60)
-                
+
                 return self._token
 
     def _generate_jwt(self, app_id: str, private_key_pem: str) -> str:
         """
         Generate JWT token for GitHub App authentication.
-        
+
         Args:
             app_id: GitHub App ID
             private_key_pem: Private key in PEM format
-            
+
         Returns:
             JWT token string
         """
@@ -94,23 +98,23 @@ class GitHubAppAuth:
         payload = {
             "iat": now - 60,  # Issued 60 seconds ago (clock skew tolerance)
             "exp": now + (9 * 60),  # Expires in 9 minutes (max 10 min allowed)
-            "iss": app_id
+            "iss": app_id,
         }
         return jwt.encode(payload, private_key_pem, algorithm="RS256")
 
     def get_auth_headers(self, token: str) -> dict:
         """
         Get authorization headers for GitHub API requests.
-        
+
         Args:
             token: Installation access token or PAT
-            
+
         Returns:
             Dictionary with Authorization header
         """
         return {
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json"
+            "Accept": "application/vnd.github+json",
         }
 
 
@@ -121,12 +125,12 @@ _app_auth = GitHubAppAuth()
 def load_private_key_from_file(key_path: str) -> Optional[str]:
     """
     Load private key from file path.
-    
+
     Supports both absolute and relative paths, with Windows path handling.
-    
+
     Args:
         key_path: Path to private key file (.pem)
-        
+
     Returns:
         Private key content as string, or None if file not found
     """
@@ -135,11 +139,11 @@ def load_private_key_from_file(key_path: str) -> Optional[str]:
         if not key_file.is_absolute():
             # Try relative to current working directory
             key_file = Path.cwd() / key_path
-        
+
         if not key_file.exists():
             return None
-            
-        with open(key_file, 'r', encoding='utf-8') as f:
+
+        with open(key_file, "r", encoding="utf-8") as f:
             return f.read()
     except Exception:
         return None
@@ -157,10 +161,10 @@ def _get_env_with_fallback(*names: str) -> Optional[str]:
 def _has_app_config() -> bool:
     """
     Check if GitHub App configuration is present in environment.
-    
+
     Accepts both the current names (GITHUB_APP_*) and legacy alternates
     (GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY, GITHUB_PRIVATE_KEY_PATH).
-    
+
     Returns:
         True if App ID, Installation ID, and at least one key source are configured
     """
@@ -169,10 +173,10 @@ def _has_app_config() -> bool:
         "GITHUB_APP_INSTALLATION_ID",
         "GITHUB_INSTALLATION_ID",
     )
-    
+
     if not app_id or not installation_id:
         return False
-    
+
     # Check if we have at least one key source configured
     has_key = bool(
         _get_env_with_fallback(
@@ -184,18 +188,18 @@ def _has_app_config() -> bool:
             "GITHUB_PRIVATE_KEY_PATH",
         )
     )
-    
+
     return has_key
 
 
 async def get_installation_token_from_env() -> Optional[str]:
     """
     Get installation token from environment variables.
-    
+
     Supports both:
     - GITHUB_APP_PRIVATE_KEY (key content as string)
     - GITHUB_APP_PRIVATE_KEY_PATH (path to key file)
-    
+
     Returns:
         Installation token if configured, None otherwise
     """
@@ -204,16 +208,16 @@ async def get_installation_token_from_env() -> Optional[str]:
         "GITHUB_APP_INSTALLATION_ID",
         "GITHUB_INSTALLATION_ID",
     )
-    
+
     if not app_id or not installation_id:
         return None
-    
+
     # Try private key from environment variable first
     private_key = _get_env_with_fallback(
         "GITHUB_APP_PRIVATE_KEY",
         "GITHUB_PRIVATE_KEY",
     )
-    
+
     # If not found, try loading from file path
     if not private_key:
         key_path = _get_env_with_fallback(
@@ -222,15 +226,13 @@ async def get_installation_token_from_env() -> Optional[str]:
         )
         if key_path:
             private_key = load_private_key_from_file(key_path)
-    
+
     if not private_key:
         return None
-    
+
     try:
         return await _app_auth.get_installation_token(
-            app_id=app_id,
-            private_key_pem=private_key,
-            installation_id=installation_id
+            app_id=app_id, private_key_pem=private_key, installation_id=installation_id
         )
     except Exception:
         # Graceful fallback - return None if App auth fails
@@ -240,12 +242,12 @@ async def get_installation_token_from_env() -> Optional[str]:
 async def verify_installation_access(token: str, owner: str, repo: str) -> tuple:
     """
     Verify if the installation token has access to a specific repository.
-    
+
     Args:
         token: Installation access token
         owner: Repository owner
         repo: Repository name
-        
+
     Returns:
         Tuple of (has_access, message)
     """
@@ -254,35 +256,44 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
             timeout=30.0,
             headers={
                 "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github+json"
-            }
+                "Accept": "application/vnd.github+json",
+            },
         ) as client:
             # Try to get installation info
             response = await client.get("https://api.github.com/app/installation")
             if response.status_code == 200:
                 installation = response.json()
                 account_type = installation.get("account", {}).get("type", "unknown")
-                
+
                 # Check repository access
                 repos_response = await client.get(
                     f"https://api.github.com/app/installations/{installation['id']}/repositories"
                 )
-                
+
                 if repos_response.status_code == 200:
                     repos_data = repos_response.json()
                     repos = repos_data.get("repositories", [])
                     repo_full_names = [r["full_name"] for r in repos]
                     target_repo = f"{owner}/{repo}"
-                    
+
                     if target_repo in repo_full_names:
-                        return True, f"✅ Repository {target_repo} is in installation access list"
+                        return (
+                            True,
+                            f"✅ Repository {target_repo} is in installation access list",
+                        )
                     else:
                         # Check if it's user-level installation
                         if account_type == "User" and len(repos) == 0:
-                            return True, f"⚠️ User-level installation - has access to ALL user repos (including {target_repo})"
+                            return (
+                                True,
+                                f"⚠️ User-level installation - has access to ALL user repos (including {target_repo})",
+                            )
                         else:
-                            return False, f"❌ Repository {target_repo} NOT in installation access list. Access: {repo_full_names[:5]}"
-                
+                            return (
+                                False,
+                                f"❌ Repository {target_repo} NOT in installation access list. Access: {repo_full_names[:5]}",
+                            )
+
             return True, "⚠️ Could not verify repository access (API call failed)"
     except Exception as e:
         return True, f"⚠️ Could not verify access: {str(e)}"
@@ -291,12 +302,12 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
 def clear_token_cache() -> None:
     """
     Clear the cached GitHub App installation token.
-    
+
     Call this after:
     - Updating GitHub App permissions
     - Re-installing the app
     - Any permission-related changes
-    
+
     This forces the next API call to get a fresh token with current permissions.
     """
     _app_auth.clear_token_cache()
@@ -305,82 +316,131 @@ def clear_token_cache() -> None:
 async def get_auth_token() -> Optional[str]:
     """
     Get authentication token with automatic fallback.
-    
+
     Tries GitHub App first (when configured), then falls back to PAT.
     Respects GITHUB_AUTH_MODE environment variable for explicit control.
-    
+
     Priority:
     1. Explicit GITHUB_AUTH_MODE=app (if App is configured)
     2. GitHub App (if configured)
     3. PAT (GITHUB_TOKEN)
-    
+
     Returns:
         Token string if available, None otherwise
     """
     import sys
-    
+
     # Diagnostic logging (only if DEBUG_AUTH is enabled)
     DEBUG_AUTH = os.getenv("GITHUB_MCP_DEBUG_AUTH", "false").lower() == "true"
-    
+
     if DEBUG_AUTH:
         print("🔍 AUTH DIAGNOSTIC:", file=sys.stderr)
-        print(f"  GITHUB_TOKEN present: {bool(os.getenv('GITHUB_TOKEN'))}", file=sys.stderr)
-        print(f"  GITHUB_APP_ID present: {bool(os.getenv('GITHUB_APP_ID'))}", file=sys.stderr)
-        print(f"  GITHUB_APP_INSTALLATION_ID present: {bool(os.getenv('GITHUB_APP_INSTALLATION_ID'))}", file=sys.stderr)
-        print(f"  GITHUB_APP_PRIVATE_KEY_PATH present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY_PATH'))}", file=sys.stderr)
-        print(f"  GITHUB_APP_PRIVATE_KEY present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY'))}", file=sys.stderr)
-        print(f"  GITHUB_AUTH_MODE: {os.getenv('GITHUB_AUTH_MODE', 'not set')}", file=sys.stderr)
-    
+        print(
+            f"  GITHUB_TOKEN present: {bool(os.getenv('GITHUB_TOKEN'))}",
+            file=sys.stderr,
+        )
+        print(
+            f"  GITHUB_APP_ID present: {bool(os.getenv('GITHUB_APP_ID'))}",
+            file=sys.stderr,
+        )
+        print(
+            f"  GITHUB_APP_INSTALLATION_ID present: {bool(os.getenv('GITHUB_APP_INSTALLATION_ID'))}",
+            file=sys.stderr,
+        )
+        print(
+            f"  GITHUB_APP_PRIVATE_KEY_PATH present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY_PATH'))}",
+            file=sys.stderr,
+        )
+        print(
+            f"  GITHUB_APP_PRIVATE_KEY present: {bool(os.getenv('GITHUB_APP_PRIVATE_KEY'))}",
+            file=sys.stderr,
+        )
+        print(
+            f"  GITHUB_AUTH_MODE: {os.getenv('GITHUB_AUTH_MODE', 'not set')}",
+            file=sys.stderr,
+        )
+
     # Check for explicit auth mode preference
     auth_mode = os.getenv("GITHUB_AUTH_MODE", "").lower()
-    
+
     # If explicitly requesting PAT mode, skip App and use PAT
     if auth_mode == "pat":
         pat_token = os.getenv("GITHUB_TOKEN")
         if DEBUG_AUTH:
             if pat_token:
-                print(f"  ✅ Using PAT token (GITHUB_AUTH_MODE=pat, prefix: {pat_token[:10]}...)", file=sys.stderr)
+                print(
+                    f"  ✅ Using PAT token (GITHUB_AUTH_MODE=pat, prefix: {pat_token[:10]}...)",
+                    file=sys.stderr,
+                )
             else:
-                print("  ❌ GITHUB_AUTH_MODE=pat but no PAT configured", file=sys.stderr)
+                print(
+                    "  ❌ GITHUB_AUTH_MODE=pat but no PAT configured", file=sys.stderr
+                )
         return pat_token
-    
+
     # If explicitly requesting App mode and App is configured, prioritize App
     if auth_mode == "app" and _has_app_config():
         try:
             app_token = await get_installation_token_from_env()
             if app_token:
                 if DEBUG_AUTH:
-                    token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
-                    print(f"  ✅ Using GitHub App token (GITHUB_AUTH_MODE=app, prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+                    token_type = (
+                        "App Installation Token"
+                        if app_token.startswith("ghs_")
+                        else "Unknown Token Type"
+                    )
+                    print(
+                        f"  ✅ Using GitHub App token (GITHUB_AUTH_MODE=app, prefix: {app_token[:10]}..., type: {token_type})",
+                        file=sys.stderr,
+                    )
                 return app_token
             # If App mode is explicitly requested but fails, fall back to PAT as safety net
             if DEBUG_AUTH:
-                print("  ⚠️ GITHUB_AUTH_MODE=app but App token retrieval failed, falling back to PAT", file=sys.stderr)
+                print(
+                    "  ⚠️ GITHUB_AUTH_MODE=app but App token retrieval failed, falling back to PAT",
+                    file=sys.stderr,
+                )
             # Fall through to PAT fallback below
         except Exception as e:
             # Even in app mode, if there's an exception, fall back to PAT as safety net
             if DEBUG_AUTH:
-                print(f"  ⚠️ GITHUB_AUTH_MODE=app but App exception: {type(e).__name__}: {e}, falling back to PAT", file=sys.stderr)
+                print(
+                    f"  ⚠️ GITHUB_AUTH_MODE=app but App exception: {type(e).__name__}: {e}, falling back to PAT",
+                    file=sys.stderr,
+                )
             # Fall through to PAT fallback below
-    
+
     # Default behavior: Try GitHub App first if configured
     if _has_app_config():
         try:
             app_token = await get_installation_token_from_env()
             if app_token:
                 if DEBUG_AUTH:
-                    token_type = "App Installation Token" if app_token.startswith("ghs_") else "Unknown Token Type"
-                    print(f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})", file=sys.stderr)
+                    token_type = (
+                        "App Installation Token"
+                        if app_token.startswith("ghs_")
+                        else "Unknown Token Type"
+                    )
+                    print(
+                        f"  ✅ Using GitHub App token (prefix: {app_token[:10]}..., type: {token_type})",
+                        file=sys.stderr,
+                    )
                 return app_token
             # If App is configured but returns None, fall back to PAT
             if DEBUG_AUTH:
-                print("  ⚠️ App configured but token retrieval returned None, falling back to PAT", file=sys.stderr)
+                print(
+                    "  ⚠️ App configured but token retrieval returned None, falling back to PAT",
+                    file=sys.stderr,
+                )
         except Exception as e:
             # CRITICAL: Don't let any exception break the fallback chain
             if DEBUG_AUTH:
-                print(f"  ⚠️ GitHub App exception: {type(e).__name__}: {e}, falling back to PAT", file=sys.stderr)
+                print(
+                    f"  ⚠️ GitHub App exception: {type(e).__name__}: {e}, falling back to PAT",
+                    file=sys.stderr,
+                )
             # Continue to PAT fallback
-    
+
     # Fall back to PAT
     pat_token = os.getenv("GITHUB_TOKEN")
     if DEBUG_AUTH:

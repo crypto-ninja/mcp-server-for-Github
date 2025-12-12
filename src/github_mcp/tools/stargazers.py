@@ -22,14 +22,16 @@ async def github_list_stargazers(params: ListStargazersInput) -> str:
             query["per_page"] = params.per_page
         if params.page:
             query["page"] = params.page
-        
+
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/stargazers",
             token=params.token,
-            params=query
+            params=query,
         )
         # GitHub API returns a list for stargazers endpoint
-        stargazers_list: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        stargazers_list: List[Dict[str, Any]] = (
+            cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
+        )
         return json.dumps(stargazers_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
@@ -41,23 +43,27 @@ async def github_star_repository(params: StarRepositoryInput) -> str:
     """
     auth_token = await _get_auth_token_fallback(params.token)
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for starring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for starring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         # PUT returns 204 No Content on success
         await _make_github_request(
-            f"user/starred/{params.owner}/{params.repo}",
-            method="PUT",
-            token=auth_token
+            f"user/starred/{params.owner}/{params.repo}", method="PUT", token=auth_token
         )
-        return json.dumps({
-            "success": True,
-            "message": f"Repository {params.owner}/{params.repo} has been starred."
-        }, indent=2)
+        return json.dumps(
+            {
+                "success": True,
+                "message": f"Repository {params.owner}/{params.repo} has been starred.",
+            },
+            indent=2,
+        )
     except Exception as e:
         return _handle_api_error(e)
 
@@ -68,22 +74,27 @@ async def github_unstar_repository(params: UnstarRepositoryInput) -> str:
     """
     auth_token = await _get_auth_token_fallback(params.token)
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for unstarring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for unstarring repositories. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         await _make_github_request(
             f"user/starred/{params.owner}/{params.repo}",
             method="DELETE",
-            token=auth_token
+            token=auth_token,
         )
-        return json.dumps({
-            "success": True,
-            "message": f"Repository {params.owner}/{params.repo} has been unstarred."
-        }, indent=2)
+        return json.dumps(
+            {
+                "success": True,
+                "message": f"Repository {params.owner}/{params.repo} has been unstarred.",
+            },
+            indent=2,
+        )
     except Exception as e:
         return _handle_api_error(e)
-

@@ -32,9 +32,21 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="GitHub MCP Server")
-    parser.add_argument("--auth", choices=["pat", "app"], default=None, help="Authentication mode: pat (default) or app")
-    parser.add_argument("--transport", choices=["stdio", "http", "sse"], default=None, help="Transport type")
-    parser.add_argument("--port", type=int, default=None, help="Port for HTTP/SSE transport")
+    parser.add_argument(
+        "--auth",
+        choices=["pat", "app"],
+        default=None,
+        help="Authentication mode: pat (default) or app",
+    )
+    parser.add_argument(
+        "--transport",
+        choices=["stdio", "http", "sse"],
+        default=None,
+        help="Transport type",
+    )
+    parser.add_argument(
+        "--port", type=int, default=None, help="Port for HTTP/SSE transport"
+    )
     args, unknown = parser.parse_known_args()
 
     if args.auth:

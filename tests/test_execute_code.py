@@ -1,6 +1,7 @@
 """
 Test the execute_code tool through MCP
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -19,23 +20,31 @@ from src.github_mcp.server import execute_code  # noqa: E402
 def _fix_windows_encoding():
     """Fix Windows console encoding for Unicode output (only when printing)."""
     import os
-    
+
     # Skip if running under pytest (pytest handles encoding)
-    if 'pytest' in sys.modules or hasattr(sys.stdout, '_pytest') or os.environ.get('PYTEST_CURRENT_TEST'):
+    if (
+        "pytest" in sys.modules
+        or hasattr(sys.stdout, "_pytest")
+        or os.environ.get("PYTEST_CURRENT_TEST")
+    ):
         return
-    
-    if sys.platform == 'win32':
+
+    if sys.platform == "win32":
         # Only reconfigure if not already UTF-8 and not in pytest capture
         try:
             # Check if stdout has buffer and encoding attributes before accessing
-            if (hasattr(sys.stdout, 'buffer') and 
-                hasattr(sys.stdout, 'encoding') and 
-                getattr(sys.stdout, 'encoding', None) != 'utf-8'):
-                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            if (hasattr(sys.stderr, 'buffer') and 
-                hasattr(sys.stderr, 'encoding') and 
-                getattr(sys.stderr, 'encoding', None) != 'utf-8'):
-                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            if (
+                hasattr(sys.stdout, "buffer")
+                and hasattr(sys.stdout, "encoding")
+                and getattr(sys.stdout, "encoding", None) != "utf-8"
+            ):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if (
+                hasattr(sys.stderr, "buffer")
+                and hasattr(sys.stderr, "encoding")
+                and getattr(sys.stderr, "encoding", None) != "utf-8"
+            ):
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError, OSError):
             # Python < 3.7, already wrapped, or pytest capture - skip silently
             pass
@@ -49,7 +58,7 @@ async def test_simple_code():
     const timestamp = Date.now();
     return { message, timestamp };
     """
-    
+
     result = await execute_code(code)
     print("Test 1: Simple code execution")
     print(result)
@@ -71,7 +80,7 @@ async def test_tool_call():
         success: true
     };
     """
-    
+
     result = await execute_code(code)
     print("Test 2: Tool call from code")
     print(result)
@@ -102,7 +111,7 @@ async def test_multiple_tools():
         issueCount: issues.includes("Found") ? "yes" : "unknown"
     };
     """
-    
+
     result = await execute_code(code)
     print("Test 3: Multiple tool calls")
     print(result)
@@ -115,7 +124,7 @@ async def test_error_handling():
     code = """
     throw new Error("Test error from user code");
     """
-    
+
     result = await execute_code(code)
     print("Test 4: Error handling")
     print(result)
@@ -150,7 +159,7 @@ async def test_complex_workflow():
         };
     }
     """
-    
+
     result = await execute_code(code)
     print("Test 5: Complex workflow with logic")
     print(result)
@@ -161,17 +170,16 @@ async def main():
     print("Testing execute_code tool")
     print("=" * 60)
     print()
-    
+
     await test_simple_code()
     await test_tool_call()
     await test_multiple_tools()
     await test_error_handling()
     await test_complex_workflow()
-    
+
     print("=" * 60)
     print("All tests completed!")
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-

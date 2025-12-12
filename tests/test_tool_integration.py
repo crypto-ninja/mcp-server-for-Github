@@ -13,6 +13,7 @@ import pytest
 # Import the MCP server
 import sys
 from pathlib import Path
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -22,29 +23,29 @@ from src.github_mcp.deno_runtime import get_runtime  # noqa: E402
 def _fix_windows_encoding():
     """Fix Windows console encoding for Unicode output."""
     import sys
-    
-    if sys.platform == 'win32':
+
+    if sys.platform == "win32":
         try:
-            if hasattr(sys.stdout, 'reconfigure'):
-                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            if hasattr(sys.stderr, 'reconfigure'):
-                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "reconfigure"):
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError, OSError):
             pass
 
 
 class TestToolChaining:
     """Test that tools can be chained together."""
-    
+
     @pytest.mark.asyncio
     async def test_search_then_read(self):
         """Test searching for files then reading them."""
         _fix_windows_encoding()
-        
+
         # This would require actual API calls or mocking
         # For now, verify the pattern exists
         runtime = get_runtime()
-        
+
         code = """
         // Search for a file
         const results = await callMCPTool("github_search_code", {
@@ -62,21 +63,21 @@ class TestToolChaining:
             resultType: typeof results
         };
         """
-        
+
         result = runtime.execute_code(code)
-        
+
         # Should execute (may have errors, but should have structured response)
         assert isinstance(result, dict), f"Result should be a dict, got {type(result)}"
-        assert 'error' in result, "Result should have 'error' field"
+        assert "error" in result, "Result should have 'error' field"
         # Accept both success and error responses (both are valid structured responses)
-    
+
     @pytest.mark.asyncio
     async def test_create_then_update_pattern(self):
         """Test creating resources then updating them."""
         # This would require actual API calls
         # For now, verify the pattern is possible
         runtime = get_runtime()
-        
+
         code = """
         // Verify we can call create and update tools
         const createTool = getToolInfo("github_create_issue");
@@ -89,23 +90,26 @@ class TestToolChaining:
             updateParams: Object.keys(updateTool?.parameters || {})
         };
         """
-        
+
         result = runtime.execute_code(code)
-        
+
         # Should execute without errors
-        assert result.get('error') is False or 'error' not in result or result.get('error') is None, \
-            f"Code execution failed: {result.get('message', 'Unknown error')}"
+        assert (
+            result.get("error") is False
+            or "error" not in result
+            or result.get("error") is None
+        ), f"Code execution failed: {result.get('message', 'Unknown error')}"
 
 
 class TestExecuteCodeIntegration:
     """Test tools called via execute_code work correctly."""
-    
+
     @pytest.mark.asyncio
     async def test_execute_code_tool_calls(self):
         """Test tools called via execute_code work correctly."""
         _fix_windows_encoding()
         runtime = get_runtime()
-        
+
         code = """const result = await callMCPTool("github_get_repo_info", {
     owner: "modelcontextprotocol",
     repo: "servers",
@@ -121,32 +125,38 @@ return {
     isObject: typeof parsed === 'object',
     keys: Object.keys(parsed || {})
 };"""
-        
+
         # execute_code returns a dict with 'error' (true/false) and 'data' or 'message'
         result = runtime.execute_code(code.strip())
-        
+
         # Should execute successfully (check if it's a dict with success key)
         if isinstance(result, dict):
             # Accept both success and error responses (both are valid structured responses)
             # The test is just checking that execute_code works, not that the API call succeeds
-            assert 'error' in result or 'data' in result or 'result' in result or 'code' in result, \
+            assert (
+                "error" in result
+                or "data" in result
+                or "result" in result
+                or "code" in result
+            ), (
                 f"execute_code should return dict with error/data/result/code, got keys: {list(result.keys())}"
+            )
         else:
             # If it's not a dict, it might be the result directly
             assert result is not None, "execute_code returned None"
-        
+
         # Result should be parseable if it's a dict
         if isinstance(result, dict):
-            result_data = result.get('data', result.get('result', result))
+            result_data = result.get("data", result.get("result", result))
             # Just verify it's a structured response
             assert result_data is not None, "Result data should not be None"
-    
+
     @pytest.mark.asyncio
     async def test_execute_code_error_handling(self):
         """Test error handling in execute_code."""
         _fix_windows_encoding()
         runtime = get_runtime()
-        
+
         code = """
         try {
             // Call with invalid parameters
@@ -162,19 +172,20 @@ return {
             };
         }
         """
-        
+
         result = runtime.execute_code(code)
-        
+
         # Should handle errors gracefully
-        assert result.get('error') is False or result.get('error') is True, \
+        assert result.get("error") is False or result.get("error") is True, (
             "Should handle errors without crashing"
-    
+        )
+
     @pytest.mark.asyncio
     async def test_execute_code_json_parsing(self):
         """Test that JSON responses are properly parsed."""
         _fix_windows_encoding()
         runtime = get_runtime()
-        
+
         code = """const result = await callMCPTool("github_list_issues", {
     owner: "modelcontextprotocol",
     repo: "servers",
@@ -195,12 +206,12 @@ return {
     isObject: typeof parsed === 'object' && parsed !== null,
     canParse: !parsed.parseError
 };"""
-        
+
         result = runtime.execute_code(code.strip())
-        
+
         # Should execute and return structured response (may be error or success)
         if isinstance(result, dict):
-            assert 'error' in result, "Result should have 'error' field"
+            assert "error" in result, "Result should have 'error' field"
             # Accept both error and success responses (both are valid)
         else:
             assert result is not None, "execute_code returned None"
@@ -208,13 +219,13 @@ return {
 
 class TestDataFlow:
     """Test data flows correctly between tools."""
-    
+
     @pytest.mark.asyncio
     async def test_list_then_get(self):
         """Test listing items then getting details."""
         _fix_windows_encoding()
         runtime = get_runtime()
-        
+
         code = """
         // List releases
         const releases = await callMCPTool("github_list_releases", {
@@ -231,14 +242,14 @@ class TestDataFlow:
             canGetDetails: !!releasesList?.[0]?.tag_name
         };
         """
-        
+
         result = runtime.execute_code(code)
-        
+
         # Should execute without errors
-        assert result.get('error') is False or result.get('error') is True, \
+        assert result.get("error") is False or result.get("error") is True, (
             f"List then get test failed: {result.get('message', 'Unknown error')}"
+        )
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -33,10 +33,12 @@ def _validate_search_path(repo_path: str) -> Path:
     # Normalize path
     if norm_path:
         # Remove leading slashes
-        norm_path = norm_path.lstrip('/')
+        norm_path = norm_path.lstrip("/")
         # Check for parent traversal
-        if '..' in norm_path or norm_path.startswith('..'):
-            raise ValueError("Path traversal detected: parent directory access not allowed")
+        if ".." in norm_path or norm_path.startswith(".."):
+            raise ValueError(
+                "Path traversal detected: parent directory access not allowed"
+            )
         search_path = (base_dir / norm_path).resolve()
     else:
         search_path = base_dir
@@ -56,23 +58,49 @@ def _validate_search_path(repo_path: str) -> Path:
 def _is_binary_file(file_path: Path) -> bool:
     """Check if a file is binary."""
     # Check by extension
-    binary_extensions = {'.pyc', '.pyo', '.pyd', '.so', '.dll', '.exe', '.bin',
-                        '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip', '.tar',
-                        '.gz', '.bz2', '.xz', '.ico', '.woff', '.woff2', '.ttf',
-                        '.eot', '.otf', '.mp3', '.mp4', '.avi', '.mov', '.wmv'}
+    binary_extensions = {
+        ".pyc",
+        ".pyo",
+        ".pyd",
+        ".so",
+        ".dll",
+        ".exe",
+        ".bin",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".pdf",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".xz",
+        ".ico",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".otf",
+        ".mp3",
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".wmv",
+    }
     if file_path.suffix.lower() in binary_extensions:
         return True
 
     # Check by content (first 512 bytes)
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             chunk = f.read(512)
             # Check for null bytes (common in binary files)
-            if b'\x00' in chunk:
+            if b"\x00" in chunk:
                 return True
             # Check if it's valid UTF-8
             try:
-                chunk.decode('utf-8')
+                chunk.decode("utf-8")
             except UnicodeDecodeError:
                 return True
     except Exception:
@@ -83,27 +111,27 @@ def _is_binary_file(file_path: Path) -> bool:
 
 def _load_gitignore(base_dir: Path) -> List[re.Pattern]:
     """Load and parse .gitignore patterns."""
-    gitignore_path = base_dir / '.gitignore'
+    gitignore_path = base_dir / ".gitignore"
     patterns = []
 
     # Always ignore .git directory
-    patterns.append(re.compile(r'^\.git(/|$)'))
+    patterns.append(re.compile(r"^\.git(/|$)"))
 
     if not gitignore_path.exists():
         return patterns
 
     try:
-        with open(gitignore_path, 'r', encoding='utf-8') as f:
+        with open(gitignore_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
                 # Convert gitignore pattern to regex
-                pattern = line.replace('.', r'\.').replace('*', '.*').replace('?', '.')
-                if pattern.startswith('/'):
+                pattern = line.replace(".", r"\.").replace("*", ".*").replace("?", ".")
+                if pattern.startswith("/"):
                     pattern = pattern[1:]
                 else:
-                    pattern = f'.*{pattern}'
+                    pattern = f".*{pattern}"
                 patterns.append(re.compile(pattern))
     except Exception:
         pass
@@ -111,7 +139,9 @@ def _load_gitignore(base_dir: Path) -> List[re.Pattern]:
     return patterns
 
 
-def _should_ignore_file(file_path: Path, base_dir: Path, gitignore_patterns: List[re.Pattern]) -> bool:
+def _should_ignore_file(
+    file_path: Path, base_dir: Path, gitignore_patterns: List[re.Pattern]
+) -> bool:
     """Check if a file should be ignored based on .gitignore patterns."""
     rel_path = file_path.relative_to(base_dir).as_posix()
 
@@ -122,26 +152,35 @@ def _should_ignore_file(file_path: Path, base_dir: Path, gitignore_patterns: Lis
     return False
 
 
-def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
-                        case_sensitive: bool, max_results: int, context_lines: int,
-                        gitignore_patterns: List[re.Pattern], base_dir: Path) -> List[Dict[str, Any]]:
+def _python_grep_search(
+    search_path: Path,
+    pattern: str,
+    file_pattern: str,
+    case_sensitive: bool,
+    max_results: int,
+    context_lines: int,
+    gitignore_patterns: List[re.Pattern],
+    base_dir: Path,
+) -> List[Dict[str, Any]]:
     """Python-based grep search as fallback."""
     matches: List[Dict[str, Any]] = []
     compiled_pattern = re.compile(pattern, re.IGNORECASE if not case_sensitive else 0)
 
     # Convert file_pattern glob to regex
     if file_pattern == "*":
-        file_regex = re.compile(r'.*')
+        file_regex = re.compile(r".*")
     else:
         # Simple glob to regex conversion
-        file_regex_str = file_pattern.replace('.', r'\.').replace('*', '.*').replace('?', '.')
+        file_regex_str = (
+            file_pattern.replace(".", r"\.").replace("*", ".*").replace("?", ".")
+        )
         file_regex = re.compile(file_regex_str, re.IGNORECASE)
 
     try:
         for root, dirs, files in os.walk(search_path):
             # Skip .git directory
-            if '.git' in dirs:
-                dirs.remove('.git')
+            if ".git" in dirs:
+                dirs.remove(".git")
 
             for file_name in files:
                 file_path = Path(root) / file_name
@@ -162,7 +201,7 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
                     break
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                         lines = f.readlines()
                         for line_num, line in enumerate(lines, start=1):
                             if len(matches) >= max_results:
@@ -171,16 +210,24 @@ def _python_grep_search(search_path: Path, pattern: str, file_pattern: str,
                                 # Get context
                                 start_line = max(1, line_num - context_lines)
                                 end_line = min(len(lines), line_num + context_lines)
-                                context_before = [line.rstrip('\n\r') for line in lines[start_line-1:line_num-1]]
-                                context_after = [line.rstrip('\n\r') for line in lines[line_num:end_line]]
+                                context_before = [
+                                    line.rstrip("\n\r")
+                                    for line in lines[start_line - 1 : line_num - 1]
+                                ]
+                                context_after = [
+                                    line.rstrip("\n\r")
+                                    for line in lines[line_num:end_line]
+                                ]
 
-                                matches.append({
-                                    'file': str(file_path.relative_to(base_dir)),
-                                    'line_number': line_num,
-                                    'line': line.rstrip('\n\r'),
-                                    'context_before': context_before,
-                                    'context_after': context_after
-                                })
+                                matches.append(
+                                    {
+                                        "file": str(file_path.relative_to(base_dir)),
+                                        "line_number": line_num,
+                                        "line": line.rstrip("\n\r"),
+                                        "context_before": context_before,
+                                        "context_after": context_after,
+                                    }
+                                )
                 except Exception:
                     continue
     except Exception:
@@ -248,29 +295,29 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
 
         # Try ripgrep
         try:
-            cmd = ['rg', '--json', '--no-heading', '--with-filename', '--line-number']
+            cmd = ["rg", "--json", "--no-heading", "--with-filename", "--line-number"]
             if params.context_lines > 0:
-                cmd.extend(['-C', str(params.context_lines)])
+                cmd.extend(["-C", str(params.context_lines)])
             if not params.case_sensitive:
-                cmd.append('--ignore-case')
-            if params.file_pattern != '*':
-                cmd.extend(['--glob', params.file_pattern])
+                cmd.append("--ignore-case")
+            if params.file_pattern != "*":
+                cmd.extend(["--glob", params.file_pattern])
             cmd.extend([params.pattern, str(search_path)])
 
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             if proc.returncode == 0:
                 # Parse ripgrep JSON output
-                for line in proc.stdout.strip().split('\n'):
+                for line in proc.stdout.strip().split("\n"):
                     if not line:
                         continue
                     try:
                         data = json.loads(line)
-                        if data.get('type') == 'match':
-                            file_path_str = data['data']['path']['text']
+                        if data.get("type") == "match":
+                            file_path_str = data["data"]["path"]["text"]
                             file_path = Path(file_path_str)
-                            line_num = data['data']['line_number']
-                            line_text = data['data']['lines']['text'].rstrip('\n\r')
+                            line_num = data["data"]["line_number"]
+                            line_text = data["data"]["lines"]["text"].rstrip("\n\r")
 
                             # Convert to relative path if absolute
                             try:
@@ -285,49 +332,88 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
                             context_after = []
                             if params.context_lines > 0:
                                 try:
-                                    full_path = base_dir / rel_path if not rel_path.is_absolute() else rel_path
+                                    full_path = (
+                                        base_dir / rel_path
+                                        if not rel_path.is_absolute()
+                                        else rel_path
+                                    )
                                     if full_path.exists() and full_path.is_file():
-                                        with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
+                                        with open(
+                                            full_path,
+                                            "r",
+                                            encoding="utf-8",
+                                            errors="replace",
+                                        ) as f:
                                             all_lines = f.readlines()
                                             if line_num <= len(all_lines):
-                                                start_idx = max(0, line_num - 1 - params.context_lines)
-                                                end_idx = min(len(all_lines), line_num + params.context_lines)
-                                                context_before = [line.rstrip('\n\r') for line in all_lines[start_idx:line_num-1]]
-                                                context_after = [line.rstrip('\n\r') for line in all_lines[line_num:end_idx]]
+                                                start_idx = max(
+                                                    0,
+                                                    line_num - 1 - params.context_lines,
+                                                )
+                                                end_idx = min(
+                                                    len(all_lines),
+                                                    line_num + params.context_lines,
+                                                )
+                                                context_before = [
+                                                    line.rstrip("\n\r")
+                                                    for line in all_lines[
+                                                        start_idx : line_num - 1
+                                                    ]
+                                                ]
+                                                context_after = [
+                                                    line.rstrip("\n\r")
+                                                    for line in all_lines[
+                                                        line_num:end_idx
+                                                    ]
+                                                ]
                                 except Exception:
                                     pass
 
-                            matches.append({
-                                'file': str(rel_path),
-                                'line_number': line_num,
-                                'line': line_text,
-                                'context_before': context_before,
-                                'context_after': context_after
-                            })
-                        elif data.get('type') == 'summary':
-                            files_searched = data.get('data', {}).get('stats', {}).get('searched', 0)
+                            matches.append(
+                                {
+                                    "file": str(rel_path),
+                                    "line_number": line_num,
+                                    "line": line_text,
+                                    "context_before": context_before,
+                                    "context_after": context_after,
+                                }
+                            )
+                        elif data.get("type") == "summary":
+                            files_searched = (
+                                data.get("data", {}).get("stats", {}).get("searched", 0)
+                            )
                     except (json.JSONDecodeError, KeyError):
                         continue
-        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        except (
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+            subprocess.SubprocessError,
+        ):
             # Fallback to Python-based search
             matches = _python_grep_search(
-                search_path, params.pattern, params.file_pattern,
-                params.case_sensitive, params.max_results, params.context_lines,
-                gitignore_patterns, base_dir
+                search_path,
+                params.pattern,
+                params.file_pattern,
+                params.case_sensitive,
+                params.max_results,
+                params.context_lines,
+                gitignore_patterns,
+                base_dir,
             )
-            files_searched = len(set(m['file'] for m in matches))
+            files_searched = len(set(m["file"] for m in matches))
 
         # Limit results
-        matches = matches[:params.max_results]
+        matches = matches[: params.max_results]
 
         # Format response
         if params.response_format == ResponseFormat.JSON:
             result = {
-                'pattern': params.pattern,
-                'files_searched': files_searched or len(set(m['file'] for m in matches)),
-                'total_matches': len(matches),
-                'matches': matches,
-                'truncated': len(matches) >= params.max_results
+                "pattern": params.pattern,
+                "files_searched": files_searched
+                or len(set(m["file"] for m in matches)),
+                "total_matches": len(matches),
+                "matches": matches,
+                "truncated": len(matches) >= params.max_results,
             }
             return json.dumps(result, indent=2)
 
@@ -344,7 +430,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
             # Group by file
             by_file: Dict[str, List[Dict[str, Any]]] = {}
             for match in matches:
-                file_key = match['file']
+                file_key = match["file"]
                 if file_key not in by_file:
                     by_file[file_key] = []
                 by_file[file_key].append(match)
@@ -352,10 +438,10 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
             for file_key, file_matches in by_file.items():
                 markdown += f"## {file_key}\n\n"
                 for match in file_matches:
-                    line_num = match['line_number']
-                    line_text = match['line']
-                    context_before = match.get('context_before', [])
-                    context_after = match.get('context_after', [])
+                    line_num = match["line_number"]
+                    line_text = match["line"]
+                    context_before = match.get("context_before", [])
+                    context_after = match.get("context_after", [])
 
                     markdown += f"**Line {line_num}:**\n"
                     markdown += "```\n"
@@ -379,7 +465,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
 
         markdown += "\n**Summary:**\n"
         if matches:
-            files_with_matches = {match['file'] for match in matches}
+            files_with_matches = {match["file"] for match in matches}
             markdown += f"- {len(files_with_matches)} files with matches\n"
         else:
             markdown += "- 0 files with matches\n"
@@ -432,7 +518,7 @@ async def str_replace(params: StrReplaceInput) -> str:
         norm_path = Path(params.path).as_posix()
 
         # Check for path traversal
-        if '..' in norm_path or norm_path.startswith('..') or os.path.isabs(norm_path):
+        if ".." in norm_path or norm_path.startswith("..") or os.path.isabs(norm_path):
             return "Error: Path traversal is not allowed."
 
         abs_path = (base_dir / norm_path).resolve()
@@ -451,7 +537,7 @@ async def str_replace(params: StrReplaceInput) -> str:
 
         # Read file content
         try:
-            with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         except Exception as e:
             return f"Error: Could not read file: {str(e)}"
@@ -470,7 +556,7 @@ async def str_replace(params: StrReplaceInput) -> str:
 
         # Write back to file
         try:
-            with open(abs_path, 'w', encoding='utf-8', newline='') as f:
+            with open(abs_path, "w", encoding="utf-8", newline="") as f:
                 f.write(new_content)
         except Exception as e:
             return f"Error: Could not write to file: {str(e)}"
@@ -511,7 +597,9 @@ async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
             return "Error: Path traversal is not allowed."
 
         abs_path = os.path.abspath(os.path.join(str(base_dir), norm_path))
-        if not abs_path.startswith(str(base_dir) + os.sep) and abs_path != str(base_dir):
+        if not abs_path.startswith(str(base_dir) + os.sep) and abs_path != str(
+            base_dir
+        ):
             return "Error: Access outside workspace root is not allowed."
 
         if not os.path.exists(abs_path):
@@ -536,4 +624,3 @@ async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
         return _truncate_response(header + "```\n" + content + "\n```")
     except Exception as e:
         return _handle_api_error(e)
-

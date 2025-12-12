@@ -8,15 +8,15 @@ from auth.github_app import get_auth_token
 async def _get_auth_token_fallback(param_token: Optional[str] = None) -> Optional[str]:
     """
     Get authentication token with fallback logic.
-    
+
     Priority:
     1. Parameter token (if provided)
     2. GitHub App token (if configured)
     3. Personal Access Token (if configured)
-    
+
     Args:
         param_token: Token from function parameter
-        
+
     Returns:
         Token string or None
     """
@@ -30,7 +30,7 @@ async def _make_github_request(
     method: str = "GET",
     token: Optional[str] = None,
     skip_cache_headers: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """
     Reusable function for all GitHub API calls using a shared pooled client.
@@ -68,25 +68,23 @@ async def _make_github_request(
 
 
 async def _make_graphql_request(
-    query: str,
-    variables: Optional[Dict[str, Any]] = None,
-    token: Optional[str] = None
+    query: str, variables: Optional[Dict[str, Any]] = None, token: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Make a GraphQL request to GitHub API.
-    
+
     Args:
         query: GraphQL query string
         variables: Optional variables for the query
         token: Optional authentication token
-        
+
     Returns:
         GraphQL response data
     """
     if token is None:
         token = await get_auth_token()
-    
+
     from graphql_client import GraphQLClient
+
     client = GraphQLClient()
     return await client.query(token, query, variables)
-

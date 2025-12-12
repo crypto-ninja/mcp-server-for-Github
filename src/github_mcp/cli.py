@@ -51,13 +51,19 @@ def clear_cache():
     """Clear GitHub App installation token cache."""
     has_app_id = bool(os.getenv("GITHUB_APP_ID"))
     has_app_installation = bool(os.getenv("GITHUB_APP_INSTALLATION_ID"))
-    has_app_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")) or bool(os.getenv("GITHUB_APP_PRIVATE_KEY"))
-    
+    has_app_key = bool(os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")) or bool(
+        os.getenv("GITHUB_APP_PRIVATE_KEY")
+    )
+
     if has_app_id and has_app_installation and has_app_key:
         clear_token_cache()
-        click.echo("✅ GitHub App token cache cleared. Next API call will use a fresh token with current permissions.")
+        click.echo(
+            "✅ GitHub App token cache cleared. Next API call will use a fresh token with current permissions."
+        )
     else:
-        click.echo("ℹ️ GitHub App not configured. Using PAT authentication (no cache to clear).")
+        click.echo(
+            "ℹ️ GitHub App not configured. Using PAT authentication (no cache to clear)."
+        )
 
 
 @cli.command()
@@ -71,5 +77,5 @@ def check_deno():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

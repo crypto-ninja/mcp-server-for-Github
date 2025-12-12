@@ -933,6 +933,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       draft: { type: "boolean", required: false, description: "Create as draft release (not visible publicly)" },
       prerelease: { type: "boolean", required: false, description: "Mark as pre-release (not production ready)" },
       target_commitish: { type: "string", required: false, description: "Commit SHA, branch, or tag to create release from (defaults to default branch)" },
+      generate_release_notes: { type: "boolean", required: false, description: "Auto-generate release notes from merged PRs and commits since last release" },
+      discussion_category_name: { type: "string", required: false, description: "Create a linked discussion in this category (e.g., 'Announcements')" },
+      make_latest: { type: "string", required: false, description: "Control 'Latest' badge: 'true', 'false', or 'legacy'" },
       token: { type: "string", required: false, description: "GitHub personal access token" }
     },
     returns: "Created release details with URL",

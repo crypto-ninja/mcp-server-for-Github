@@ -18,9 +18,9 @@ For full instructions, see LICENSE_INTEGRATION.md
 
 def show_integration_instructions():
     """Display integration instructions."""
-    print("="*70)
+    print("=" * 70)
     print("LICENSE VERIFICATION INTEGRATION")
-    print("="*70)
+    print("=" * 70)
     print()
     print("To integrate license verification into github_mcp.py:")
     print()
@@ -76,9 +76,10 @@ def show_integration_instructions():
     print("Contact: licensing@mcplabs.co.uk")
     print("'''")
     print()
-    print("="*70)
+    print("=" * 70)
     print("For detailed instructions, see: LICENSE_INTEGRATION.md")
-    print("="*70)
+    print("=" * 70)
+
 
 if __name__ == "__main__":
     show_integration_instructions()

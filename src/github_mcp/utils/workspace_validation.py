@@ -7,10 +7,10 @@ import os
 def validate_workspace_path(path: Path) -> bool:
     """
     Ensure path is within workspace for security.
-    
+
     Args:
         path: Path to validate
-        
+
     Returns:
         True if path is within WORKSPACE_ROOT, False otherwise
     """
@@ -22,4 +22,3 @@ def validate_workspace_path(path: Path) -> bool:
         return True
     except (ValueError, OSError):
         return False
-

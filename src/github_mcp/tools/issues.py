@@ -18,10 +18,10 @@ from ..utils.formatting import _format_timestamp, _truncate_response
 async def github_list_issues(params: ListIssuesInput) -> str:
     """
     List issues from a GitHub repository with filtering options.
-    
+
     This tool retrieves issues from a repository, supporting state filtering and
     pagination. It does NOT create or modify issues.
-    
+
     Args:
         params (ListIssuesInput): Validated input parameters containing:
             - owner (str): Repository owner
@@ -31,15 +31,15 @@ async def github_list_issues(params: ListIssuesInput) -> str:
             - page (int): Page number for pagination (default 1)
             - token (Optional[str]): GitHub token
             - response_format (ResponseFormat): Output format
-    
+
     Returns:
         str: List of issues in requested format with pagination info
-    
+
     Examples:
         - Use when: "Show me open issues in react repository"
         - Use when: "List all closed issues for tensorflow/tensorflow"
         - Use when: "Get the first 50 issues from microsoft/vscode"
-    
+
     Error Handling:
         - Returns error if repository not found
         - Handles rate limiting with clear guidance
@@ -49,56 +49,64 @@ async def github_list_issues(params: ListIssuesInput) -> str:
         params_dict = {
             "state": params.state.value,
             "per_page": params.limit,
-            "page": params.page
+            "page": params.page,
         }
-        
+
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",
             token=params.token,
-            params=params_dict
+            params=params_dict,
         )
-        
+
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result, len(data))
-        
+
         # Markdown format
         markdown = f"# Issues for {params.owner}/{params.repo}\n\n"
         markdown += f"**State:** {params.state.value} | **Page:** {params.page} | **Showing:** {len(data)} issues\n\n"
-        
+
         if not data:
             markdown += f"No {params.state.value} issues found.\n"
         else:
             for issue in data:
                 # Skip pull requests (they appear in issues endpoint)
-                if 'pull_request' in issue:
+                if "pull_request" in issue:
                     continue
-                
+
                 markdown += f"## #{issue['number']}: {issue['title']}\n"
                 markdown += f"- **State:** {issue['state']}\n"
                 markdown += f"- **Author:** @{issue['user']['login']}\n"
                 markdown += f"- **Created:** {_format_timestamp(issue['created_at'])}\n"
                 markdown += f"- **Updated:** {_format_timestamp(issue['updated_at'])}\n"
-                
-                if issue.get('labels'):
-                    labels = ', '.join([f"`{label['name']}`" for label in issue['labels']])
+
+                if issue.get("labels"):
+                    labels = ", ".join(
+                        [f"`{label['name']}`" for label in issue["labels"]]
+                    )
                     markdown += f"- **Labels:** {labels}\n"
-                
-                if issue.get('assignees'):
-                    assignees = ', '.join([f"@{a['login']}" for a in issue['assignees']])
+
+                if issue.get("assignees"):
+                    assignees = ", ".join(
+                        [f"@{a['login']}" for a in issue["assignees"]]
+                    )
                     markdown += f"- **Assignees:** {assignees}\n"
-                
+
                 markdown += f"- **Comments:** {issue['comments']}\n"
                 markdown += f"- **URL:** {issue['html_url']}\n\n"
-                
-                if issue.get('body'):
-                    body_preview = issue['body'][:200] + "..." if len(issue['body']) > 200 else issue['body']
+
+                if issue.get("body"):
+                    body_preview = (
+                        issue["body"][:200] + "..."
+                        if len(issue["body"]) > 200
+                        else issue["body"]
+                    )
                     markdown += f"**Preview:** {body_preview}\n\n"
-                
+
                 markdown += "---\n\n"
-        
+
         return _truncate_response(markdown, len(data))
-        
+
     except Exception as e:
         return _handle_api_error(e)
 
@@ -106,10 +114,10 @@ async def github_list_issues(params: ListIssuesInput) -> str:
 async def github_create_issue(params: CreateIssueInput) -> str:
     """
     Create a new issue in a GitHub repository.
-    
+
     This tool creates a new issue with specified title, body, labels, and assignees.
     Requires authentication with a GitHub token that has repository access.
-    
+
     Args:
         params (CreateIssueInput): Validated input parameters containing:
             - owner (str): Repository owner
@@ -119,15 +127,15 @@ async def github_create_issue(params: CreateIssueInput) -> str:
             - labels (Optional[List[str]]): Label names to apply
             - assignees (Optional[List[str]]): Usernames to assign
             - token (Optional[str]): GitHub token (optional - uses GITHUB_TOKEN env var if not provided)
-    
+
     Returns:
         str: Created issue details including issue number and URL
-    
+
     Examples:
         - Use when: "Create a bug report in myrepo"
         - Use when: "Open a new feature request issue"
         - Use when: "File an issue about the documentation"
-    
+
     Error Handling:
         - Returns error if authentication fails (401)
         - Returns error if insufficient permissions (403)
@@ -135,44 +143,43 @@ async def github_create_issue(params: CreateIssueInput) -> str:
     """
     # Get token (try param, then GitHub App, then PAT)
     auth_token = await _get_auth_token_fallback(params.token)
-    
+
     if not auth_token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for creating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for creating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     try:
         payload: Dict[str, Any] = {
             "title": params.title,
         }
-        
+
         if params.body:
             payload["body"] = params.body
         if params.labels:
             payload["labels"] = params.labels  # type: ignore[assignment]
         if params.assignees:
             payload["assignees"] = params.assignees  # type: ignore[assignment]
-        
+
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",
             method="POST",
             token=auth_token,
-            json=payload
+            json=payload,
         )
-        
+
         # Return the FULL GitHub API response as JSON
         return json.dumps(data, indent=2)
-        
+
     except Exception as e:
         # Return structured JSON error for programmatic use
-        error_info = {
-            "success": False,
-            "error": str(e),
-            "type": type(e).__name__
-        }
-        
+        error_info = {"success": False, "error": str(e), "type": type(e).__name__}
+
         # Extract detailed error info from HTTPStatusError
         if isinstance(e, httpx.HTTPStatusError):
             error_info["status_code"] = e.response.status_code
@@ -181,21 +188,23 @@ async def github_create_issue(params: CreateIssueInput) -> str:
                 error_info["message"] = error_body.get("message", "Unknown error")
                 error_info["errors"] = error_body.get("errors", [])
             except Exception:
-                error_info["message"] = e.response.text[:200] if e.response.text else "Unknown error"
+                error_info["message"] = (
+                    e.response.text[:200] if e.response.text else "Unknown error"
+                )
         else:
             error_info["message"] = str(e)
-        
+
         return json.dumps(error_info, indent=2)
 
 
 async def github_update_issue(params: UpdateIssueInput) -> str:
     """
     Update an existing GitHub issue.
-    
+
     This tool modifies issue properties including state (open/closed),
     title, body, labels, assignees, and milestone. Only provided fields
     will be updated - others remain unchanged.
-    
+
     Args:
         params (UpdateIssueInput): Validated input parameters containing:
             - owner (str): Repository owner
@@ -208,34 +217,37 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
             - assignees (Optional[List[str]]): Usernames to assign
             - milestone (Optional[int]): Milestone number
             - token (Optional[str]): GitHub token
-    
+
     Returns:
         str: Updated issue details with confirmation message
-    
+
     Examples:
         - Use when: "Close issue #28"
         - Use when: "Update issue #29 labels"
         - Use when: "Reassign issue #30 to user"
-    
+
     Error Handling:
         - Returns error if issue not found (404)
         - Returns error if authentication fails (401/403)
         - Returns error if invalid parameters (422)
     """
-    
+
     # Get token (try param, then GitHub App, then PAT)
     token = await _get_auth_token_fallback(params.token)
     if not token:
-        return json.dumps({
-            "error": "Authentication required",
-            "message": "GitHub token required for updating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
-            "success": False
-        }, indent=2)
-    
+        return json.dumps(
+            {
+                "error": "Authentication required",
+                "message": "GitHub token required for updating issues. Set GITHUB_TOKEN or configure GitHub App authentication.",
+                "success": False,
+            },
+            indent=2,
+        )
+
     # Validate state if provided
     if params.state and params.state not in ["open", "closed"]:
         return f"Error: Invalid state '{params.state}'. Must be 'open' or 'closed'."
-    
+
     try:
         # Build update payload
         update_data: Dict[str, Any] = {}
@@ -251,15 +263,15 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
             update_data["assignees"] = params.assignees  # type: ignore[assignment]
         if params.milestone is not None:
             update_data["milestone"] = params.milestone
-        
+
         # Make request
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues/{params.issue_number}",
             method="PATCH",
             token=token,
-            json=update_data
+            json=update_data,
         )
-        
+
         # Format response
         changes = []
         if params.state:
@@ -274,22 +286,21 @@ async def github_update_issue(params: UpdateIssueInput) -> str:
             changes.append(f"Assignees: {', '.join(params.assignees)}")
         if params.milestone:
             changes.append(f"Milestone: #{params.milestone}")
-        
+
         result = f"""✅ Issue Updated Successfully!
 
-**Issue:** #{data['number']} - {data['title']}
+**Issue:** #{data["number"]} - {data["title"]}
 **Repository:** {params.owner}/{params.repo}
-**URL:** {data['html_url']}
+**URL:** {data["html_url"]}
 
 **Changes Applied:**
-{chr(10).join(f'- {change}' for change in changes)}
+{chr(10).join(f"- {change}" for change in changes)}
 
-**Current State:** {data['state']}
-**Updated:** {_format_timestamp(data['updated_at'])}
+**Current State:** {data["state"]}
+**Updated:** {_format_timestamp(data["updated_at"])}
 """
-        
+
         return result
-        
+
     except Exception as e:
         return _handle_api_error(e)
-
