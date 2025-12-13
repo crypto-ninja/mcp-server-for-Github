@@ -1,6 +1,6 @@
 """Miscellaneous tools for GitHub MCP Server."""
 
-from license_manager import get_license_manager
+from ..utils.license_manager import get_license_manager
 
 
 async def github_license_info() -> str:
