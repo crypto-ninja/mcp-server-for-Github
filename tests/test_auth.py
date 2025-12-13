@@ -18,7 +18,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from auth.github_app import (
+from github_mcp.auth.github_app import (
     GitHubAppAuth,
     get_auth_token,
     clear_token_cache,
@@ -72,8 +72,8 @@ class TestGitHubAppAuth:
         assert auth._expires_at == 0.0
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
-    @patch("auth.github_app.jwt.encode")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.jwt.encode")
     async def test_get_token_success(self, mock_jwt, mock_client_class):
         """Test successful token retrieval."""
         # Mock JWT
@@ -105,8 +105,8 @@ class TestGitHubAppAuth:
         assert auth._expires_at > 0
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
-    @patch("auth.github_app.jwt.encode")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.jwt.encode")
     async def test_token_cache_used_when_valid(self, mock_jwt, mock_client_class):
         """Test that cached token is used when still valid."""
         # Mock JWT
@@ -145,8 +145,8 @@ class TestGitHubAppAuth:
         assert mock_client.post.call_count == 1
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
-    @patch("auth.github_app.jwt.encode")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.jwt.encode")
     async def test_token_refresh_on_expiry(self, mock_jwt, mock_client_class):
         """Test that expired tokens are refreshed."""
         # Mock JWT
@@ -199,8 +199,8 @@ class TestGitHubAppAuth:
         assert auth._expires_at == 0.0
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
-    @patch("auth.github_app.jwt.encode")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.jwt.encode")
     async def test_force_refresh(self, mock_jwt, mock_client_class):
         """Test force refresh parameter."""
         # Mock JWT
@@ -283,8 +283,8 @@ class TestAuthFallback:
             "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem",
         },
     )
-    @patch("auth.github_app.load_private_key_from_file")
-    @patch("auth.github_app.GitHubAppAuth.get_installation_token")
+    @patch("github_mcp.auth.github_app.load_private_key_from_file")
+    @patch("github_mcp.auth.github_app.GitHubAppAuth.get_installation_token")
     async def test_get_auth_token_app_priority(self, mock_get_token, mock_load_key):
         """Test GitHub App takes priority over PAT."""
         # Mock the private key loading to return a valid key
@@ -310,8 +310,8 @@ class TestAuthFallback:
             "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem",
         },
     )
-    @patch("auth.github_app.load_private_key_from_file")
-    @patch("auth.github_app.GitHubAppAuth.get_installation_token")
+    @patch("github_mcp.auth.github_app.load_private_key_from_file")
+    @patch("github_mcp.auth.github_app.GitHubAppAuth.get_installation_token")
     async def test_get_auth_token_app_fallback_to_pat(
         self, mock_get_token, mock_load_key
     ):
@@ -349,8 +349,8 @@ class TestAuthFallback:
             "GITHUB_TOKEN": "pat_token",
         },
     )
-    @patch("auth.github_app.load_private_key_from_file")
-    @patch("auth.github_app.GitHubAppAuth.get_installation_token")
+    @patch("github_mcp.auth.github_app.load_private_key_from_file")
+    @patch("github_mcp.auth.github_app.GitHubAppAuth.get_installation_token")
     async def test_get_auth_token_force_pat_mode(self, mock_get_token, mock_load_key):
         """Test GITHUB_AUTH_MODE=pat forces PAT even when App configured."""
         mock_load_key.return_value = (
@@ -375,7 +375,7 @@ class TestHasAppConfig:
     @patch.dict(os.environ, {}, clear=True)
     async def test_has_app_config_missing_app_id(self):
         """Test _has_app_config returns False when app ID missing."""
-        from auth.github_app import _has_app_config
+        from github_mcp.auth.github_app import _has_app_config
 
         with patch.dict(
             os.environ,
@@ -390,7 +390,7 @@ class TestHasAppConfig:
     @patch.dict(os.environ, {}, clear=True)
     async def test_has_app_config_missing_installation_id(self):
         """Test _has_app_config returns False when installation ID missing."""
-        from auth.github_app import _has_app_config
+        from github_mcp.auth.github_app import _has_app_config
 
         with patch.dict(
             os.environ,
@@ -402,7 +402,7 @@ class TestHasAppConfig:
     @patch.dict(os.environ, {}, clear=True)
     async def test_has_app_config_missing_both_keys(self):
         """Test _has_app_config returns False when no key source."""
-        from auth.github_app import _has_app_config
+        from github_mcp.auth.github_app import _has_app_config
 
         with patch.dict(
             os.environ, {"GITHUB_APP_ID": "123", "GITHUB_APP_INSTALLATION_ID": "456"}
@@ -413,7 +413,7 @@ class TestHasAppConfig:
     @patch.dict(os.environ, {}, clear=True)
     async def test_has_app_config_with_key_path_only(self):
         """Test _has_app_config returns True with KEY_PATH only."""
-        from auth.github_app import _has_app_config
+        from github_mcp.auth.github_app import _has_app_config
 
         with patch.dict(
             os.environ,
@@ -429,7 +429,7 @@ class TestHasAppConfig:
     @patch.dict(os.environ, {}, clear=True)
     async def test_has_app_config_with_key_direct_only(self):
         """Test _has_app_config returns True with KEY only."""
-        from auth.github_app import _has_app_config
+        from github_mcp.auth.github_app import _has_app_config
 
         with patch.dict(
             os.environ,
@@ -454,7 +454,7 @@ class TestAppAuthErrors:
             "GITHUB_APP_PRIVATE_KEY": "invalid_key_format",
         },
     )
-    @patch("auth.github_app.GitHubAppAuth.get_installation_token")
+    @patch("github_mcp.auth.github_app.GitHubAppAuth.get_installation_token")
     async def test_get_auth_token_app_invalid_key_format(self, mock_get_token):
         """Test when App key is malformed."""
         # Mock JWT generation to fail
@@ -478,8 +478,8 @@ class TestAppAuthErrors:
             "GITHUB_APP_PRIVATE_KEY_PATH": "/path/to/key.pem",
         },
     )
-    @patch("auth.github_app.load_private_key_from_file")
-    @patch("auth.github_app.GitHubAppAuth.get_installation_token")
+    @patch("github_mcp.auth.github_app.load_private_key_from_file")
+    @patch("github_mcp.auth.github_app.GitHubAppAuth.get_installation_token")
     async def test_get_auth_token_app_github_api_error(
         self, mock_get_token, mock_load_key
     ):
@@ -502,10 +502,10 @@ class TestAppAuthErrors:
         assert token == "pat_token"
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
     async def test_get_installation_token_api_error(self, mock_client_class):
         """Test get_installation_token when API call fails."""
-        from auth.github_app import GitHubAppAuth
+        from github_mcp.auth.github_app import GitHubAppAuth
 
         # Mock client to raise error
         mock_client = AsyncMock()
@@ -529,10 +529,10 @@ class TestAppAuthErrors:
             )
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.jwt.encode")
+    @patch("github_mcp.auth.github_app.jwt.encode")
     async def test_generate_jwt_error(self, mock_jwt_encode):
         """Test _generate_jwt when JWT encoding fails."""
-        from auth.github_app import GitHubAppAuth
+        from github_mcp.auth.github_app import GitHubAppAuth
         import jwt
 
         # Mock JWT encoding to fail
@@ -550,14 +550,14 @@ class TestLoadPrivateKeyFromFile:
 
     def test_load_private_key_from_file_nonexistent(self):
         """Test loading from non-existent file."""
-        from auth.github_app import load_private_key_from_file
+        from github_mcp.auth.github_app import load_private_key_from_file
 
         result = load_private_key_from_file("/nonexistent/path/key.pem")
         assert result is None
 
     def test_load_private_key_from_file_relative_path(self):
         """Test loading from relative path."""
-        from auth.github_app import load_private_key_from_file
+        from github_mcp.auth.github_app import load_private_key_from_file
         from pathlib import Path
         import tempfile
 
@@ -583,7 +583,7 @@ class TestLoadPrivateKeyFromFile:
 
     def test_load_private_key_from_file_absolute_path(self):
         """Test loading from absolute path."""
-        from auth.github_app import load_private_key_from_file
+        from github_mcp.auth.github_app import load_private_key_from_file
         import tempfile
 
         # Create a temporary key file
@@ -622,7 +622,7 @@ class TestVerifyInstallationAccess:
     """Test installation access verification."""
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
     async def test_verify_installation_access_success(self, mock_client_class):
         """Test successful installation access verification."""
         # Mock successful API responses
@@ -653,7 +653,7 @@ class TestVerifyInstallationAccess:
         assert "repo" in message.lower() or "access" in message.lower()
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
     async def test_verify_installation_access_not_found(self, mock_client_class):
         """Test installation access verification when repo not in list."""
         # Mock API responses
@@ -686,7 +686,7 @@ class TestVerifyInstallationAccess:
         assert "not" in message.lower() or "NOT" in message
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
     async def test_verify_installation_access_user_level(self, mock_client_class):
         """Test user-level installation (has access to all repos)."""
         # Mock user-level installation
@@ -719,7 +719,7 @@ class TestVerifyInstallationAccess:
         assert "user-level" in message.lower() or "all" in message.lower()
 
     @pytest.mark.asyncio
-    @patch("auth.github_app.httpx.AsyncClient")
+    @patch("github_mcp.auth.github_app.httpx.AsyncClient")
     async def test_verify_installation_access_api_error(self, mock_client_class):
         """Test installation access verification with API error."""
         # Mock API error
