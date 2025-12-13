@@ -16,7 +16,7 @@ env_path = SCRIPT_DIR / ".env"
 load_dotenv(env_path)
 
 # Import license manager for entry point (after dotenv)
-from license_manager import check_license_on_startup  # noqa: E402
+from src.github_mcp.utils.license_manager import check_license_on_startup  # noqa: E402
 
 # Import server components (after dotenv)
 from src.github_mcp.server import run  # noqa: E402
