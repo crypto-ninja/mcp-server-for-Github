@@ -14,7 +14,7 @@ long_description = (
 
 setup(
     name="github-mcp-server",
-    version="2.5.3",
+    version="2.5.4",
     author="MCP Labs",
     author_email="licensing@mcplabs.co.uk",
     description="A comprehensive Model Context Protocol server for GitHub integration",
