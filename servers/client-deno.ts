@@ -86,20 +86,18 @@ function getMCPConfig(): MCPConfig {
         };
     }
     
-    // Default configuration - use the actual path to github_mcp.py
-    const projectRoot = Deno.cwd();
-    const githubMcpPath = `${projectRoot}/github_mcp.py`.replace(/\//g, isWindows ? '\\' : '/');
-    
+    // Default configuration - use module execution (works with installed package)
+    // Use python -m github_mcp which calls __main__.py -> server.run()
     if (isWindows) {
         return {
             command: 'cmd',
-            args: ['/c', 'python', githubMcpPath],
+            args: ['/c', 'python', '-m', 'github_mcp'],
             env: env
         };
     } else {
         return {
             command: 'python',
-            args: [githubMcpPath],
+            args: ['-m', 'github_mcp'],
             env: env
         };
     }

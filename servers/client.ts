@@ -92,24 +92,12 @@ function getMCPConfig(): MCPConfig {
         };
     }
     
-    // Default configuration - use the actual path to github_mcp.py
-    // Since we're in the servers directory, we need to go up to find github_mcp.py
-    let githubMcpPath: string;
-    if (typeof Deno !== 'undefined') {
-        // Deno: use Deno.cwd() and construct path
-        const projectRoot = Deno.cwd();
-        githubMcpPath = `${projectRoot}/github_mcp.py`.replace(/\//g, '\\');
-    } else {
-        // Node.js: use import.meta.url
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = dirname(__filename);
-        githubMcpPath = resolve(__dirname, '..', 'github_mcp.py');
-    }
-    
+    // Default configuration - use module execution (works with installed package)
+    // Use python -m github_mcp which calls __main__.py -> server.run()
     if (isWindows) {
         return {
             command: 'cmd',
-            args: ['/c', 'python', githubMcpPath],
+            args: ['/c', 'python', '-m', 'github_mcp'],
             env: {
                 ...process.env,
                 MCP_CODE_EXECUTION_MODE: 'true',
@@ -118,7 +106,7 @@ function getMCPConfig(): MCPConfig {
     } else {
         return {
             command: 'python',
-            args: [githubMcpPath],
+            args: ['-m', 'github_mcp'],
             env: {
                 ...process.env,
                 MCP_CODE_EXECUTION_MODE: 'true',
