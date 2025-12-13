@@ -7,7 +7,7 @@ This script verifies:
 2. GitHub App token can be obtained
 3. Rate limits confirm App auth is working (15,000/hour)
 
-Run with: python test_github_app_auth.py
+Run with: python scripts/test_github_app_auth.py
 """
 
 import asyncio
@@ -71,7 +71,7 @@ async def test_app_auth():
         return True
 
     try:
-        from auth.github_app import get_installation_token_from_env
+        from github_mcp.auth.github_app import get_installation_token_from_env
 
         print("🔧 Getting GitHub App token...")
         token = await get_installation_token_from_env()

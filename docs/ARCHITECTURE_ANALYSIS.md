@@ -35,7 +35,6 @@ The GitHub MCP Server is a **code-first MCP implementation** that provides 112 G
 
 ```
 github-mcp-server/
-├── github_mcp.py              # Minimal entry point (delegates to server)
 ├── src/github_mcp/            # Main package
 │   ├── __init__.py            # Package exports (server components only)
 │   ├── server.py              # FastMCP server + tool registration
@@ -142,7 +141,7 @@ github-mcp-server/
 
 ### Layer 1: Entry Point
 
-**File:** `github_mcp.py`
+**Entry Point:** `python -m github_mcp` (via `src/github_mcp/__main__.py`)
 
 Minimal entry point that delegates to the server module:
 

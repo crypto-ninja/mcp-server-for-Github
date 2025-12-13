@@ -56,8 +56,11 @@ cd github-mcp-server
 # Install dependencies
 pip install -r requirements.txt
 
-# Verify syntax
-python -m py_compile github_mcp.py
+# Install package in editable mode
+pip install -e .
+
+# Verify imports work
+python -c "from github_mcp.server import run; print('✅ Package imports work')"
 
 # Run tests
 # (Add test commands when available)

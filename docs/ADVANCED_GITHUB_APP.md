@@ -219,7 +219,7 @@ const info = await callMCPTool("github_get_repo_info", {
 1. Verify all GitHub App environment variables are set
 2. Check private key file permissions
 3. Ensure app has required permissions
-4. Run `test_github_app_auth.py` for diagnostics
+4. Run `scripts/test_github_app_auth.py` for diagnostics
 
 ### Branch Operations Failing
 

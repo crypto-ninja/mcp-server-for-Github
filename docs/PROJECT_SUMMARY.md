@@ -45,11 +45,19 @@ Following all MCP best practices:
 
 ```
 github-mcp-server/
-├── github_mcp.py              # Main MCP server implementation (1,200+ lines)
+├── src/github_mcp/            # Main package
+│   ├── __init__.py            # Package exports
+│   ├── __main__.py            # Module entry point (python -m github_mcp)
+│   ├── server.py              # FastMCP server + tool registration
+│   ├── tools/                 # 20 tool modules (112 GitHub tools)
+│   ├── models/                # Pydantic input models
+│   ├── utils/                 # Shared utilities
+│   └── auth/                  # Authentication (GitHub App + PAT)
 ├── README.md                  # Comprehensive user documentation
 ├── CONFIGURATION.md           # Setup guide for Claude Desktop
 ├── requirements.txt           # Python dependencies
-└── github_mcp_evaluation.xml  # Test evaluation scenarios
+└── examples/                  # Example configurations
+    └── github_mcp_evaluation.xml  # Test evaluation scenarios
 ```
 
 ## 🛠️ Tool Catalog

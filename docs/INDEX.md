@@ -49,7 +49,7 @@ Complete guide to GitHub MCP Server documentation.
 
 | File | Description | Location |
 |------|-------------|----------|
-| **github_mcp.py** | Main server implementation | [../github_mcp.py](../github_mcp.py) |
+| **github_mcp package** | Main server implementation | [../src/github_mcp/](../src/github_mcp/) |
 | **requirements.txt** | Python dependencies | [../requirements.txt](../requirements.txt) |
 | **setup.py** | Package setup | [../setup.py](../setup.py) |
 
@@ -82,7 +82,7 @@ Complete guide to GitHub MCP Server documentation.
 **Understanding the Code:**
 1. [Architecture Guide](ARCHITECTURE.md) - System design
 2. [Contributing Guide](../CONTRIBUTING.md) - Development workflow
-3. [Source Code](../github_mcp.py) - Main implementation
+3. [Source Code](../src/github_mcp/) - Main package implementation
 
 **Building & Testing:**
 - [Requirements](../requirements.txt) - Dependencies
