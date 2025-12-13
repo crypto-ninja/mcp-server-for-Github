@@ -84,7 +84,7 @@ async def _make_graphql_request(
     if token is None:
         token = await get_auth_token()
 
-    from graphql_client import GraphQLClient
+    from .graphql_client import GraphQLClient
 
     client = GraphQLClient()
     return await client.query(token, query, variables)
