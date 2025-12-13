@@ -4,7 +4,7 @@ import os
 import json
 from typing import Dict, Any
 from ..server import check_deno_installed
-from auth.github_app import clear_token_cache
+from ..auth.github_app import clear_token_cache
 
 
 async def health_check() -> str:

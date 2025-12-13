@@ -21,7 +21,7 @@ if str(project_root) not in sys.path:
 # Import functions (these are now internal, not MCP tools)
 from src.github_mcp.utils.health import health_check  # noqa: E402
 from src.github_mcp.server import check_deno_installed  # noqa: E402
-from auth.github_app import clear_token_cache  # noqa: E402
+from .auth.github_app import clear_token_cache  # noqa: E402
 
 
 @click.group()

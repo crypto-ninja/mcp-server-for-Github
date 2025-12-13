@@ -2,7 +2,7 @@
 
 from typing import Optional, Dict, Any
 from github_client import GhClient
-from auth.github_app import get_auth_token
+from ..auth.github_app import get_auth_token
 
 
 async def _get_auth_token_fallback(param_token: Optional[str] = None) -> Optional[str]:
