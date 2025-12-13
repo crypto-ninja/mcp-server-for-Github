@@ -3,7 +3,7 @@
 Setup script for GitHub MCP Server.
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from pathlib import Path
 
 # Read the README file
@@ -21,7 +21,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/crypto-ninja/mcp-server-for-Github",
-    py_modules=["github_mcp"],
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     python_requires=">=3.10",
     install_requires=[
         "mcp>=1.0.0",
@@ -49,7 +50,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "github-mcp=github_mcp:main",
+            "github-mcp=github_mcp.server:run",
         ],
     },
 )
