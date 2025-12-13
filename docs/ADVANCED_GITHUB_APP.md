@@ -164,7 +164,7 @@ Restart your MCP server to pick up the new configuration.
 Run the test script to verify configuration:
 
 ```bash
-python test_github_app_auth.py
+python scripts/test_github_app_auth.py
 ```
 
 Expected output:
