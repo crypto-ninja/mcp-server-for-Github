@@ -1,7 +1,7 @@
 """GitHub API request utilities."""
 
 from typing import Optional, Dict, Any
-from github_client import GhClient
+from .github_client import GhClient
 from ..auth.github_app import get_auth_token
 
 

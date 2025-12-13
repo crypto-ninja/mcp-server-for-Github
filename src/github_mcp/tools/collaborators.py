@@ -109,7 +109,7 @@ async def github_check_collaborator(params: CheckCollaboratorInput) -> str:
         - Use when: "Verify user has access to this repo"
     """
     try:
-        from github_client import GhClient
+        from ..utils.github_client import GhClient
 
         auth_token = await _get_auth_token_fallback(params.token)
         client = GhClient.instance()

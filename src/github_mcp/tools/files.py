@@ -7,7 +7,7 @@ import base64
 import os
 import fnmatch
 
-from github_client import GhClient
+from ..utils.github_client import GhClient
 
 from ..models.inputs import (
     BatchFileOperationsInput,
