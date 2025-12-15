@@ -127,10 +127,10 @@ uv pip install mcp httpx pydantic
 ### Running
 ```bash
 # Direct execution
-python github_mcp.py
+python -m github_mcp
 
 # With UV
-uv run github_mcp.py
+uv run python -m github_mcp
 ```
 
 ### Integration with Claude Desktop
@@ -140,7 +140,10 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "github": {
       "command": "python",
-      "args": ["/path/to/github_mcp.py"]
+      "args": ["-m", "github_mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_..."
+      }
     }
   }
 }
@@ -148,9 +151,9 @@ Add to `claude_desktop_config.json`:
 
 ## 📊 Code Statistics
 
-- **Total Lines**: ~1,200+
-- **Tools Implemented**: 8
-- **Input Models**: 8
+- **Total Lines**: ~15,000+
+- **Tools Implemented**: 112
+- **Input Models**: 60+
 - **Utility Functions**: 4
 - **Documentation**: Extensive docstrings for every function
 - **Error Handling**: Comprehensive with actionable messages
@@ -197,11 +200,11 @@ The `github_mcp_evaluation.xml` file contains 10 realistic test scenarios coveri
 
 ### Manual Testing
 ```bash
-# Verify syntax
-python -m py_compile github_mcp.py
+# Verify imports
+python -c "import github_mcp; print('OK')"
 
 # Test with timeout
-timeout 5s python github_mcp.py
+timeout 5s python -m github_mcp
 ```
 
 ## 🌟 Real-World Use Cases

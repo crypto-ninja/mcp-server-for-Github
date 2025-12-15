@@ -21,7 +21,7 @@
 
 **Previous: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)**
 
-- 🏗️ **Modular Architecture** - `github_mcp.py` reduced from 10,857 to ~50 lines
+- 🏗️ **Modular Architecture** - `github_mcp.py` split into modular package structure
 - ⚡ **Connection Pooling** - 97% latency reduction (4000ms → 108ms for subsequent calls)
 - 🔧 **Dict→Model Conversion** - `callMCPTool` now works seamlessly with plain JavaScript objects
 - 📝 **Multiline Code Support** - Fixed truncation issues, full JSON protocol support

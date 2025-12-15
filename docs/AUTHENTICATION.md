@@ -51,7 +51,7 @@ The server resolves authentication in this order:
 2. **GitHub App** – When `GITHUB_AUTH_MODE=app` and App credentials are configured.
 3. **Personal Access Token** – `GITHUB_TOKEN` environment variable.
 
-This matches the behavior implemented in `auth/github_app.py` and `github_mcp.py`.
+This matches the behavior implemented in `github_mcp/auth/github_app.py` and `github_mcp/server.py`.
 
 ---
 
