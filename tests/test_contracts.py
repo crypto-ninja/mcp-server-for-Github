@@ -25,7 +25,7 @@ import inspect  # noqa: E402
 
 def read_typescript_tool_list() -> List[str]:
     """Read READ_TOOLS_WITH_JSON_SUPPORT from client-deno.ts."""
-    client_deno_path = project_root / "servers" / "client-deno.ts"
+    client_deno_path = project_root / "src" / "github_mcp" / "servers" / "client-deno.ts"
 
     if not client_deno_path.exists():
         return []
@@ -42,12 +42,14 @@ def read_typescript_tool_list() -> List[str]:
     tools = []
     for line in match.group(1).split("\n"):
         line = line.strip()
-        if (line.startswith("'") and line.endswith("'")) or (
-            line.startswith('"') and line.endswith('"')
-        ):
-            tool_name = line.strip("'\"")
-            tool_name = tool_name.rstrip(",")
-            if tool_name and not tool_name.startswith("//"):
+        # Skip empty lines and comments
+        if not line or line.startswith("//"):
+            continue
+        # Extract tool name using regex: match 'tool_name' or "tool_name" with optional trailing comma
+        tool_match = re.search(r"['\"]([^'\"]+)['\"]", line)
+        if tool_match:
+            tool_name = tool_match.group(1).strip()
+            if tool_name:
                 tools.append(tool_name)
 
     return tools
