@@ -1,56 +1,11 @@
-#!/usr/bin/env python3
-"""
-Setup script for GitHub MCP Server.
-"""
+"""Minimal setup.py for backward compatibility with older pip versions."""
 
 from setuptools import setup, find_packages
-from pathlib import Path
 
-# Read the README file
-readme_file = Path(__file__).parent / "README.md"
-long_description = (
-    readme_file.read_text(encoding="utf-8") if readme_file.exists() else ""
-)
+# All metadata is defined in pyproject.toml.
+# This file exists only for compatibility with older tools.
 
 setup(
-    name="github-mcp-server",
-    version="2.5.4",
-    author="MCP Labs",
-    author_email="licensing@mcplabs.co.uk",
-    description="A comprehensive Model Context Protocol server for GitHub integration",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/crypto-ninja/mcp-server-for-Github",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    python_requires=">=3.10",
-    install_requires=[
-        "mcp>=1.0.0",
-        "httpx>=0.25.0",
-        "pydantic>=2.0.0",
-    ],
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Operating System :: OS Independent",
-    ],
-    keywords="mcp model-context-protocol github api ai assistant claude",
-    project_urls={
-        "Bug Reports": "https://github.com/crypto-ninja/mcp-server-for-Github/issues",
-        "Source": "https://github.com/crypto-ninja/mcp-server-for-Github",
-        "Documentation": "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/README.md",
-        "Website": "https://mcplabs.co.uk",
-        "Licensing": "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/LICENSING.md",
-    },
-    entry_points={
-        "console_scripts": [
-            "github-mcp=github_mcp.server:run",
-        ],
-    },
 )
