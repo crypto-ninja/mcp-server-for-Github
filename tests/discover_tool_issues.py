@@ -24,7 +24,7 @@ from src.github_mcp import models as models_module  # noqa: E402
 
 def read_typescript_tool_list() -> List[str]:
     """Read READ_TOOLS_WITH_JSON_SUPPORT from client-deno.ts."""
-    client_deno_path = project_root / "servers" / "client-deno.ts"
+    client_deno_path = project_root / "src" / "github_mcp" / "servers" / "client-deno.ts"
 
     if not client_deno_path.exists():
         return []

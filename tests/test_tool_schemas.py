@@ -72,7 +72,7 @@ def get_tool_input_model(tool_name: str) -> Optional[Any]:
 
 def get_read_tools_with_json_support() -> List[str]:
     """Read the READ_TOOLS_WITH_JSON_SUPPORT list from client-deno.ts."""
-    client_deno_path = project_root / "servers" / "client-deno.ts"
+    client_deno_path = project_root / "src" / "github_mcp" / "servers" / "client-deno.ts"
 
     if not client_deno_path.exists():
         return []
