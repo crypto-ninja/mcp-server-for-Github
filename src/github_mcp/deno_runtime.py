@@ -21,8 +21,8 @@ class DenoRuntime:
     """Manages Deno subprocess for executing TypeScript code."""
 
     def __init__(self):
-        # Get project root (assuming this file is in src/github_mcp/)
-        project_root = Path(__file__).parent.parent.parent
+        # Get package root (this file lives in src/github_mcp/)
+        project_root = Path(__file__).parent  # src/github_mcp/ (package root)
         self.deno_executor_path = project_root / "deno_executor" / "mod.ts"
         self.servers_path = project_root / "servers"
         self.project_root = project_root

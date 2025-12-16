@@ -68,3 +68,12 @@ exclude = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"github_mcp" = [
+    "deno_executor/*.ts",
+    "deno_executor/*.md",
+    "servers/*.ts",
+    "servers/*.json",
+    "servers/github/**/*.ts",
+]
+

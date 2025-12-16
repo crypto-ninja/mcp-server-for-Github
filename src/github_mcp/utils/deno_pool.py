@@ -58,8 +58,8 @@ class DenoConnectionPool:
         self.max_requests_per_process = max_requests_per_process
         self.health_check_interval = health_check_interval
 
-        # Get project root (go up from src/github_mcp/utils/ to project root)
-        project_root = Path(__file__).parent.parent.parent.parent
+        # Get package root (go up from src/github_mcp/utils/ to src/github_mcp/)
+        project_root = Path(__file__).parent.parent  # utils -> github_mcp (package root)
         self.deno_executor_path = project_root / "deno_executor" / "mod.ts"
         self.project_root = project_root
 
