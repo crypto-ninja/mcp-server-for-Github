@@ -20,7 +20,7 @@ async def health_check() -> str:
 
         version = importlib.metadata.version("github-mcp-server")
     except Exception:
-        version = "2.5.3"
+        version = "2.5.4"
 
     # Check authentication
     has_pat = bool(os.getenv("GITHUB_TOKEN"))

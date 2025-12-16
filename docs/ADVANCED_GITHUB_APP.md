@@ -260,4 +260,4 @@ After changing app permissions:
 
 ---
 
-*Last updated: December 2025 (v2.5.3)*
+*Last updated: December 2025 (v2.5.4)*
