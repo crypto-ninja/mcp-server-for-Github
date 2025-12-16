@@ -4,10 +4,13 @@
 
 ### Fixed
 - Package structure reorganized for PyPI distribution
-- Moved auth/, github_client.py, license_manager.py into package
-- Fixed relative imports for proper package installation
-- Updated test imports for new package structure
-- Fixed setup.py to properly install github_mcp package
+- Moved auth/, github_client.py, license_manager.py into src/github_mcp/
+- Fixed relative imports for proper package installation  
+- Added __main__.py for module execution (python -m github_mcp)
+- Updated MCP clients to use module execution instead of file path
+- Removed conflicting root github_mcp.py file
+- Updated all documentation for new package structure
+- Fixed CLI entry point path for installed package
 
 ## [2.5.3] - 2025-12-11
 

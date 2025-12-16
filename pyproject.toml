@@ -40,7 +40,7 @@ dev = [
 
 [project.scripts]
 github-mcp = "github_mcp.server:run"
-github-mcp-cli = "src.github_mcp.cli:cli"
+github-mcp-cli = "github_mcp.cli:cli"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
