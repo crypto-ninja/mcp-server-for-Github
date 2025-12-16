@@ -122,8 +122,8 @@ def _slim_issue_item(item: Dict[str, Any]) -> Dict[str, Any]:
         }
     if "labels" in item:
         slim["labels"] = [
-            {"name": l.get("name"), "color": l.get("color")}
-            for l in item.get("labels", [])
+            {"name": label.get("name"), "color": label.get("color")}
+            for label in item.get("labels", [])
         ]
     if "assignees" in item:
         slim["assignees"] = [
