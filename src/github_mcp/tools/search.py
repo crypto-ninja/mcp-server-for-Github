@@ -13,7 +13,11 @@ from ..models.enums import (
 )
 from ..utils.requests import _make_github_request
 from ..utils.errors import _handle_api_error
-from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.formatting import (
+    _format_timestamp,
+    _truncate_response,
+    _slim_search_response,
+)
 
 
 async def github_search_code(params: SearchCodeInput) -> str:
@@ -91,7 +95,8 @@ async def github_search_code(params: SearchCodeInput) -> str:
         total_count: int = search_result.get("total_count", 0)
 
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(search_result, indent=2)
+            slim_result = _slim_search_response(search_result, "code")
+            result = json.dumps(slim_result, indent=2)
             return _truncate_response(result, total_count)
 
         # Markdown format
@@ -218,7 +223,8 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
         total_count: int = search_result.get("total_count", 0)
 
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(search_result, indent=2)
+            slim_result = _slim_search_response(search_result, "repository")
+            result = json.dumps(slim_result, indent=2)
             return _truncate_response(result, total_count)
 
         # Markdown format
@@ -336,7 +342,8 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
         total_count: int = search_result.get("total_count", 0)
 
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(search_result, indent=2)
+            slim_result = _slim_search_response(search_result, "issue")
+            result = json.dumps(slim_result, indent=2)
             return _truncate_response(result, total_count)
 
         # Markdown format

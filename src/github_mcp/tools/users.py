@@ -13,7 +13,7 @@ from ..models.enums import (
 )
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
-from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.formatting import _format_timestamp, _truncate_response, _slim_search_response
 
 
 async def github_get_user_info(params: GetUserInfoInput) -> str:
@@ -143,6 +143,7 @@ async def github_search_users(params: SearchUsersInput) -> str:
             if isinstance(data, dict)
             else {"total_count": 0, "items": []}
         )
-        return json.dumps(search_result, indent=2)
+        slim_result = _slim_search_response(search_result, "user")
+        return json.dumps(slim_result, indent=2)
     except Exception as e:
         return _handle_api_error(e)
