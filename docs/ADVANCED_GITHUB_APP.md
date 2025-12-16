@@ -136,7 +136,7 @@ The server implements automatic auth fallback:
 
 ### Step 4: Configure Environment
 
-Add to your `.env` file:
+Add to your Claude Desktop config (`env` section) or system environment:
 
 ```bash
 # GitHub App Configuration (Recommended - 15,000 requests/hour)

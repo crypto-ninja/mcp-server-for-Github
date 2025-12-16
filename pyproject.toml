@@ -26,7 +26,6 @@ dependencies = [
     "httpx>=0.25.0",
     "pydantic>=2.0.0",
     "PyJWT>=2.8.0",
-    "python-dotenv>=1.0.0",
     "click>=8.0.0",
 ]
 
@@ -46,6 +45,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0.0",
     "pip-audit>=2.6.0",
+    "python-dotenv>=1.0.0",  # For test scripts
 ]
 
 [project.scripts]

@@ -79,7 +79,6 @@
 - 🔐 **GitHub App Authentication** - Enterprise-grade auth with installation-based access
 - ⚡ **3x Rate Limits** - 15,000 requests/hour vs 5,000 with PAT
 - 🔄 **Dual Authentication** - Automatic App → PAT fallback
-- 📝 **python-dotenv Support** - Easy `.env` file configuration
 - 🐛 **19 Auth Fixes** - Consistent authentication across all tools
 - ✅ **100% Backward Compatible** - Existing PAT users unaffected
 
@@ -659,11 +658,9 @@ Most users just need a Personal Access Token:
 }
 ```
 
-**Or using .env file:**
+**Or using system environment variables:**
 
-```env
-GITHUB_TOKEN=ghp_your_token_here
-```
+Set `GITHUB_TOKEN` in your shell profile or system environment settings.
 
 That's it! You're ready to use all 109 GitHub tools.
 
