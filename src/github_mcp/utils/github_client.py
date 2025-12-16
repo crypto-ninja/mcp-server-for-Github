@@ -36,6 +36,7 @@ class GhClient:
         self._client = httpx.AsyncClient(
             base_url=base_url,
             timeout=timeout,
+            follow_redirects=True,  # Required for job logs API (302 redirect to blob storage)
             headers={
                 "Accept": "application/vnd.github+json",
                 "X-GitHub-Api-Version": "2022-11-28",
