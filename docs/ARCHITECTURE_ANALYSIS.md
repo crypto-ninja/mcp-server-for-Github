@@ -1,14 +1,14 @@
-# GitHub MCP Server - Architecture Analysis v2.5.4
+# GitHub MCP Server - Architecture Analysis v2.5.5
 
 **Project:** GitHub MCP Server (code-first reference implementation)  
-**Version:** 2.5.4  
+**Version:** 2.5.5  
 **Last Updated:** 2025-12-17
 
 ---
 
 ## Executive Summary
 
-The GitHub MCP Server is a **code-first MCP implementation** that provides 111 GitHub tools through a single `execute_code` entrypoint, achieving **98% token reduction** compared to traditional MCP servers.
+The GitHub MCP Server is a **code-first MCP implementation** that provides **112 tools** (111 internal + execute_code) through a single `execute_code` entrypoint, achieving **98% token reduction** compared to traditional MCP servers.
 
 ### Key Metrics
 
@@ -1083,7 +1083,7 @@ For production and typical runtime use, environment variables should be configur
 
 ## Conclusion
 
-The GitHub MCP Server v2.5.4 represents a **mature, production-ready code-first MCP implementation** with:
+The GitHub MCP Server v2.5.5 represents a **mature, production-ready code-first MCP implementation** with:
 
 - **112 tools** across 18 categories
 - **98% token reduction** through code-first architecture
@@ -1096,6 +1096,6 @@ The architecture is **highly extensible**, **well-tested**, and **performance-op
 
 ---
 
-**Document Version:** 2.5.4
+**Document Version:** 2.5.5
 **Last Updated:** 2025-12-17  
 **Maintained By:** GitHub MCP Server Team

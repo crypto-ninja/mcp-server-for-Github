@@ -2,7 +2,7 @@
 
 ## What You Have
 
-**111 GitHub tools** accessed through a single `execute_code` tool.
+**112 tools** (111 internal + execute_code) accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
 ## Tool Discovery

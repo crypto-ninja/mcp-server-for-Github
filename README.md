@@ -14,7 +14,7 @@
 
 ## ✨ What's New
 
-### 🚀 Latest: v2.5.4 - Package Structure & Tooling Updates (December 13, 2025)
+### 🚀 Latest: v2.5.5 - MCP Registry Ready (December 17, 2025)
 
 - 🔄 Removed admin-only tools (delete_repository, transfer_repository)
 - ➕ Added delete tools (delete_release, delete_gist)
@@ -330,7 +330,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 - **Massive token savings:** 98% reduction means faster responses and lower costs
 - **Complex workflows:** Combine multiple operations in single execution
 - **Conditional logic:** Use if/else, loops, and full programming capability
-- **Same functionality:** All 111 GitHub tools still available
+- **Same functionality:** All **112 tools** still available (111 internal + execute_code wrapper)
 
 This architecture validates Anthropic's research predictions about code-first MCP.
 
@@ -664,7 +664,7 @@ Most users just need a Personal Access Token:
 
 Set `GITHUB_TOKEN` in your shell profile or system environment settings.
 
-That's it! You're ready to use all 109 GitHub tools.
+That's it! You're ready to use all **112 tools**.
 
 > 💡 **Need higher rate limits?** Power users can [create their own GitHub App](docs/ADVANCED_GITHUB_APP.md) for 15,000 requests/hour instead of 5,000.
 
@@ -824,7 +824,7 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 
 - Tools proven to work through self-execution
 - Validated contracts between TypeScript and Python
-- Comprehensive test coverage (214 tests, 63% coverage)
+- Comprehensive test coverage (320 tests, 63% coverage)
 - Automated issue detection
 - Highest form of quality assurance
 
@@ -1104,7 +1104,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.4 with 112 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
+**Current:** v2.5.5 with 112 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

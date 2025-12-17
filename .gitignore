@@ -62,6 +62,7 @@ Thumbs.db
 # Personal planning docs (keep local only)
 FEATURE_ROADMAP.md
 RELEASE_CHECKLIST.md
+QUICK_START_ACT.md
 
 # Claude-generated files (untracked)
 claude/

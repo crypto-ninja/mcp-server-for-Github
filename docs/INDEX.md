@@ -21,7 +21,6 @@ Complete guide to GitHub MCP Server documentation.
 | Document | Description | Location |
 |----------|-------------|----------|
 | **README** | Main documentation and API reference | [../README.md](../README.md) |
-| **START_HERE** | Welcome guide and navigation | [../START_HERE.md](../START_HERE.md) |
 | **Quick Start** | 5-minute setup guide | [QUICKSTART.md](QUICKSTART.md) |
 | **Configuration** | Advanced setup and options | [CONFIGURATION.md](CONFIGURATION.md) |
 | **Features** | Tool showcase with examples | [FEATURES.md](FEATURES.md) |
@@ -106,7 +105,7 @@ Complete guide to GitHub MCP Server documentation.
 ## 🗺️ Document Relationships
 
 ```
-START_HERE.md (Welcome)
+QUICKSTART.md (Welcome)
     │
     ├─→ QUICKSTART.md (5-min setup)
     │       │
