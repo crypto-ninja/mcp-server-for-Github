@@ -1,12 +1,18 @@
 /**
- * GitHub MCP Server - Deno Executor (Pooled Mode)
+ * GitHub MCP Server - Deno Executor (Unified)
  *
- * This version reads code from stdin in a loop, allowing process reuse.
- * Each line of input is treated as a separate code execution.
+ * Unified executor supporting both pooled and single-shot execution modes.
  *
- * Used by connection pool for efficient process reuse.
+ * Pooled Mode (default):
+ * - Reads code from stdin in a loop, allowing process reuse
+ * - Each line of input is treated as a separate code execution
+ * - Keeps MCP connection alive across executions for performance
+ * - Used by connection pool for efficient process reuse
  *
- * KEY DIFFERENCE: Keeps MCP connection alive across executions for performance.
+ * Single-Shot Mode (--single-shot flag):
+ * - Reads code from stdin once, executes, and exits
+ * - Initializes and closes MCP connection per execution
+ * - Used for synchronous/non-pooled execution paths
  */
 
 // Deno global type declaration for TypeScript
