@@ -176,6 +176,21 @@ When calling tools, you may encounter HTTP errors:
 | 422 | Validation failed | Check required parameters |
 | 429 | Rate limited | Wait and retry |
 
+### Unknown Tool
+
+When using `getToolInfo()` with a tool name that doesn't exist, it returns a helpful error object instead of crashing:
+
+```typescript
+const info = getToolInfo("unknown_tool");
+// Returns: { 
+//   error: "Tool 'unknown_tool' not found", 
+//   suggestion: "Use searchTools() to find available tools", 
+//   availableTools: 112 
+// }
+```
+
+This makes it easy to handle typos or unknown tool names gracefully. Use `searchTools(keyword)` to find the correct tool name.
+
 ### Code Execution Errors
 
 When executing code via `execute_code`, responses use a standardized format:

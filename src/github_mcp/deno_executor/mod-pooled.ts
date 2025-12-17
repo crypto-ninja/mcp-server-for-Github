@@ -190,8 +190,8 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
     }
 
     /**
-     * Search for tools by keyword (compact format)
-     * Returns matching tool names with descriptions - use getToolInfo(toolName) for full details
+     * Search for tools by keyword (compact format with relevance)
+     * Returns matching tool names sorted by relevance - use getToolInfo(toolName) for full details
      */
     function searchToolsHelper(keyword: string) {
       const lowerKeyword = keyword.toLowerCase();
@@ -199,27 +199,67 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
         name: string;
         category: string;
         description: string;
+        relevance: number;
       }> = [];
       
       for (const tool of GITHUB_TOOLS) {
-        if (
-          tool.name.toLowerCase().includes(lowerKeyword) ||
-          tool.description?.toLowerCase().includes(lowerKeyword) ||
-          tool.category?.toLowerCase().includes(lowerKeyword)
-        ) {
+        let relevance = 0;
+        
+        // Check tool name (highest relevance)
+        if (tool.name.toLowerCase().includes(lowerKeyword)) {
+          relevance += 10;
+        }
+        
+        // Check description
+        if (tool.description?.toLowerCase().includes(lowerKeyword)) {
+          relevance += 5;
+        }
+        
+        // Check category
+        if (tool.category?.toLowerCase().includes(lowerKeyword)) {
+          relevance += 3;
+        }
+        
+        if (relevance > 0) {
           results.push({
             name: tool.name,
             category: tool.category,
             description: tool.description,
+            relevance: relevance,
           });
         }
       }
+      
+      // Sort by relevance (highest first)
+      results.sort((a, b) => b.relevance - a.relevance);
       
       return results;
     }
 
     function getToolInfoHelper(toolName: string) {
-      return GITHUB_TOOLS.find((t) => t.name === toolName);
+      const tool = GITHUB_TOOLS.find((t) => t.name === toolName);
+      
+      if (tool) {
+        // Get category count for metadata
+        const categoryCount = GITHUB_TOOLS.filter(t => t.category === tool.category).length;
+        
+        return {
+          ...tool,
+          usage: `await callMCPTool("${toolName}", parameters)`,
+          metadata: {
+            totalTools: GITHUB_TOOLS.length,
+            categoryTools: categoryCount,
+            relatedCategory: tool.category,
+          },
+        };
+      }
+
+      // Tool not found - return helpful error for AI user
+      return {
+        error: `Tool "${toolName}" not found`,
+        suggestion: "Use searchTools() to find available tools",
+        availableTools: GITHUB_TOOLS.length,
+      };
     }
 
     function getToolsInCategoryHelper(category: string) {
