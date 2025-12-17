@@ -79,8 +79,7 @@ github-mcp-server/
 │   └── auth/                   # Authentication (GitHub App + PAT)
 │       └── github_app.py       # Dual-auth implementation
 ├── deno_executor/             # TypeScript runtime
-│   ├── mod.ts                 # Single-run executor
-│   ├── mod-pooled.ts          # Pooled executor (persistent MCP)
+│   ├── mod.ts                 # Unified executor (supports both pooled and single-shot modes)
 │   ├── tool-definitions.ts    # Tool schema catalog (112 tools)
 │   ├── code-validator.ts      # Code validation & sanitization
 │   ├── error-codes.ts         # Standardized error codes
@@ -265,28 +264,31 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
 **Files:**
 - `src/github_mcp/deno_runtime.py` - Python bridge
 - `src/github_mcp/utils/deno_pool.py` - Connection pooling
-- `deno_executor/mod.ts` - Single-run executor
-- `deno_executor/mod-pooled.ts` - Pooled executor
+- `deno_executor/mod.ts` - Unified executor (supports both modes)
 
-#### Single-Run Executor (`mod.ts`)
+#### Unified Executor (`mod.ts`)
 
-**Purpose:** One-time code execution (testing, debugging)
+**Purpose:** Single executor supporting both pooled and single-shot execution modes
 
-**Flow:**
-1. Read code from stdin (full read until EOF)
-2. Initialize MCP client
-3. Execute user code with injected helpers
-4. Return JSON result
-5. Close MCP client
+**Modes:**
+1. **Pooled mode (default):** Persistent process for connection pooling
+   - Initialize MCP connection once (persistent)
+   - Loop: Read JSON lines from stdin
+   - Execute each line with persistent connection
+   - Keep process alive for reuse
+
+2. **Single-shot mode (`--single-shot` flag):** One-time code execution
+   - Read code from stdin (full read until EOF)
+   - Initialize MCP client
+   - Execute user code with injected helpers
+   - Return JSON result
+   - Close MCP client and exit
 
 **Key Features:**
-- Reads **all** stdin (supports multiline code)
-- Command-line args fallback for testing
+- Unified codebase eliminates duplication
+- Supports both execution modes via command-line flag
+- Reads **all** stdin in single-shot mode (supports multiline code)
 - Graceful error handling with structured errors
-
-#### Pooled Executor (`mod-pooled.ts`)
-
-**Purpose:** Persistent process for connection pooling
 
 **Flow:**
 1. Initialize MCP connection once (persistent)
@@ -620,7 +622,7 @@ def _handle_api_error(e: Exception, context: str) -> str:
        ↓
 ┌──────────────────────────┐
 │ Deno Executor            │
-│ (mod-pooled.ts)          │
+│ (mod.ts)                  │
 │ - Parses JSON            │
 │ - Executes user code     │
 │ - callMCPTool(...)       │
@@ -915,7 +917,7 @@ For production and typical runtime use, environment variables should be configur
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  Deno Executor (Pooled)                      │
-│              (deno_executor/mod-pooled.ts)                    │
+│              (deno_executor/mod.ts)                           │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ - Persistent MCP connection                           │   │
 │  │ - Reads JSON lines from stdin                         │   │
@@ -997,7 +999,7 @@ For production and typical runtime use, environment variables should be configur
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              Create PooledDenoProcess 1                      │
-│  - Start Deno subprocess (mod-pooled.ts)                     │
+│  - Start Deno subprocess (mod.ts)                            │
 │  - Initialize MCP connection                                 │
 │  - State: IDLE                                              │
 └───────────────────────────┬─────────────────────────────────┘

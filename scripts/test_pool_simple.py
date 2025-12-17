@@ -8,8 +8,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-os.environ["DENO_POOL_ENABLED"] = "true"
-
 from src.github_mcp.utils.deno_pool import get_pool, execute_with_pool
 
 
