@@ -2,7 +2,7 @@
 
 ## What You Have
 
-**112 GitHub tools** accessed through a single `execute_code` tool.
+**111 GitHub tools** accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
 ## Tool Discovery
@@ -91,7 +91,7 @@ const display = await callMCPTool("github_list_branches", {
 });
 ```
 
-## Tool Categories (112 total)
+## Tool Categories (111 total)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|

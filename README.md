@@ -3,12 +3,12 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-112-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-111-brightgreen.svg)](#-available-tools)
 [![Version](https://img.shields.io/badge/version-2.5.4-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.4)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
 
-👉 New here? Start with the quick guide: [START_HERE.md](START_HERE.md)
+👉 New here? See the [Quick Start Guide](docs/QUICKSTART.md)
 
 ## ✨ What's New
 
@@ -110,7 +110,7 @@
 
 **New Architecture:**
 - Single `execute_code` tool exposed to Claude
-- Write TypeScript code calling 112 tools on-demand
+- Write TypeScript code calling 111 tools on-demand
 - 95% faster initialization (45s → 2s)
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
@@ -317,7 +317,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 | Aspect | Traditional MCP | Code-First MCP (Us) |
 |--------|----------------|---------------------|
-| Tools exposed | 112 tools | 1 tool |
+| Tools exposed | 111 tools | 1 tool |
 | Token cost | ~70,000 | ~800 |
 | Reduction | - | **98%** |
 | Functionality | Same | Same |
@@ -328,7 +328,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 - **Massive token savings:** 98% reduction means faster responses and lower costs
 - **Complex workflows:** Combine multiple operations in single execution
 - **Conditional logic:** Use if/else, loops, and full programming capability
-- **Same functionality:** All 112 GitHub tools still available
+- **Same functionality:** All 111 GitHub tools still available
 
 This architecture validates Anthropic's research predictions about code-first MCP.
 
@@ -836,7 +836,7 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 - **CI/CD**: 4 quality gates (lint, type, security, test)
 - **Meta Achievement**: Tools test themselves (∞)
 
-[Read more about our testing philosophy →](TESTING.md)
+[Read more about our testing philosophy →](tests/TEST_SUITE_GUIDE.md)
 
 **📖 Need detailed setup instructions?** See [Advanced GitHub App Guide](docs/ADVANCED_GITHUB_APP.md)
 
@@ -1102,11 +1102,11 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.4 with 112 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
+**Current:** v2.5.4 with 111 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 
-📋 **[View Detailed Roadmap →](docs/FEATURE_ROADMAP.md)**
+📋 **Detailed roadmap coming soon.**
 
 ---
 
