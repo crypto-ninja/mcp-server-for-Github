@@ -228,32 +228,30 @@ function searchTools(keyword: string): Array<{
  * console.log(info.example);
  */
 function getToolInfo(toolName: string): any {
-  const allTools = listAvailableTools();
-
-  // Search through all categories for the tool
-  for (const [category, tools] of Object.entries(allTools.tools)) {
-    for (const tool of tools as ToolDefinition[]) {
-      if (tool.name === toolName) {
-        return {
-          ...tool,
-          category: category,
-          usage: `await callMCPTool("${toolName}", parameters)`,
-          // Add helpful metadata
-          metadata: {
-            totalTools: allTools.totalTools,
-            categoryTools: (tools as ToolDefinition[]).length,
-            relatedCategory: category,
-          },
-        };
-      }
-    }
+  // Search through GITHUB_TOOLS directly for full tool definition
+  const tool = GITHUB_TOOLS.find(t => t.name === toolName);
+  
+  if (tool) {
+    // Get category count for metadata
+    const categoryCount = GITHUB_TOOLS.filter(t => t.category === tool.category).length;
+    
+    return {
+      ...tool,
+      usage: `await callMCPTool("${toolName}", parameters)`,
+      // Add helpful metadata
+      metadata: {
+        totalTools: GITHUB_TOOLS.length,
+        categoryTools: categoryCount,
+        relatedCategory: tool.category,
+      },
+    };
   }
 
   // Tool not found
   return {
     error: `Tool "${toolName}" not found`,
     suggestion: "Use searchTools() to find available tools",
-    availableTools: allTools.totalTools,
+    availableTools: GITHUB_TOOLS.length,
   };
 }
 
