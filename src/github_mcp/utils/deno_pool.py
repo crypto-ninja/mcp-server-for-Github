@@ -95,11 +95,7 @@ class DenoConnectionPool:
             process = await asyncio.create_subprocess_exec(
                 "deno",
                 "run",
-                "--allow-read",  # Read MCP server files
-                "--allow-run",  # Spawn MCP server process
-                "--allow-env",  # Access environment variables
-                "--allow-net",  # Network access for GitHub API
-                "--allow-all",  # Simplified permissions
+                "--allow-all",  # All permissions (read, run, env, net)
                 str(executor_path),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,

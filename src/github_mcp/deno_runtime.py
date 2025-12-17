@@ -55,11 +55,7 @@ class DenoRuntime:
                 [
                     "deno",
                     "run",
-                    "--allow-read",  # Read MCP server files
-                    "--allow-run",  # Spawn MCP server process
-                    "--allow-env",  # Access environment variables
-                    "--allow-net",  # Network access for GitHub API
-                    "--allow-all",  # Simplified permissions
+                    "--allow-all",  # All permissions (read, run, env, net)
                     str(self.deno_executor_path),
                     "--single-shot",  # Use single-shot mode for non-pooled execution
                 ],
