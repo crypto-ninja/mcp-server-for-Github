@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/Tools-111-brightgreen.svg)](#-available-tools)
+[![Tools](https://img.shields.io/badge/Tools-112-brightgreen.svg)](#-available-tools)
 [![Version](https://img.shields.io/badge/version-2.5.4-blue.svg)](https://github.com/crypto-ninja/mcp-server-for-Github/releases/tag/v2.5.4)
 
 > **The most comprehensive GitHub MCP server** - Full GitHub workflow automation with Actions monitoring, advanced PR management, intelligent code search, and complete file management. Built for AI-powered development teams.
