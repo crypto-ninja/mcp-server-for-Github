@@ -2220,3 +2220,20 @@ export function getCategories(): string[] {
   return Array.from(categories).sort();
 }
 
+/**
+ * Get compact tool listing by category
+ * Returns just names grouped by category - use getToolInfo() for full details
+ */
+export function getCompactToolsByCategory(): Array<{
+  name: string;
+  count: number;
+  tools: string[];
+}> {
+  const categories = getCategories();
+  return categories.map(category => ({
+    name: category,
+    count: GITHUB_TOOLS.filter(t => t.category === category).length,
+    tools: GITHUB_TOOLS.filter(t => t.category === category).map(t => t.name)
+  }));
+}
+

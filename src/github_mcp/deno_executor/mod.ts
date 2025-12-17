@@ -47,6 +47,7 @@ import {
 } from "../servers/client-deno.ts";
 import {
   getCategories,
+  getCompactToolsByCategory,
   getToolsByCategory,
   GITHUB_TOOLS,
   type ToolDefinition,
@@ -108,41 +109,17 @@ function createSuccessResponse<T>(data: T): string {
 }
 
 /**
- * List all available GitHub MCP tools with complete schemas
- * This enables intelligent tool discovery without loading all tools into context
+ * List all available GitHub MCP tools (compact format)
+ * Returns tool names grouped by category - use getToolInfo(toolName) for full details
+ * 
+ * This compact format prevents buffer overflow with 112+ tools
  */
 function listAvailableTools() {
-  // Group by category
-  const byCategory: Record<string, ToolDefinition[]> = {};
-
-  for (const tool of GITHUB_TOOLS) {
-    if (!byCategory[tool.category]) {
-      byCategory[tool.category] = [];
-    }
-    byCategory[tool.category].push(tool);
-  }
-
   return {
     totalTools: GITHUB_TOOLS.length,
-    categories: getCategories(),
-    tools: byCategory,
-    byCategory,
-    usage: "Call any tool via: await callMCPTool(toolName, parameters)",
-    quickReference: {
-      "Repository Management": GITHUB_TOOLS.filter((t) =>
-        t.category === "Repository Management"
-      ).map((t) => t.name),
-      "Issues": GITHUB_TOOLS.filter((t) => t.category === "Issues").map((t) =>
-        t.name
-      ),
-      "Pull Requests": GITHUB_TOOLS.filter((t) =>
-        t.category === "Pull Requests"
-      ).map((t) => t.name),
-      "Files": GITHUB_TOOLS.filter((t) => t.category === "File Operations").map(
-        (t) => t.name,
-      ),
-    },
-    exampleTool: GITHUB_TOOLS[0],
+    categories: getCompactToolsByCategory(),
+    usage: "Use getToolInfo(toolName) for full details, or callMCPTool(toolName, params) to execute",
+    tip: "Use searchTools(keyword) to find tools by name, description, or category"
   };
 }
 
@@ -161,13 +138,16 @@ function listAvailableTools() {
  * const createTools = searchTools("create");
  * // Returns all tools that create resources
  */
+/**
+ * Search for tools by keyword (compact format)
+ * Returns matching tool names with descriptions - use getToolInfo(toolName) for full details
+ */
 function searchTools(keyword: string): Array<{
   name: string;
   category: string;
   description: string;
   relevance: number;
   matchedIn: string[];
-  tool: ToolDefinition;
 }> {
   const results: Array<{
     name: string;
@@ -175,7 +155,6 @@ function searchTools(keyword: string): Array<{
     description: string;
     relevance: number;
     matchedIn: string[];
-    tool: ToolDefinition;
   }> = [];
   const searchTerm = keyword.toLowerCase();
 
@@ -225,7 +204,6 @@ function searchTools(keyword: string): Array<{
         description: tool.description,
         relevance: relevance,
         matchedIn: matches,
-        tool: tool, // Include full tool object
       });
     }
   }
@@ -250,32 +228,30 @@ function searchTools(keyword: string): Array<{
  * console.log(info.example);
  */
 function getToolInfo(toolName: string): any {
-  const allTools = listAvailableTools();
-
-  // Search through all categories for the tool
-  for (const [category, tools] of Object.entries(allTools.tools)) {
-    for (const tool of tools as ToolDefinition[]) {
-      if (tool.name === toolName) {
-        return {
-          ...tool,
-          category: category,
-          usage: `await callMCPTool("${toolName}", parameters)`,
-          // Add helpful metadata
-          metadata: {
-            totalTools: allTools.totalTools,
-            categoryTools: (tools as ToolDefinition[]).length,
-            relatedCategory: category,
-          },
-        };
-      }
-    }
+  // Search through GITHUB_TOOLS directly for full tool definition
+  const tool = GITHUB_TOOLS.find(t => t.name === toolName);
+  
+  if (tool) {
+    // Get category count for metadata
+    const categoryCount = GITHUB_TOOLS.filter(t => t.category === tool.category).length;
+    
+    return {
+      ...tool,
+      usage: `await callMCPTool("${toolName}", parameters)`,
+      // Add helpful metadata
+      metadata: {
+        totalTools: GITHUB_TOOLS.length,
+        categoryTools: categoryCount,
+        relatedCategory: tool.category,
+      },
+    };
   }
 
   // Tool not found
   return {
     error: `Tool "${toolName}" not found`,
     suggestion: "Use searchTools() to find available tools",
-    availableTools: allTools.totalTools,
+    availableTools: GITHUB_TOOLS.length,
   };
 }
 

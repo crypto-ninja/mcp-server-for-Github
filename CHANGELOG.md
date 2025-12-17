@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.5.6] - 2025-01-XX
+
+### Fixed
+- **Compact Tool Discovery**: `listAvailableTools()` now returns compact format (tool names grouped by category) instead of full tool objects, preventing buffer overflow with 112+ tools (#32)
+
+### Changed
+- `listAvailableTools()` returns `{ totalTools, categories: [{ name, count, tools: string[] }] }`
+- `searchTools()` returns compact results: `[{ name, category, description }]`
+- `getToolInfo(toolName)` unchanged - still returns full parameter details
+
+### Migration Notes
+If you were accessing full tool objects from `listAvailableTools()`:
+```typescript
+// Before (no longer works)
+const params = tools.toolsByCategory["Issues"][0].parameters;
+
+// After (use getToolInfo for full details)
+const toolName = tools.categories.find(c => c.name === "Issues").tools[0];
+const fullTool = getToolInfo(toolName);
+const params = fullTool.parameters;
+```
+
+---
+
 ## v2.5.5 - MCP Registry Ready (December 17, 2025)
 
 ### Added
