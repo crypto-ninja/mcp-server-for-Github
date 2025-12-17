@@ -34,6 +34,8 @@ import {
   getCompactToolsByCategory,
   getToolsByCategory,
   GITHUB_TOOLS,
+  type ToolDefinition,
+  type ToolParameter,
 } from "./tool-definitions.ts";
 import { sanitizeErrorMessage, validateCode } from "./code-validator.ts";
 import { ErrorCodes } from "./error-codes.ts";
@@ -190,36 +192,98 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
     }
 
     /**
-     * Search for tools by keyword (compact format)
-     * Returns matching tool names with descriptions - use getToolInfo(toolName) for full details
+     * Search for tools by keyword (compact format with relevance)
+     * Returns matching tool names sorted by relevance - use getToolInfo(toolName) for full details
      */
     function searchToolsHelper(keyword: string) {
-      const lowerKeyword = keyword.toLowerCase();
+      const searchTerm = keyword.toLowerCase();
       const results: Array<{
         name: string;
         category: string;
         description: string;
+        relevance: number;
+        matchedIn: string[];
       }> = [];
       
       for (const tool of GITHUB_TOOLS) {
-        if (
-          tool.name.toLowerCase().includes(lowerKeyword) ||
-          tool.description?.toLowerCase().includes(lowerKeyword) ||
-          tool.category?.toLowerCase().includes(lowerKeyword)
-        ) {
+        const matches: string[] = [];
+        let relevance = 0;
+        
+        // Check tool name (highest relevance)
+        if (tool.name.toLowerCase().includes(searchTerm)) {
+          matches.push("name");
+          relevance += 10;
+        }
+        
+        // Check description
+        if (tool.description?.toLowerCase().includes(searchTerm)) {
+          matches.push("description");
+          relevance += 5;
+        }
+        
+        // Check category
+        if (tool.category.toLowerCase().includes(searchTerm)) {
+          matches.push("category");
+          relevance += 3;
+        }
+        
+        // Check parameter names and descriptions
+        if (tool.parameters) {
+          for (const [paramName, paramInfo] of Object.entries(tool.parameters)) {
+            const param = paramInfo as ToolParameter;
+            if (paramName.toLowerCase().includes(searchTerm)) {
+              matches.push(`parameter: ${paramName}`);
+              relevance += 2;
+            }
+            if (param.description?.toLowerCase().includes(searchTerm)) {
+              matches.push(`parameter description: ${paramName}`);
+              relevance += 1;
+            }
+          }
+        }
+        
+        // If matches found, add to results
+        if (matches.length > 0) {
           results.push({
             name: tool.name,
             category: tool.category,
             description: tool.description,
+            relevance: relevance,
+            matchedIn: matches,
           });
         }
       }
+      
+      // Sort by relevance (highest first)
+      results.sort((a, b) => b.relevance - a.relevance);
       
       return results;
     }
 
     function getToolInfoHelper(toolName: string) {
-      return GITHUB_TOOLS.find((t) => t.name === toolName);
+      const tool = GITHUB_TOOLS.find((t) => t.name === toolName);
+      
+      if (tool) {
+        // Get category count for metadata
+        const categoryCount = GITHUB_TOOLS.filter(t => t.category === tool.category).length;
+        
+        return {
+          ...tool,
+          usage: `await callMCPTool("${toolName}", parameters)`,
+          metadata: {
+            totalTools: GITHUB_TOOLS.length,
+            categoryTools: categoryCount,
+            relatedCategory: tool.category,
+          },
+        };
+      }
+
+      // Tool not found - return helpful error for AI user
+      return {
+        error: `Tool "${toolName}" not found`,
+        suggestion: "Use searchTools() to find available tools",
+        availableTools: GITHUB_TOOLS.length,
+      };
     }
 
     function getToolsInCategoryHelper(category: string) {
@@ -281,6 +345,29 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
 }
 
 /**
+ * Read full stdin content (for single-shot mode)
+ */
+async function readFullStdin(): Promise<string> {
+  const reader = Deno.stdin.readable.getReader();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) chunks.push(value);
+  }
+  reader.releaseLock();
+  if (chunks.length === 0) return "";
+  const total = chunks.reduce((acc, c) => acc + c.length, 0);
+  const all = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    all.set(c, offset);
+    offset += c.length;
+  }
+  return new TextDecoder().decode(all).trim();
+}
+
+/**
  * Main entry point for pooled execution
  *
  * Reads JSON lines from stdin; each line should be a JSON object with a `code` field.
@@ -290,6 +377,29 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
  * KEY: Keeps MCP connection alive across executions
  */
 if (import.meta.main) {
+  // Check for single-shot mode (non-pooled execution)
+  const singleShot = Deno.args.includes("--single-shot");
+  
+  if (singleShot) {
+    // Single-shot mode: read stdin once, execute, exit
+    const code = await readFullStdin();
+    if (!code || code.trim() === "") {
+      console.log(JSON.stringify({
+        error: true,
+        message: "No code provided",
+        code: "CODE_EMPTY"
+      }));
+      Deno.exit(1);
+    }
+    
+    // Initialize MCP for single execution
+    await ensureMCPConnection();
+    const result = await executeWithPersistentConnection(code);
+    await closeMCPClient();
+    Deno.exit(result.error ? 1 : 0);
+  }
+  
+  // Pooled mode: read JSON lines in a loop
   const decoder = new TextDecoder();
   const reader = Deno.stdin.readable.getReader();
 
