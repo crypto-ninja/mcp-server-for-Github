@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.5.5 - MCP Registry Ready (December 17, 2025)
+
+### Added
+- `server.json` for MCP Registry submission
+- `mcp-name` validation tag in README.md
+- GitHub Actions workflow for automated PyPI publishing (trusted publishing)
+- `RELEASE_CHECKLIST.md` for local release quality gate (gitignored)
+
+### Changed
+- Release process now automated via GitHub Actions on version tags
+- PyPI uploads use OIDC trusted publishing (no API tokens)
+
+### Fixed
+- Package now includes all required metadata for MCP Registry validation
+
 ## [2.5.4] - 2025-12-13
 
 ### Fixed
