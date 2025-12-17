@@ -478,9 +478,11 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
         return _handle_api_error(e)
 
 
-async def str_replace(params: StrReplaceInput) -> str:
+async def workspace_str_replace(params: StrReplaceInput) -> str:
     """
-    Replace an exact string match in a file with a new string.
+    [LOCAL] Replace an exact string match in a local workspace file.
+    
+    For editing files on GitHub remote, use github_str_replace instead.
 
     **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable
     to your project directory. Defaults to current working directory.
@@ -576,9 +578,11 @@ async def str_replace(params: StrReplaceInput) -> str:
         return _handle_api_error(e)
 
 
-async def repo_read_file_chunk(params: ReadFileChunkInput) -> str:
+async def workspace_read_file(params: ReadFileChunkInput) -> str:
     """
-    Read a specific range of lines from a local file under the workspace root.
+    [LOCAL] Read a specific range of lines from a local workspace file.
+    
+    For reading files from GitHub remote, use github_get_file_content instead.
 
     **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable
     to your project directory. Defaults to current working directory.

@@ -90,8 +90,8 @@ class MCPToolExtractor:
         "github_search_repositories": "search",
         # Workspace operations (local)
         "workspace_grep": "workspace",
-        "str_replace": "workspace",
-        "repo_read_file_chunk": "workspace",
+        "workspace_str_replace": "workspace",
+        "workspace_read_file": "workspace",
         # Remote operations (GitHub remote)
         "github_grep": "remote",
         "github_read_file_chunk": "remote",

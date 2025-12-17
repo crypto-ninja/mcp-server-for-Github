@@ -170,8 +170,8 @@ from .misc import (
 
 from .workspace import (
     workspace_grep,
-    str_replace,
-    repo_read_file_chunk,
+    workspace_str_replace,
+    workspace_read_file,
 )
 
 __all__ = [
@@ -304,8 +304,8 @@ __all__ = [
     "github_license_info",
     # Actions - Workflow Suggestion (1)
     "github_suggest_workflow",
-    # Workspace (3)
+    # Workspace (3) - LOCAL file operations
     "workspace_grep",
-    "str_replace",
-    "repo_read_file_chunk",
+    "workspace_str_replace",
+    "workspace_read_file",
 ]

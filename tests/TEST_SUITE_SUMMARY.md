@@ -83,7 +83,7 @@ pytest --cov=github_mcp --cov=auth --cov-report=html --cov-report=term
 The discovery script identified 2 issues:
 
 1. **`github_read_file_chunk`** - In TypeScript list but doesn't support `response_format`
-2. **`repo_read_file_chunk`** - In TypeScript list but doesn't support `response_format`
+2. **`workspace_read_file`** - In TypeScript list but doesn't support `response_format`
 
 ### Recommended Fix
 

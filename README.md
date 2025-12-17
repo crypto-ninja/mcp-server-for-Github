@@ -134,15 +134,15 @@
 
 ### Workspace Configuration
 
-The workspace tools (`workspace_grep`, `str_replace`, `repo_read_file_chunk`) enable powerful local file operations on YOUR projects.
+The workspace tools (`workspace_grep`, `workspace_str_replace`, `workspace_read_file`) enable powerful local file operations on YOUR projects.
 
 #### What are Workspace Tools?
 
 These tools allow Claude to:
 
 - 🔍 **Search** your codebase efficiently (`workspace_grep`)
-- ✏️ **Edit** files with surgical precision (`str_replace`)
-- 📖 **Read** file chunks without loading entire files (`repo_read_file_chunk`)
+- ✏️ **Edit** files with surgical precision (`workspace_str_replace`)
+- 📖 **Read** file chunks without loading entire files (`workspace_read_file`)
 
 #### Setting Your Workspace Root
 
@@ -238,10 +238,10 @@ If `MCP_WORKSPACE_ROOT` is not set, tools will use your current working director
 workspace_grep("TODO", file_pattern="*.py")
 
 # Read a specific file chunk
-repo_read_file_chunk("src/main.py", start_line=1, num_lines=50)
+workspace_read_file("src/main.py", start_line=1, num_lines=50)
 
 # Make surgical edits
-str_replace(
+workspace_str_replace(
     path="config/settings.py",
     old_str="DEBUG = True",
     new_str="DEBUG = False",

@@ -1,7 +1,7 @@
-// servers/github/workspace/str-replace.ts
+// servers/github/workspace/workspace-str-replace.ts
 import { callMCPTool } from '../../client.js';
 
-export interface StrReplaceInput {
+export interface WorkspaceStrReplaceInput {
   /** Relative path to file under repository root */
   path: string;
   /** Exact string to find and replace (must be unique match) */
@@ -13,16 +13,19 @@ export interface StrReplaceInput {
 }
 
 /**
- * Replace an exact string match in a file with a new string.
- 
+ * [LOCAL] Replace an exact string match in a local workspace file.
+ * 
+ * For editing files on GitHub remote, use github_str_replace instead.
+ * 
  * @param input - Tool parameters
  * @returns Tool execution result
  */
-export async function str_replace(
-    input: StrReplaceInput
+export async function workspace_str_replace(
+    input: WorkspaceStrReplaceInput
 ): Promise<string> {
     return callMCPTool<string>(
-        'str_replace',
+        'workspace_str_replace',
         input
     );
 }
+

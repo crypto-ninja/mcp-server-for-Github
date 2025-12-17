@@ -2122,16 +2122,16 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 
   // WORKSPACE (3 tools)
   {
-    name: "repo_read_file_chunk",
-    category: "Workspace",
-    description: "Read a chunk of lines from a file in the workspace repository",
+    name: "workspace_read_file",
+    category: "Workspace (Local)",
+    description: "[LOCAL] Read lines from a file in your local workspace. For GitHub remote files, use github_get_file_content",
     parameters: {
       path: { type: "string", required: true, description: "File path relative to repo root" },
       start_line: { type: "number", required: true, description: "Starting line number (1-indexed)" },
       num_lines: { type: "number", required: true, description: "Number of lines to read" }
     },
     returns: "File chunk with line numbers",
-    example: `const chunk = await callMCPTool("repo_read_file_chunk", {
+    example: `const chunk = await callMCPTool("workspace_read_file", {
   path: "src/index.js",
   start_line: 1,
   num_lines: 50
@@ -2139,7 +2139,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   },
   {
     name: "workspace_grep",
-    category: "Workspace",
+    category: "Workspace (Local)",
     description: "Search for pattern in workspace files (90-98% more token efficient than reading full files)",
     parameters: {
       pattern: { type: "string", required: true, description: "Regex pattern to search for" },
@@ -2157,9 +2157,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
 });`
   },
   {
-    name: "str_replace",
-    category: "Workspace",
-    description: "Replace a string in a file (must be unique in the file)",
+    name: "workspace_str_replace",
+    category: "Workspace (Local)",
+    description: "[LOCAL] Replace a string in a local workspace file. For GitHub remote files, use github_str_replace",
     parameters: {
       path: { type: "string", required: true, description: "Relative path to file under repository root" },
       old_str: { type: "string", required: true, description: "Exact string to find and replace (must be unique match)" },
@@ -2167,7 +2167,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       description: { type: "string", required: false, description: "Optional description of the change" }
     },
     returns: "Success confirmation",
-    example: `const result = await callMCPTool("str_replace", {
+    example: `const result = await callMCPTool("workspace_str_replace", {
   path: "version.txt",
   old_str: "v1.0.0",
   new_str: "v2.0.0"

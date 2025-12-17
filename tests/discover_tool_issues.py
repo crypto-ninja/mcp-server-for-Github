@@ -237,7 +237,7 @@ def discover_missing_tools() -> List[Dict]:
         "github_get_user_info",
         "github_grep",
         "github_read_file_chunk",
-        "repo_read_file_chunk",
+        "workspace_read_file",
         "workspace_grep",
     ]
 

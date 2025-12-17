@@ -233,7 +233,7 @@ export async function callMCPTool<T = string>(
                 // Advanced read operations
                 'github_grep',
                 'workspace_grep'
-                // Note: github_read_file_chunk and repo_read_file_chunk do NOT support response_format
+                // Note: github_read_file_chunk and workspace_read_file do NOT support response_format
             ];
             
             // Only add if not already specified and tool supports it
@@ -267,7 +267,7 @@ export async function callMCPTool<T = string>(
         const RAW_TEXT_TOOLS = new Set([
             'github_get_file_content',
             'github_read_file_chunk',
-            'repo_read_file_chunk',
+            'workspace_read_file',
         ]);
         if (RAW_TEXT_TOOLS.has(toolName)) {
             return text as unknown as T;

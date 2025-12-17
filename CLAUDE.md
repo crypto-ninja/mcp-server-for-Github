@@ -5,6 +5,28 @@
 **112 tools** (111 internal + execute_code) accessed through a single `execute_code` tool.
 Write TypeScript to discover, call, and chain tools dynamically.
 
+## Local vs Remote Tools
+
+The server provides two types of file operation tools:
+
+| Operation | Local (workspace_*) | Remote (github_*) |
+|-----------|---------------------|-------------------|
+| Read file | `workspace_read_file` | `github_get_file_content` |
+| Search/grep | `workspace_grep` | `github_search_code` |
+| Edit file | `workspace_str_replace` | `github_str_replace` |
+
+**When to use Local (workspace_*) tools:**
+- Reading/editing uncommitted local files
+- Working in your development environment
+- Files in MCP_WORKSPACE_ROOT directory
+
+**When to use Remote (github_*) tools:**
+- Reading files from GitHub repositories
+- Creating commits, PRs, issues
+- Any operation that hits the GitHub API
+
+**Key difference:** Local tools work on YOUR filesystem. Remote tools work via GitHub's API and create commits.
+
 ## Tool Discovery
 
 ```typescript
@@ -97,7 +119,7 @@ const display = await callMCPTool("github_list_branches", {
 |----------|-------|-----------|
 | GitHub Actions | 14 | list_workflows, get_workflow_runs, trigger_workflow, get_workflow_run, list_run_jobs, get_job, get_job_logs, rerun_workflow, cancel_workflow, list_artifacts, get_artifact, delete_artifact |
 | Security | 13 | list_dependabot_alerts, get_dependabot_alert, update_dependabot_alert, list_code_scanning_alerts, list_secret_scanning_alerts, list_security_advisories |
-| File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, str_replace, batch_file_operations |
+| File Operations | 9 | get_file_content, list_contents, create/update/delete_file, grep, read_chunk, workspace_str_replace, batch_file_operations |
 | Projects | 9 | list_repo_projects, list_org_projects, get_project, create_project, update_project, delete_project, list_columns, create_column |
 | Repository Management | 8 | get_repo_info, create_repository, update_repository, list_user_repos, list_org_repos, list_collaborators, check_collaborator, list_teams |
 | Pull Requests | 7 | create/merge/close_pr, get_pr_details, get_pr_overview_graphql, create_pr_review |
@@ -110,7 +132,7 @@ const display = await callMCPTool("github_list_branches", {
 | Users | 5 | get_user_info, get_authenticated_user, search_users, list_user_repos, list_org_repos |
 | Labels | 3 | list_labels, create_label, delete_label |
 | Stargazers | 3 | list_stargazers, star_repository, unstar_repository |
-| Workspace | 3 | repo_read_file_chunk, workspace_grep, str_replace |
+| Workspace (Local) | 3 | workspace_read_file, workspace_grep, workspace_str_replace |
 | Search | 1 | search_code |
 | Commits | 1 | list_commits |
 
