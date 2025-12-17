@@ -88,17 +88,8 @@ class DenoConnectionPool:
     async def _create_process(self) -> Optional[PooledDenoProcess]:
         """Create a new Deno subprocess."""
         try:
-            # Use pooled executor for process reuse
-            pooled_executor_path = self.project_root / "deno_executor" / "mod-pooled.ts"
-            # Check if pooled executor exists, otherwise fall back to regular executor
-            if pooled_executor_path.exists():
-                executor_path = pooled_executor_path
-                logger.debug(f"Using pooled executor: {executor_path}")
-            else:
-                executor_path = self.deno_executor_path
-                logger.warning(
-                    f"Pooled executor not found, using regular executor: {executor_path}"
-                )
+            # Use unified executor (mod.ts supports both pooled and single-shot modes)
+            executor_path = self.deno_executor_path
 
             # Start Deno process with the MCP bridge
             process = await asyncio.create_subprocess_exec(
@@ -108,6 +99,7 @@ class DenoConnectionPool:
                 "--allow-run",  # Spawn MCP server process
                 "--allow-env",  # Access environment variables
                 "--allow-net",  # Network access for GitHub API
+                "--allow-all",  # Simplified permissions
                 str(executor_path),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
