@@ -17,7 +17,7 @@
 - 🔄 Removed admin-only tools (delete_repository, transfer_repository)
 - ➕ Added delete tools (delete_release, delete_gist)
 - 🔧 Fixed return data for create_branch, create_file, create_pull_request
-- ✅ Test coverage expanded (290 → 299 tests)
+- ✅ Test coverage expanded to 320 tests
 
 **Previous: v2.5.1 - Architecture Refactor & Performance (December 9, 2025)**
 
@@ -25,7 +25,7 @@
 - ⚡ **Connection Pooling** - 97% latency reduction (4000ms → 108ms for subsequent calls)
 - 🔧 **Dict→Model Conversion** - `callMCPTool` now works seamlessly with plain JavaScript objects
 - 📝 **Multiline Code Support** - Fixed truncation issues, full JSON protocol support
-- ✅ **Live Integration Tests** - 15/15 passing, 299 total tests
+- ✅ **Live Integration Tests** - 15/15 passing, 320 total tests
 - 📦 **21 Tool Modules** - Clean organization: tools/, models/, utils/, auth/
 
 **Previous: v2.5.0 - Phase 2 Full Send (December 4, 2025)**
@@ -65,7 +65,7 @@
 **New in v2.3.0:**
 - 🎯 **Architecture Clarification** - Single-tool design formalized (always the intended architecture)
 - 🛠️ **CLI Utilities** - Development diagnostics moved to CLI (`github-mcp-cli`)
-- 📊 **Testing Excellence** - 214 tests, 63% coverage (up from 181 tests, 55%)
+- 📊 **Testing Excellence** - 320 tests, 63% coverage (up from 181 tests, 55%)
 - ✅ **33 New Tests** - Comprehensive coverage of auth, utilities, and tool operations
 - 📝 **Documentation Updates** - Clear architecture documentation and CLI usage
 
@@ -812,7 +812,7 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 
 **Test Results:**
 
-- ✅ 214/214 tests passing (100% pass rate)
+- ✅ 320/320 tests passing (100% pass rate)
 - ✅ 63% code coverage (comprehensive test suite)
 - ✅ 0 issues found by automated discovery
 - ✅ Self-validating architecture
@@ -828,7 +828,7 @@ Our test suite runs inside Cursor IDE, using the GitHub MCP Server to test the G
 
 ### Quality Metrics
 
-- **Test Coverage**: 63% (214 comprehensive tests)
+- **Test Coverage**: 63% (320 comprehensive tests)
 - **Test Pass Rate**: 100%
 - **Type Coverage**: 100% (Mypy strict mode)
 - **Code Quality**: 0 linting errors (Ruff)

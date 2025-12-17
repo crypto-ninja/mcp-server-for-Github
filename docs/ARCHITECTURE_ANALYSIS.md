@@ -17,7 +17,7 @@ The GitHub MCP Server is a **code-first MCP implementation** that provides 111 G
 - **108 internal tools** (GitHub API + workspace operations)
 - **21 tool modules** organized by domain
 - **97% latency reduction** with connection pooling (~4000ms → ~108ms)
-- **299 tests** with comprehensive coverage
+- **320 tests** with comprehensive coverage
 - **Dual authentication** (GitHub App + PAT fallback)
 
 ### Core Innovations
@@ -88,7 +88,7 @@ github-mcp-server/
 ├── servers/                    # MCP client implementation
 │   ├── client-deno.ts         # Deno-side MCP client
 │   └── client.ts              # Node.js MCP client (legacy)
-├── tests/                      # Test suite (299 tests)
+├── tests/                      # Test suite (320 tests)
 │   ├── test_individual_tools.py      # Per-tool unit tests
 │   ├── test_execute_code.py          # execute_code integration
 │   ├── test_execute_code_mcp.py      # MCP bridge tests
@@ -735,7 +735,7 @@ Response
 
 ### Test Coverage
 
-**Total Tests:** 297+
+**Total Tests:** 320
 
 **Test Categories:**
 
@@ -807,7 +807,7 @@ python scripts/live_integration_test.py
 
 ### Configuration Files
 
-**`.env` file:**
+**`.env` file (development/local testing only):**
 ```bash
 GITHUB_TOKEN=ghp_your_token_here
 GITHUB_APP_ID=123456
@@ -816,7 +816,9 @@ GITHUB_APP_PRIVATE_KEY_PATH=/path/to/key.pem
 MCP_WORKSPACE_ROOT=/path/to/workspace
 ```
 
-**Claude Desktop Config:**
+For production and typical runtime use, environment variables should be configured via your MCP client (for example, the Claude Desktop config file) rather than a `.env` file.
+
+**Claude Desktop Config (primary runtime configuration):**
 ```json
 {
   "mcpServers": {
@@ -1064,7 +1066,7 @@ MCP_WORKSPACE_ROOT=/path/to/workspace
 ### Architecture Strengths
 
 - **Highly Extensible:** Adding tools is straightforward
-- **Well-Tested:** 299 tests with live integration
+- **Well-Tested:** 320 tests with live integration
 - **Performance-Optimized:** Connection pooling for 35x speedup
 - **Token-Efficient:** 98% reduction vs traditional MCP
 - **Robust Error Handling:** Structured errors with codes
@@ -1086,7 +1088,7 @@ The GitHub MCP Server v2.5.4 represents a **mature, production-ready code-first 
 - **112 tools** across 18 categories
 - **98% token reduction** through code-first architecture
 - **97% latency reduction** through connection pooling
-- **299 tests** with comprehensive coverage
+- **320 tests** with comprehensive coverage
 - **Dual authentication** for flexibility and reliability
 - **Modular structure** for maintainability
 

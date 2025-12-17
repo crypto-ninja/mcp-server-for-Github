@@ -2,6 +2,16 @@
 
 Get up and running with the GitHub MCP Server in 5 minutes!
 
+## Prerequisites
+
+Before installing, ensure you have:
+
+1. **Python 3.10+** - [Download](https://www.python.org/downloads/)
+2. **Deno** - Required for code execution
+   - Windows: `irm https://deno.land/install.ps1 | iex`
+   - macOS: `brew install deno`
+   - Linux: `curl -fsSL https://deno.land/install.sh | sh`
+
 ## Step 1: Install the Package (1 minute)
 
 ### Recommended: Install from PyPI
@@ -95,7 +105,7 @@ Use the module-based approach (recommended):
       "command": "python",
       "args": ["-m", "github_mcp"],
       "env": {
-        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_TOKEN": "ghp_your_token_here"
       }
     }
   }
