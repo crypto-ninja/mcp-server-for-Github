@@ -110,7 +110,7 @@
 
 **New Architecture:**
 - Single `execute_code` tool exposed to Claude
-- Write TypeScript code calling 111 tools on-demand
+- Write TypeScript code calling 112 tools on-demand
 - 95% faster initialization (45s → 2s)
 - 98% cost reduction ($1.05 → $0.01 per workflow)
 
@@ -317,7 +317,7 @@ When you install this server in your MCP client (Cursor, Claude Desktop, etc.):
 
 | Aspect | Traditional MCP | Code-First MCP (Us) |
 |--------|----------------|---------------------|
-| Tools exposed | 111 tools | 1 tool |
+| Tools exposed | 112 tools | 1 tool |
 | Token cost | ~70,000 | ~800 |
 | Reduction | - | **98%** |
 | Functionality | Same | Same |
@@ -1102,7 +1102,7 @@ console.log(`Categories: ${Object.keys(tools.tools).join(", ")}`);
 
 We're building through dogfooding - using our own product reveals what's missing!
 
-**Current:** v2.5.4 with 111 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
+**Current:** v2.5.4 with 112 tools (Code-first architecture with 98% token reduction + 97% latency reduction!)
 **Next:** Phase 2.5 - Workspace Architecture (8x token efficiency!)  
 **Vision:** Phase 4.0 - AI-powered automation
 

@@ -12,7 +12,7 @@ The GitHub MCP Server is a **code-first MCP implementation** that provides 111 G
 
 ### Key Metrics
 
-- **111 tools** across 18 categories
+- **112 tools** across 18 categories
 - **1 exposed MCP tool** (`execute_code`)
 - **108 internal tools** (GitHub API + workspace operations)
 - **21 tool modules** organized by domain
@@ -81,7 +81,7 @@ github-mcp-server/
 ├── deno_executor/             # TypeScript runtime
 │   ├── mod.ts                 # Single-run executor
 │   ├── mod-pooled.ts          # Pooled executor (persistent MCP)
-│   ├── tool-definitions.ts    # Tool schema catalog (111 tools)
+│   ├── tool-definitions.ts    # Tool schema catalog (112 tools)
 │   ├── code-validator.ts      # Code validation & sanitization
 │   ├── error-codes.ts         # Standardized error codes
 │   └── error-handling.ts      # Error handling utilities
@@ -1083,7 +1083,7 @@ MCP_WORKSPACE_ROOT=/path/to/workspace
 
 The GitHub MCP Server v2.5.4 represents a **mature, production-ready code-first MCP implementation** with:
 
-- **111 tools** across 18 categories
+- **112 tools** across 18 categories
 - **98% token reduction** through code-first architecture
 - **97% latency reduction** through connection pooling
 - **299 tests** with comprehensive coverage
