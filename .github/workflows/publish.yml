@@ -1,0 +1,175 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # Run full test suite first
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Run linting
+        run: ruff check src/
+      
+      - name: Run type checking
+        run: mypy src/ --ignore-missing-imports
+      
+      - name: Run tests
+        run: pytest --tb=short -q
+
+  # Publish only if all tests pass
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install build tools
+        run: pip install build
+      
+      - name: Verify version consistency
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          
+          # Check pyproject.toml
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          
+          # Check server.json
+          SERVER_VERSION=$(python -c "import json; print(json.load(open('server.json'))['version'])")
+          SERVER_PKG_VERSION=$(python -c "import json; print(json.load(open('server.json'))['packages'][0]['version'])")
+          
+          echo "Tag version: $TAG_VERSION"
+          echo "pyproject.toml version: $PKG_VERSION"
+          echo "server.json version: $SERVER_VERSION"
+          echo "server.json package version: $SERVER_PKG_VERSION"
+          
+          FAILED=0
+          
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ Tag doesn't match pyproject.toml"
+            FAILED=1
+          fi
+          
+          if [ "$TAG_VERSION" != "$SERVER_VERSION" ]; then
+            echo "❌ Tag doesn't match server.json version"
+            FAILED=1
+          fi
+          
+          if [ "$TAG_VERSION" != "$SERVER_PKG_VERSION" ]; then
+            echo "❌ Tag doesn't match server.json package version"
+            FAILED=1
+          fi
+          
+          if [ $FAILED -eq 1 ]; then
+            exit 1
+          fi
+          
+          echo "✅ All versions match: $TAG_VERSION"
+      
+      - name: Verify MCP Registry requirements
+        run: |
+          # Check mcp-name in README
+          if ! grep -q "mcp-name: io.github.crypto-ninja/github-mcp-server" README.md; then
+            echo "❌ mcp-name tag missing from README.md"
+            exit 1
+          fi
+          echo "✅ mcp-name tag found"
+          
+          # Check server.json has required fields
+          python -c "
+          import json
+          import sys
+          
+          with open('server.json') as f:
+              data = json.load(f)
+          
+          required = ['name', 'description', 'version', 'packages']
+          missing = [r for r in required if r not in data]
+          
+          if missing:
+              print(f'❌ server.json missing required fields: {missing}')
+              sys.exit(1)
+          
+          if len(data.get('description', '')) > 100:
+              print(f'❌ Description too long ({len(data[\"description\"])} > 100 chars)')
+              sys.exit(1)
+          
+          print('✅ server.json structure valid')
+          "
+      
+      - name: Build package
+        run: python -m build
+      
+      - name: Verify package contents
+        run: |
+          echo "Checking wheel contents..."
+          WHEEL=$(ls dist/*.whl)
+          
+          # Check TypeScript files are included
+          if ! python -m zipfile -l "$WHEEL" | grep -q "deno_executor"; then
+            echo "❌ deno_executor missing from wheel"
+            exit 1
+          fi
+          
+          if ! python -m zipfile -l "$WHEEL" | grep -q "servers"; then
+            echo "❌ servers directory missing from wheel"
+            exit 1
+          fi
+          
+          if ! python -m zipfile -l "$WHEEL" | grep -q "deno.json"; then
+            echo "❌ deno.json missing from wheel"
+            exit 1
+          fi
+          
+          echo "✅ All required files present in wheel"
+          
+          # Show package size
+          echo "Package sizes:"
+          ls -lh dist/
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            server.json
+
+
