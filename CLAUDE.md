@@ -30,20 +30,29 @@ The server provides two types of file operation tools:
 ## Tool Discovery
 
 ```typescript
-// See all available tools by category
+// See all available tools (compact format - names grouped by category)
 const tools = listAvailableTools();
+// Returns: { totalTools: 112, categories: [{ name: "Issues", count: 5, tools: [...] }, ...] }
 
-// Search for tools by keyword  
+// Search for tools by keyword (compact results)
 const matches = searchTools("pull request");
+// Returns: [{ name: "github_create_pull_request", category: "Pull Requests", description: "..." }, ...]
 
-// Get full details including required/optional params
+// Get FULL details about a specific tool (parameters, examples, etc.)
 const info = getToolInfo("github_create_issue");
+// Returns complete tool definition with all parameters and examples
 
 // Get all tools in a category
 const prTools = getToolsInCategory("Pull Requests");
 ```
 
-**Always check `getToolInfo()`** - it shows exactly which parameters are required vs optional.
+**Discovery Workflow:**
+1. `listAvailableTools()` → See all tool names by category (compact)
+2. `searchTools(keyword)` → Find relevant tools (compact)
+3. `getToolInfo(toolName)` → Get full details (parameters, examples)
+4. `callMCPTool(name, params)` → Execute the tool
+
+**Always use `getToolInfo()`** before calling unfamiliar tools - it shows required vs optional parameters.
 
 ## Calling Tools
 
@@ -274,10 +283,11 @@ This means chaining multiple tool calls in a single `execute_code` execution is 
 
 ## Key Principles
 
-1. **Discover first** - Use `listAvailableTools()` or `searchTools()` when unsure
-2. **Inspect before calling** - `getToolInfo()` shows required params and return structure
-3. **Chain for efficiency** - Multiple tools in one `execute_code` is better than multiple calls (97% faster with pooling!)
-4. **Dict params work** - Pass plain JavaScript objects to `callMCPTool` - they're automatically converted to Pydantic models
-5. **Multiline code supported** - Write complex workflows with multiple tool calls, conditionals, and loops
-6. **Results contain IDs and URLs** - Useful for chaining (e.g., `issue.number`, `pr.html_url`)
-7. **Human intent drives usage** - What you DO with results depends on what the human asked for
+1. **Discover first** - Use `listAvailableTools()` to see tool names by category
+2. **Search to narrow** - Use `searchTools(keyword)` to find relevant tools
+3. **Inspect before calling** - `getToolInfo(toolName)` shows required params and examples
+4. **Chain for efficiency** - Multiple tools in one `execute_code` is better than multiple calls (97% faster with pooling!)
+5. **Dict params work** - Pass plain JavaScript objects to `callMCPTool` - they're automatically converted to Pydantic models
+6. **Multiline code supported** - Write complex workflows with multiple tool calls, conditionals, and loops
+7. **Results contain IDs and URLs** - Useful for chaining (e.g., `issue.number`, `pr.html_url`)
+8. **Human intent drives usage** - What you DO with results depends on what the human asked for
