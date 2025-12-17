@@ -31,6 +31,7 @@ import {
 } from "../servers/client-deno.ts";
 import {
   getCategories,
+  getCompactToolsByCategory,
   getToolsByCategory,
   GITHUB_TOOLS,
 } from "./tool-definitions.ts";
@@ -175,31 +176,46 @@ async function executeWithPersistentConnection(code: string): Promise<any> {
     );
 
     // Helper functions for tool discovery
+    /**
+     * List all available tools (compact format)
+     * Returns tool names grouped by category - use getToolInfo(toolName) for full details
+     */
     function listAvailableToolsHelper() {
-      const byCategory: Record<string, any[]> = {};
-      for (const tool of GITHUB_TOOLS) {
-        const category = tool.category || "Other";
-        if (!byCategory[category]) {
-          byCategory[category] = [];
-        }
-        byCategory[category].push(tool);
-      }
       return {
         totalTools: GITHUB_TOOLS.length,
-        categories: Object.keys(byCategory),
-        toolsByCategory: byCategory,
-        byCategory,
-        tools: byCategory,
+        categories: getCompactToolsByCategory(),
+        usage: "Use getToolInfo(toolName) for full details, or callMCPTool(toolName, params) to execute",
+        tip: "Use searchTools(keyword) to find tools by name, description, or category"
       };
     }
 
+    /**
+     * Search for tools by keyword (compact format)
+     * Returns matching tool names with descriptions - use getToolInfo(toolName) for full details
+     */
     function searchToolsHelper(keyword: string) {
       const lowerKeyword = keyword.toLowerCase();
-      return GITHUB_TOOLS.filter((tool) =>
-        tool.name.toLowerCase().includes(lowerKeyword) ||
-        tool.description?.toLowerCase().includes(lowerKeyword) ||
-        tool.category?.toLowerCase().includes(lowerKeyword)
-      );
+      const results: Array<{
+        name: string;
+        category: string;
+        description: string;
+      }> = [];
+      
+      for (const tool of GITHUB_TOOLS) {
+        if (
+          tool.name.toLowerCase().includes(lowerKeyword) ||
+          tool.description?.toLowerCase().includes(lowerKeyword) ||
+          tool.category?.toLowerCase().includes(lowerKeyword)
+        ) {
+          results.push({
+            name: tool.name,
+            category: tool.category,
+            description: tool.description,
+          });
+        }
+      }
+      
+      return results;
     }
 
     function getToolInfoHelper(toolName: string) {
