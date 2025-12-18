@@ -1,4 +1,18 @@
-# CLAUDE.md - AI Assistant Guide for GitHub MCP Server
+# MCP Guide - AI Assistant Instructions for GitHub MCP Server
+
+> **🤖 For AI Assistants:** This guide helps you use the GitHub MCP Server effectively.
+> Read this before calling any tools.
+>
+> **📁 For Users:** Rename this file based on your AI assistant for auto-discovery:
+>
+> | AI Assistant | Rename To | Notes |
+> |--------------|-----------|-------|
+> | Claude (Projects/Code) | `CLAUDE.md` | Auto-discovered by Claude |
+> | Cursor | `.cursorrules` | Place in project root |
+> | Windsurf | `.windsurfrules` | Place in project root |
+> | GitHub Copilot | `.github/copilot-instructions.md` | Place in .github folder |
+> | Cline | `.clinerules` | Place in project root |
+> | Other LLMs | Keep as `MCP_GUIDE.md` | Reference manually or in system prompt |
 
 ## What You Have
 
@@ -26,6 +40,8 @@ The server provides two types of file operation tools:
 - Any operation that hits the GitHub API
 
 **Key difference:** Local tools work on YOUR filesystem. Remote tools work via GitHub's API and create commits.
+
+**Note:** Local (workspace_*) tools are only available when the `MCP_WORKSPACE_ROOT` environment variable is configured to point to a local directory. If you're using this MCP server purely for remote GitHub operations, you can ignore the workspace tools.
 
 ## Tool Discovery
 
@@ -79,20 +95,23 @@ const issue = await callMCPTool("github_create_issue", {
 // Get repository info
 const repo = await callMCPTool("github_get_repo_info", {
   owner: "facebook",
-  repo: "react"
+  repo: "react",
+  response_format: "compact"
 });
 
 // List branches
 const branches = await callMCPTool("github_list_branches", {
   owner: "facebook",
-  repo: "react"
+  repo: "react",
+  response_format: "compact"
 });
 
 // List open issues
 const issues = await callMCPTool("github_list_issues", {
   owner: "facebook",
   repo: "react",
-  state: "open"
+  state: "open",
+  response_format: "compact"
 });
 
 // Return combined result
@@ -107,22 +126,28 @@ return {
 
 Many tools support a `response_format` parameter:
 
-- `"json"` - Structured data for programmatic use
+- `"compact"` - **Recommended** - Essential fields only, saves 80-97% tokens
+- `"json"` - Full structured data when you need all fields
 - `"markdown"` - Formatted text for human readability
 
 ```typescript
-// Get raw JSON for processing
+// Get compact data (recommended - saves 80-97% tokens)
 const data = await callMCPTool("github_list_branches", {
+  owner: "user", repo: "repo", response_format: "compact"
+});
+
+// Get full JSON when you need all fields
+const fullData = await callMCPTool("github_list_branches", {
   owner: "user", repo: "repo", response_format: "json"
 });
 
-// Get formatted markdown for display
+// Get formatted markdown for display to humans
 const display = await callMCPTool("github_list_branches", {
   owner: "user", repo: "repo", response_format: "markdown"
 });
 ```
 
-## Tool Categories (111 total)
+## Tool Categories (112 total)
 
 | Category | Count | Key Tools |
 |----------|-------|-----------|
@@ -365,3 +390,96 @@ const suggestion = await callMCPTool("github_suggest_workflow", {
 | Edit 1-2 files | Use API tools |
 | Edit 3+ files | Check `github_suggest_workflow` first |
 | Search code | `github_grep` (already optimized) |
+
+---
+
+## Your AI Development Partner
+
+This MCP server transforms your AI assistant into a GitHub-powered development partner. Whether you're building a website, app, API, or SaaS product, these 112 optimized tools handle the GitHub complexity so you can focus on what matters - your code.
+
+### What You Can Build
+
+With AI + GitHub MCP, you can:
+
+- **Start new projects** - Create repos, set up branch protection, add CI/CD workflows
+- **Manage development** - Create issues, track PRs, handle releases
+- **Collaborate** - Manage team access, run discussions, handle notifications
+- **Stay secure** - Monitor Dependabot alerts, code scanning, secret detection
+- **Automate** - Trigger workflows, manage artifacts, handle deployments
+
+### Example: Full Project Setup
+
+Ask your AI: *"Create a new repo for my React app with CI, branch protection, and initial issues for MVP features"*
+
+Your AI assistant can execute this entire workflow in one conversation:
+```typescript
+// 1. Create the repository
+const repo = await callMCPTool("github_create_repository", {
+  name: "my-react-app",
+  description: "My awesome React application",
+  private: true,
+  auto_init: true
+});
+
+// 2. Create development branch
+await callMCPTool("github_create_branch", {
+  owner: "your-username",
+  repo: "my-react-app",
+  branch: "develop",
+  from_ref: "main"
+});
+
+// 3. Add CI workflow file
+await callMCPTool("github_create_file", {
+  owner: "your-username",
+  repo: "my-react-app",
+  path: ".github/workflows/ci.yml",
+  content: `name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm test`,
+  message: "Add CI workflow"
+});
+
+// 4. Create initial MVP issues
+for (const feature of ["User authentication", "Dashboard UI", "API integration"]) {
+  await callMCPTool("github_create_issue", {
+    owner: "your-username",
+    repo: "my-react-app",
+    title: `[MVP] ${feature}`,
+    labels: ["enhancement", "mvp"]
+  });
+}
+
+return { repo: repo.html_url, message: "Project ready! 🚀" };
+```
+
+### Tips for Working with Your AI Assistant
+
+1. **Be specific** - "Create a PR for the bug fix in auth.js" works better than "make a PR"
+2. **Let it chain** - Complex tasks in one request are faster than multiple small ones
+3. **Ask for discovery** - "What tools can help me manage releases?"
+4. **Review before merge** - AI can create PRs, but you approve them
+
+### Token Efficiency
+
+This MCP server is optimized for AI usage:
+
+| Feature | Benefit |
+|---------|---------|
+| Compact format | 80-97% smaller responses |
+| GraphQL tools | 91% smaller than REST equivalents |
+| Connection pooling | 97% faster after first call |
+| Smart suggestions | `github_suggest_workflow` recommends best approach |
+
+Your tokens go further, your context stays cleaner, your development moves faster.
+
+---
+
+**Built by [MCP Labs](https://mcplabs.co.uk)** - AI-powered development tools.
