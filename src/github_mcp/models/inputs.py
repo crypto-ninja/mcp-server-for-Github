@@ -783,7 +783,9 @@ class ListReleasesInput(BaseModel):
         ge=1,
         le=100,
     )
-    page: Optional[int] = Field(default=1, description="Page number for pagination", ge=1)
+    page: Optional[int] = Field(
+        default=1, description="Page number for pagination", ge=1
+    )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN, description="Output format"
@@ -1138,7 +1140,9 @@ class UpdateReleaseInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    release_id: Union[int, str] = Field(..., description="Release ID (numeric) or tag name (e.g., 'v1.2.0')")
+    release_id: Union[int, str] = Field(
+        ..., description="Release ID (numeric) or tag name (e.g., 'v1.2.0')"
+    )
     tag_name: Optional[str] = Field(
         default=None, description="New tag name (use carefully!)"
     )
@@ -1257,19 +1261,23 @@ class CreateRepositoryInput(BaseModel):
         default=True, description="Allow rebase merging of pull requests"
     )
     delete_branch_on_merge: Optional[bool] = Field(
-        default=False, description="Automatically delete head branch when pull requests are merged"
+        default=False,
+        description="Automatically delete head branch when pull requests are merged",
     )
     allow_auto_merge: Optional[bool] = Field(
         default=False, description="Allow auto-merge for pull requests"
     )
     allow_update_branch: Optional[bool] = Field(
-        default=False, description="Allow pull request head branch to be updated even if it's behind base branch"
+        default=False,
+        description="Allow pull request head branch to be updated even if it's behind base branch",
     )
     squash_merge_commit_title: Optional[str] = Field(
-        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+        default=None,
+        description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)",
     )
     squash_merge_commit_message: Optional[str] = Field(
-        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+        default=None,
+        description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)",
     )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
@@ -1386,19 +1394,23 @@ class UpdateRepositoryInput(BaseModel):
         default=None, description="Allow rebase merging of pull requests"
     )
     delete_branch_on_merge: Optional[bool] = Field(
-        default=None, description="Automatically delete head branch when pull requests are merged"
+        default=None,
+        description="Automatically delete head branch when pull requests are merged",
     )
     allow_auto_merge: Optional[bool] = Field(
         default=None, description="Allow auto-merge for pull requests"
     )
     allow_update_branch: Optional[bool] = Field(
-        default=None, description="Allow pull request head branch to be updated even if it's behind base branch"
+        default=None,
+        description="Allow pull request head branch to be updated even if it's behind base branch",
     )
     squash_merge_commit_title: Optional[str] = Field(
-        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+        default=None,
+        description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)",
     )
     squash_merge_commit_message: Optional[str] = Field(
-        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+        default=None,
+        description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)",
     )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
@@ -2722,14 +2734,18 @@ class CreateDiscussionInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     category_id: str = Field(
         ...,
         description="Discussion category node_id (from github_list_discussion_categories)",
         min_length=1,
     )
-    title: str = Field(..., description="Discussion title", min_length=1, max_length=200)
+    title: str = Field(
+        ..., description="Discussion title", min_length=1, max_length=200
+    )
     body: str = Field(..., description="Discussion body (markdown)", min_length=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
 
@@ -2741,10 +2757,14 @@ class UpdateDiscussionInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     discussion_number: int = Field(..., description="Discussion number", ge=1)
-    title: Optional[str] = Field(None, description="New title", min_length=1, max_length=200)
+    title: Optional[str] = Field(
+        None, description="New title", min_length=1, max_length=200
+    )
     body: Optional[str] = Field(None, description="New body (markdown)")
     category_id: Optional[str] = Field(
         None, description="Move to different category (node_id)"
@@ -2759,7 +2779,9 @@ class AddDiscussionCommentInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     discussion_number: int = Field(..., description="Discussion number", ge=1)
     body: str = Field(..., description="Comment body (markdown)", min_length=1)

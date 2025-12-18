@@ -1,7 +1,7 @@
 """Actions tools for GitHub MCP Server."""
 
 import json
-from typing import Dict, Any, List, Union, cast
+from typing import Dict, Any, List, cast
 
 from ..models.inputs import (
     CancelWorkflowRunInput,
@@ -455,7 +455,10 @@ async def github_list_workflow_run_jobs(params: ListWorkflowRunJobsInput) -> str
                 jobs_list, ResponseFormat.COMPACT.value, "job"
             )
             result = json.dumps(
-                {"total_count": data.get("total_count", len(jobs_list)), "jobs": compact_data},
+                {
+                    "total_count": data.get("total_count", len(jobs_list)),
+                    "jobs": compact_data,
+                },
                 indent=2,
             )
             return _truncate_response(result, data.get("total_count", len(jobs_list)))
@@ -790,7 +793,7 @@ async def github_cancel_workflow_run(params: CancelWorkflowRunInput) -> str:
 
 
 async def github_list_workflow_run_artifacts(
-        params: ListWorkflowRunArtifactsInput,
+    params: ListWorkflowRunArtifactsInput,
 ) -> str:
     """
     List artifacts from a workflow run.
@@ -836,10 +839,15 @@ async def github_list_workflow_run_artifacts(
                 artifacts_list, ResponseFormat.COMPACT.value, "artifact"
             )
             result = json.dumps(
-                {"total_count": data.get("total_count", len(artifacts_list)), "artifacts": compact_data},
+                {
+                    "total_count": data.get("total_count", len(artifacts_list)),
+                    "artifacts": compact_data,
+                },
                 indent=2,
             )
-            return _truncate_response(result, data.get("total_count", len(artifacts_list)))
+            return _truncate_response(
+                result, data.get("total_count", len(artifacts_list))
+            )
 
         markdown = f"# Artifacts for Workflow Run #{params.run_id}\n\n"
         markdown += f"**Total Artifacts:** {data['total_count']}\n"

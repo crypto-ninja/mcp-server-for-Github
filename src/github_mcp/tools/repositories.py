@@ -360,7 +360,9 @@ async def github_list_org_repos(params: ListOrgReposInput) -> str:
         )
 
         if params.response_format == ResponseFormat.COMPACT:
-            compact_data = format_response(repos_list, ResponseFormat.COMPACT.value, "repo")
+            compact_data = format_response(
+                repos_list, ResponseFormat.COMPACT.value, "repo"
+            )
             return json.dumps(compact_data, indent=2)
 
         return json.dumps(repos_list, indent=2)

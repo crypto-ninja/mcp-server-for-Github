@@ -13,7 +13,11 @@ from ..models.enums import (
 )
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
-from ..utils.formatting import _format_timestamp, _truncate_response, _slim_search_response
+from ..utils.formatting import (
+    _format_timestamp,
+    _truncate_response,
+    _slim_search_response,
+)
 from ..utils.compact_format import format_response
 
 
@@ -156,7 +160,10 @@ async def github_search_users(params: SearchUsersInput) -> str:
                 slim_result.get("items", []), ResponseFormat.COMPACT.value, "user"
             )
             return json.dumps(
-                {"total_count": slim_result.get("total_count", 0), "items": compact_items},
+                {
+                    "total_count": slim_result.get("total_count", 0),
+                    "items": compact_items,
+                },
                 indent=2,
             )
 

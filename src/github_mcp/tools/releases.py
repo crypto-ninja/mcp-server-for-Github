@@ -374,9 +374,11 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
     try:
         # Convert release_id to string for processing
         release_id_str = str(params.release_id)
-        
+
         # First, get the release to find its ID if tag name was provided
-        if isinstance(params.release_id, str) and (release_id_str.startswith("v") or "." in release_id_str):
+        if isinstance(params.release_id, str) and (
+            release_id_str.startswith("v") or "." in release_id_str
+        ):
             # Looks like a tag name, need to get release ID
             get_endpoint = (
                 f"repos/{params.owner}/{params.repo}/releases/tags/{release_id_str}"
@@ -387,7 +389,11 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             release_id = release_data["id"]
         else:
             # It's a numeric ID (int or numeric string)
-            release_id = int(params.release_id) if isinstance(params.release_id, str) else params.release_id
+            release_id = (
+                int(params.release_id)
+                if isinstance(params.release_id, str)
+                else params.release_id
+            )
 
         endpoint = f"repos/{params.owner}/{params.repo}/releases/{release_id}"
 

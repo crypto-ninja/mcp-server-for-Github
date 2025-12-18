@@ -273,5 +273,3 @@ def format_response(data: Any, response_format: str, resource_type: str) -> Any:
         return to_compact(data, resource_type)
     # json and markdown pass through (markdown handled elsewhere)
     return data
-
-

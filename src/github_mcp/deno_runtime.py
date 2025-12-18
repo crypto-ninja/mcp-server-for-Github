@@ -35,6 +35,7 @@ class DenoRuntime:
             Dict with 'error', 'message'/'data', and optional 'code' keys
         """
         from .utils.deno_pool import execute_with_pool
+
         return await execute_with_pool(code)
 
     def execute_code(self, code: str) -> Dict[str, Any]:

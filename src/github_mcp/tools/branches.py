@@ -72,7 +72,9 @@ async def github_list_branches(params: ListBranchesInput) -> str:
         )
 
         if params.response_format == ResponseFormat.COMPACT:
-            compact_data = format_response(branches, ResponseFormat.COMPACT.value, "branch")
+            compact_data = format_response(
+                branches, ResponseFormat.COMPACT.value, "branch"
+            )
             return json.dumps(compact_data, indent=2)
 
         if params.response_format == ResponseFormat.JSON:

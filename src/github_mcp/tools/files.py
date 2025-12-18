@@ -183,7 +183,10 @@ async def github_create_file(params: CreateFileInput) -> str:
         if params.branch:
             body["branch"] = params.branch
         if params.committer:
-            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+            body["committer"] = {
+                "name": params.committer.name,
+                "email": params.committer.email,
+            }
         if params.author:
             body["author"] = {"name": params.author.name, "email": params.author.email}
 
@@ -289,12 +292,19 @@ async def github_update_file(params: UpdateFileInput) -> str:
         content_base64 = base64.b64encode(content_bytes).decode("utf-8")
 
         # Prepare request body
-        body: Dict[str, Any] = {"message": params.message, "content": content_base64, "sha": params.sha}
+        body: Dict[str, Any] = {
+            "message": params.message,
+            "content": content_base64,
+            "sha": params.sha,
+        }
 
         if params.branch:
             body["branch"] = params.branch
         if params.committer:
-            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+            body["committer"] = {
+                "name": params.committer.name,
+                "email": params.committer.email,
+            }
         if params.author:
             body["author"] = {"name": params.author.name, "email": params.author.email}
 
@@ -397,7 +407,10 @@ async def github_delete_file(params: DeleteFileInput) -> str:
         if params.branch:
             body["branch"] = params.branch
         if params.committer:
-            body["committer"] = {"name": params.committer.name, "email": params.committer.email}
+            body["committer"] = {
+                "name": params.committer.name,
+                "email": params.committer.email,
+            }
         if params.author:
             body["author"] = {"name": params.author.name, "email": params.author.email}
 
@@ -507,7 +520,9 @@ async def github_list_repo_contents(params: ListRepoContentsInput) -> str:
             )
 
         if params.response_format == ResponseFormat.COMPACT:
-            compact_data = format_response(data, ResponseFormat.COMPACT.value, "content")
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "content"
+            )
             result = json.dumps(compact_data, indent=2)
             return _truncate_response(
                 result, len(data) if isinstance(data, list) else 1

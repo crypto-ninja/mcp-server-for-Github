@@ -308,7 +308,9 @@ async def _get_discussion_id(token: str, owner: str, repo: str, number: int) -> 
         }
     }
     """
-    result = await gql.query(token, query, {"owner": owner, "repo": repo, "number": number})
+    result = await gql.query(
+        token, query, {"owner": owner, "repo": repo, "number": number}
+    )
     if "errors" in result:
         raise Exception(f"GraphQL error: {result['errors']}")
     discussion = result["data"]["repository"].get("discussion")
