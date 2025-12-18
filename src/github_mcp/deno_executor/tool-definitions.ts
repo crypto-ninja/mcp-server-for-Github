@@ -144,7 +144,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results (1-100, default 20)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of matching repositories with details",
     example: `const results = await callMCPTool("github_search_repositories", {
@@ -452,7 +452,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results (1-100, default 20)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of matching issues/PRs",
     example: `const results = await callMCPTool("github_search_issues", {
@@ -537,7 +537,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       pull_number: { type: "number", required: true, description: "PR number" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "PR overview with metadata",
     example: `const overview = await callMCPTool("github_get_pr_overview_graphql", {
@@ -698,7 +698,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       branch: { type: "string", required: true, description: "Branch name" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed branch information with commit details and protection status",
     example: `const branch = await callMCPTool("github_get_branch", {
@@ -734,7 +734,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       base: { type: "string", required: true, description: "Base branch name" },
       head: { type: "string", required: true, description: "Head branch name to compare" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Comparison results with commits ahead/behind and files changed",
     example: `const comparison = await callMCPTool("github_compare_branches", {
@@ -928,7 +928,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results (1-100, default 20)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Code search results with file paths and snippets",
     example: `const results = await callMCPTool("github_search_code", {
@@ -964,7 +964,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       tag: { type: "string", required: false, description: "Release tag (e.g., 'v1.1.0') or 'latest' for most recent (default: 'latest')", example: "v1.0.0" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed release information with tag, status, dates, author, and URL",
     example: `const release = await callMCPTool("github_get_release", {
@@ -1078,7 +1078,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results to return (1-100, default 20)" },
       page: { type: "number", required: false, description: "Page number for pagination (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token for authenticated requests" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of workflow runs with status, timing, and results",
     example: `const runs = await callMCPTool("github_get_workflow_runs", {
@@ -1098,7 +1098,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       workflow_id: { type: "string", required: true, description: "Workflow ID (numeric) or workflow file name (e.g., 'ci.yml')" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Workflow details including configuration and status",
     example: `const workflow = await callMCPTool("github_get_workflow", {
@@ -1137,7 +1137,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       run_id: { type: "number", required: true, description: "Workflow run ID" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed workflow run information including status, conclusion, timing, and jobs",
     example: `const run = await callMCPTool("github_get_workflow_run", {
@@ -1177,7 +1177,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       job_id: { type: "number", required: true, description: "Job ID" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed job information including status, conclusion, steps, and runner",
     example: `const job = await callMCPTool("github_get_job", {
@@ -1284,7 +1284,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       artifact_id: { type: "number", required: true, description: "Artifact ID" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Artifact details including name, size, creation date, expiration, and download URL",
     example: `const artifact = await callMCPTool("github_get_artifact", {
@@ -1343,7 +1343,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       alert_number: { type: "number", required: true, description: "Alert number" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed alert information including vulnerability details and remediation guidance",
     example: `const alert = await callMCPTool("github_get_dependabot_alert", {
@@ -1427,7 +1427,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       alert_number: { type: "number", required: true, description: "Alert number" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed alert information including rule details, location, and remediation guidance",
     example: `const alert = await callMCPTool("github_get_code_scanning_alert", {
@@ -1511,7 +1511,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       alert_number: { type: "number", required: true, description: "Alert number" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed alert information including secret type, location, and resolution status",
     example: `const alert = await callMCPTool("github_get_secret_scanning_alert", {
@@ -1572,7 +1572,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       ghsa_id: { type: "string", required: true, description: "GitHub Security Advisory ID (e.g., 'GHSA-xxxx-xxxx-xxxx')" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed advisory information including description, severity, affected versions, and remediation guidance",
     example: `const advisory = await callMCPTool("github_get_security_advisory", {
@@ -1628,7 +1628,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       project_id: { type: "number", required: true, description: "Project ID" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed project information including name, description, state, and metadata",
     example: `const project = await callMCPTool("github_get_project", {
@@ -1764,7 +1764,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       discussion_number: { type: "number", required: true, description: "Discussion number" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed discussion information including title, body, category, author, and comments count",
     example: `const discussion = await callMCPTool("github_get_discussion", {
@@ -1802,7 +1802,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of discussion comments including replies and reactions",
     example: `const comments = await callMCPTool("github_list_discussion_comments", {
@@ -1903,7 +1903,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       thread_id: { type: "string", required: true, description: "Thread ID" },
       token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed thread information including subject, reason, and repository details",
     example: `const thread = await callMCPTool("github_get_thread", {
@@ -1944,7 +1944,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       thread_id: { type: "string", required: true, description: "Thread ID" },
       token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Subscription status (subscribed, ignored, reason)",
     example: `const subscription = await callMCPTool("github_get_thread_subscription", {
@@ -1998,7 +1998,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       username: { type: "string", required: true, description: "GitHub username to check" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Collaborator status (is collaborator or not)",
     example: `const status = await callMCPTool("github_check_collaborator", {
@@ -2042,7 +2042,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       limit: { type: "number", required: false, description: "Maximum results (1-100, default 20)", example: "10" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of commits with SHAs, messages, authors, and dates",
     example: `const commits = await callMCPTool("github_list_commits", {
@@ -2148,7 +2148,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       num_edits: { type: "number", required: false, description: "Number of separate edit operations (default: 1)" },
       file_count: { type: "number", required: false, description: "Number of files being modified (default: 1)" },
       description: { type: "string", required: false, description: "Additional context about the task" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default: 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default: 'markdown')" }
     },
     returns: "Workflow recommendation (API, local, or hybrid) with rationale and token estimates",
     example: `const suggestion = await callMCPTool("github_suggest_workflow", {
@@ -2187,7 +2187,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       max_results: { type: "number", required: false, description: "Maximum matches to return (1-500, default 100)" },
       file_pattern: { type: "string", required: false, description: "Glob pattern for files to search (e.g., '*.py', '*.md')", example: "*.py" },
       case_sensitive: { type: "boolean", required: false, description: "Whether search is case-sensitive (default: true)" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Matching lines with file paths and line numbers",
     example: `const matches = await callMCPTool("workspace_grep", {
