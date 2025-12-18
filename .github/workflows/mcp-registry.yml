@@ -17,11 +17,12 @@ jobs:
       - name: Install mcp-publisher
         run: |
           # Get latest version tag
-          VERSION=$(curl -s https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r '.tag_name' | tr -d 'v')
+          VERSION=$(curl -s https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
           echo "Installing mcp-publisher version: $VERSION"
           
-          # Download and extract
-          curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/v${VERSION}/mcp-publisher_${VERSION}_linux_amd64.tar.gz" | tar xz
+          # Download - filename doesn't include version number
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/${VERSION}/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
+          tar xzf mcp-publisher.tar.gz
           chmod +x mcp-publisher
           ./mcp-publisher --version
           
@@ -29,4 +30,3 @@ jobs:
         run: |
           ./mcp-publisher login github --token "${{ secrets.GITHUB_TOKEN }}"
           ./mcp-publisher publish
-
