@@ -125,6 +125,12 @@ async def github_get_discussion(params: GetDiscussionInput) -> str:
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "discussion"
+            )
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -247,6 +253,13 @@ async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -
         comments_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                comments_list, ResponseFormat.COMPACT.value, "comment"
+            )
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result, len(comments_list))
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(comments_list, indent=2)

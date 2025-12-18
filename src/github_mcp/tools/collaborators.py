@@ -123,15 +123,18 @@ async def github_check_collaborator(params: CheckCollaboratorInput) -> str:
 
         is_collaborator = response.status_code == 204
 
-        if params.response_format == ResponseFormat.JSON:
-            return json.dumps(
-                {
-                    "is_collaborator": is_collaborator,
-                    "username": params.username,
-                    "repository": f"{params.owner}/{params.repo}",
-                },
-                indent=2,
-            )
+        payload = {
+            "is_collaborator": is_collaborator,
+            "username": params.username,
+            "repository": f"{params.owner}/{params.repo}",
+        }
+
+        if params.response_format in (
+            ResponseFormat.JSON,
+            ResponseFormat.COMPACT,
+        ):
+            # Compact matches JSON shape here; response is already minimal
+            return json.dumps(payload, indent=2)
 
         markdown = f"# Collaborator Check: {params.username}\n\n"
         markdown += f"- **Repository:** {params.owner}/{params.repo}\n"
@@ -148,16 +151,21 @@ async def github_check_collaborator(params: CheckCollaboratorInput) -> str:
             and hasattr(e.response, "status_code")
             and e.response.status_code == 404
         ):
-            if params.response_format == ResponseFormat.JSON:
-                return json.dumps(
-                    {
-                        "is_collaborator": False,
-                        "username": params.username,
-                        "repository": f"{params.owner}/{params.repo}",
-                    },
-                    indent=2,
-                )
-            return f"# Collaborator Check: {params.username}\n\n- **Repository:** {params.owner}/{params.repo}\n- **Is Collaborator:** ❌ No\n"
+            payload = {
+                "is_collaborator": False,
+                "username": params.username,
+                "repository": f"{params.owner}/{params.repo}",
+            }
+            if params.response_format in (
+                ResponseFormat.JSON,
+                ResponseFormat.COMPACT,
+            ):
+                return json.dumps(payload, indent=2)
+            return (
+                f"# Collaborator Check: {params.username}\n\n"
+                f"- **Repository:** {params.owner}/{params.repo}\n"
+                "- **Is Collaborator:** ❌ No\n"
+            )
         return _handle_api_error(e)
 
 

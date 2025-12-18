@@ -145,6 +145,12 @@ async def github_get_workflow(params: GetWorkflowInput) -> str:
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "workflow"
+            )
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -213,21 +219,34 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
             endpoint, token=params.token, params=params_dict
         )
 
+        runs: List[Dict[str, Any]] = data.get("workflow_runs", [])
+        total_count = data.get("total_count", len(runs))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                runs, ResponseFormat.COMPACT.value, "workflow_run"
+            )
+            result = json.dumps(
+                {"total_count": total_count, "workflow_runs": compact_data},
+                indent=2,
+            )
+            return _truncate_response(result, total_count)
+
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
-            return _truncate_response(result, data["total_count"])
+            return _truncate_response(result, total_count)
 
         # Markdown format
         workflow_name = params.workflow_id or "All Workflows"
         markdown = f"# Workflow Runs for {params.owner}/{params.repo}\n\n"
         markdown += f"**Workflow:** {workflow_name}\n"
-        markdown += f"**Total Runs:** {data['total_count']:,}\n"
-        markdown += f"**Page:** {params.page} | **Showing:** {len(data['workflow_runs'])} runs\n\n"
+        markdown += f"**Total Runs:** {total_count:,}\n"
+        markdown += f"**Page:** {params.page} | **Showing:** {len(runs)} runs\n\n"
 
-        if not data["workflow_runs"]:
+        if not runs:
             markdown += "No workflow runs found matching your criteria.\n"
         else:
-            for run in data["workflow_runs"]:
+            for run in runs:
                 # Status emoji
                 status_emoji = (
                     "🔄"
@@ -268,7 +287,7 @@ async def github_get_workflow_runs(params: GetWorkflowRunsInput) -> str:
 
                 markdown += "---\n\n"
 
-        return _truncate_response(markdown, data["total_count"])
+        return _truncate_response(markdown, total_count)
 
     except Exception as e:
         return _handle_api_error(e)
@@ -367,6 +386,12 @@ async def github_get_workflow_run(params: GetWorkflowRunInput) -> str:
             f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}",
             token=params.token,
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "workflow_run"
+            )
+            return json.dumps(compact_data, indent=2)
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
@@ -528,6 +553,10 @@ async def github_get_job(params: GetJobInput) -> str:
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "job")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -625,10 +654,39 @@ async def github_get_job_logs(params: GetJobLogsInput) -> str:
         max_length = 50000  # ~50KB
         if len(logs_text) > max_length:
             truncated = logs_text[:max_length]
+            if params.response_format == ResponseFormat.JSON:
+                return json.dumps(
+                    {
+                        "job_id": params.job_id,
+                        "logs": truncated,
+                        "truncated": True,
+                        "max_length": max_length,
+                    },
+                    indent=2,
+                )
+            if params.response_format == ResponseFormat.COMPACT:
+                return json.dumps(
+                    {
+                        "job_id": params.job_id,
+                        "snippet": truncated[:1000],
+                        "truncated": True,
+                    },
+                    indent=2,
+                )
             return f"# Job Logs (Truncated - showing first {max_length} characters)\n\n```\n{truncated}\n...\n```\n\n*Logs truncated. Full logs available at job URL.*"
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps({"job_id": params.job_id, "logs": logs_text}, indent=2)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            return json.dumps(
+                {
+                    "job_id": params.job_id,
+                    "snippet": logs_text[:1000],
+                    "truncated": len(logs_text) > 1000,
+                },
+                indent=2,
+            )
 
         # markdown (default)
         return f"# Job Logs\n\n```\n{logs_text}\n```"
@@ -902,6 +960,12 @@ async def github_get_artifact(params: GetArtifactInput) -> str:
             f"repos/{params.owner}/{params.repo}/actions/artifacts/{params.artifact_id}",
             token=params.token,
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "artifact"
+            )
+            return json.dumps(compact_data, indent=2)
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)

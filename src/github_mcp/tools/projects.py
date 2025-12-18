@@ -193,6 +193,12 @@ async def github_get_project(params: GetProjectInput) -> str:
             headers={"Accept": "application/vnd.github.inertia-preview+json"},
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "project"
+            )
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 

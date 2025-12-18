@@ -103,6 +103,12 @@ async def github_get_release(params: GetReleaseInput) -> str:
         else:
             endpoint = f"repos/{params.owner}/{params.repo}/releases/tags/{params.tag}"
         data: Dict[str, Any] = await _make_github_request(endpoint, token=params.token)
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "release"
+            )
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result)
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result)

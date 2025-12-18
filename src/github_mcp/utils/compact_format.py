@@ -180,10 +180,15 @@ def compact_discussion(discussion: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "number": discussion.get("number"),
         "title": discussion.get("title", "")[:100],
-        "author": discussion.get("author", {}).get("login", "unknown"),
-        "category": discussion.get("category", {}).get("name"),
-        "created": discussion.get("createdAt", ""),
-        "url": discussion.get("url", ""),
+        # Support both GraphQL (author/login, createdAt, url) and REST (user/login, created_at, html_url)
+        "author": (discussion.get("author", {}) or discussion.get("user", {})).get(
+            "login", "unknown"
+        ),
+        "category": (
+            discussion.get("category", {}) or discussion.get("repository", {})
+        ).get("name"),
+        "created": discussion.get("createdAt", "") or discussion.get("created_at", ""),
+        "url": discussion.get("url", "") or discussion.get("html_url", ""),
     }
 
 
@@ -207,6 +212,55 @@ def compact_job(job: Dict[str, Any]) -> Dict[str, Any]:
         "conclusion": job.get("conclusion"),
         "started": job.get("started_at", ""),
         "completed": job.get("completed_at", ""),
+    }
+
+
+def compact_thread(thread: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert notification thread to compact format."""
+    subject = thread.get("subject", {})
+    repo = thread.get("repository", {})
+    return {
+        "id": thread.get("id"),
+        "reason": thread.get("reason"),
+        "unread": thread.get("unread", False),
+        "title": (subject.get("title") or "")[:100],
+        "type": subject.get("type"),
+        "repo": repo.get("full_name"),
+        "url": subject.get("url") or thread.get("url", ""),
+        "updated": thread.get("updated_at", ""),
+    }
+
+
+def compact_comment(comment: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a generic comment (e.g., discussion comment) to compact format."""
+    return {
+        "id": comment.get("id"),
+        "author": comment.get("user", {}).get("login", "unknown"),
+        "created": comment.get("created_at", ""),
+        "updated": comment.get("updated_at", ""),
+        "url": comment.get("html_url", ""),
+        "body": (comment.get("body") or "")[:200],
+    }
+
+
+def compact_search_code(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a code search result to compact format."""
+    repo = result.get("repository", {}) or {}
+    return {
+        "path": result.get("path"),
+        "repo": repo.get("full_name"),
+        "url": result.get("html_url", ""),
+    }
+
+
+def compact_advisory(advisory: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert security advisory to compact format."""
+    return {
+        "id": advisory.get("ghsa_id") or advisory.get("id"),
+        "summary": (advisory.get("summary") or "")[:120],
+        "severity": advisory.get("severity"),
+        "published": advisory.get("published_at", ""),
+        "url": advisory.get("html_url", ""),
     }
 
 
@@ -236,6 +290,10 @@ COMPACT_SERIALIZERS = {
     "discussion": compact_discussion,
     "artifact": compact_artifact,
     "job": compact_job,
+    "thread": compact_thread,
+    "comment": compact_comment,
+    "search_code": compact_search_code,
+    "advisory": compact_advisory,
 }
 
 

@@ -146,6 +146,10 @@ async def github_get_dependabot_alert(params: GetDependabotAlertInput) -> str:
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "alert")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -438,6 +442,10 @@ async def github_get_code_scanning_alert(params: GetCodeScanningAlertInput) -> s
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "alert")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -709,6 +717,10 @@ async def github_get_secret_scanning_alert(params: GetSecretScanningAlertInput) 
             token=params.token,
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "alert")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -882,6 +894,12 @@ async def github_get_security_advisory(params: GetSecurityAdvisoryInput) -> str:
             f"repos/{params.owner}/{params.repo}/security-advisories/{params.ghsa_id}",
             token=params.token,
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "advisory"
+            )
+            return json.dumps(compact_data, indent=2)
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)

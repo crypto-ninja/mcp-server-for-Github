@@ -148,6 +148,10 @@ async def github_get_thread(params: GetThreadInput) -> str:
             f"notifications/threads/{params.thread_id}", token=auth_token
         )
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "thread")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)
 
@@ -302,6 +306,13 @@ async def github_get_thread_subscription(params: GetThreadSubscriptionInput) -> 
         data = await _make_github_request(
             f"notifications/threads/{params.thread_id}/subscription", token=auth_token
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact = {
+                "subscribed": data.get("subscribed", False),
+                "ignored": data.get("ignored", False),
+            }
+            return json.dumps(compact, indent=2)
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(data, indent=2)

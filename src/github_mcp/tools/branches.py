@@ -230,6 +230,12 @@ async def github_get_branch(params: GetBranchInput) -> str:
         endpoint = f"repos/{params.owner}/{params.repo}/branches/{params.branch}"
         data = await _make_github_request(endpoint, method="GET", token=auth_token)
 
+        if params.response_format == ResponseFormat.COMPACT:
+            from ..utils.compact_format import format_response
+
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "branch")
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(
                 {
@@ -382,27 +388,33 @@ async def github_compare_branches(params: CompareBranchesInput) -> str:
             endpoint, method="GET", token=auth_token
         )
 
+        summary = {
+            "base": params.base,
+            "head": params.head,
+            "status": data["status"],
+            "ahead_by": data["ahead_by"],
+            "behind_by": data["behind_by"],
+            "total_commits": data["total_commits"],
+            "files_changed": len(data.get("files", [])),
+        }
+
+        if params.response_format == ResponseFormat.COMPACT:
+            # Compact comparison summary without full commit/file details
+            return json.dumps(summary, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
-            return json.dumps(
-                {
-                    "base": params.base,
-                    "head": params.head,
-                    "status": data["status"],
-                    "ahead_by": data["ahead_by"],
-                    "behind_by": data["behind_by"],
-                    "total_commits": data["total_commits"],
-                    "files_changed": len(data.get("files", [])),
-                    "commits": [
-                        {
-                            "sha": c["sha"][:7],
-                            "message": c["commit"]["message"].split("\n")[0],
-                            "author": c["commit"]["author"]["name"],
-                        }
-                        for c in data["commits"][:10]
-                    ],
-                },
-                indent=2,
-            )
+            details = {
+                **summary,
+                "commits": [
+                    {
+                        "sha": c["sha"][:7],
+                        "message": c["commit"]["message"].split("\n")[0],
+                        "author": c["commit"]["author"]["name"],
+                    }
+                    for c in data["commits"][:10]
+                ],
+            }
+            return json.dumps(details, indent=2)
         else:
             result = "# Branch Comparison\n\n"
             result += f"**Base:** {params.base} → **Head:** {params.head}\n\n"

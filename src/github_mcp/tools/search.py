@@ -18,6 +18,7 @@ from ..utils.formatting import (
     _truncate_response,
     _slim_search_response,
 )
+from ..utils.compact_format import format_response
 
 
 async def github_search_code(params: SearchCodeInput) -> str:
@@ -93,6 +94,15 @@ async def github_search_code(params: SearchCodeInput) -> str:
         )
         items: List[Dict[str, Any]] = search_result.get("items", [])
         total_count: int = search_result.get("total_count", 0)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_items = format_response(
+                items, ResponseFormat.COMPACT.value, "search_code"
+            )
+            result = json.dumps(
+                {"total_count": total_count, "items": compact_items}, indent=2
+            )
+            return _truncate_response(result, total_count)
 
         if params.response_format == ResponseFormat.JSON:
             slim_result = _slim_search_response(search_result, "code")
@@ -222,6 +232,13 @@ async def github_search_repositories(params: SearchRepositoriesInput) -> str:
         items: List[Dict[str, Any]] = search_result.get("items", [])
         total_count: int = search_result.get("total_count", 0)
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_items = format_response(items, ResponseFormat.COMPACT.value, "repo")
+            result = json.dumps(
+                {"total_count": total_count, "items": compact_items}, indent=2
+            )
+            return _truncate_response(result, total_count)
+
         if params.response_format == ResponseFormat.JSON:
             slim_result = _slim_search_response(search_result, "repository")
             result = json.dumps(slim_result, indent=2)
@@ -340,6 +357,15 @@ async def github_search_issues(params: SearchIssuesInput) -> str:
         )
         items: List[Dict[str, Any]] = search_result.get("items", [])
         total_count: int = search_result.get("total_count", 0)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_items = format_response(
+                items, ResponseFormat.COMPACT.value, "issue"
+            )
+            result = json.dumps(
+                {"total_count": total_count, "items": compact_items}, indent=2
+            )
+            return _truncate_response(result, total_count)
 
         if params.response_format == ResponseFormat.JSON:
             slim_result = _slim_search_response(search_result, "issue")

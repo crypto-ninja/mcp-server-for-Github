@@ -406,11 +406,30 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
         matches = matches[: params.max_results]
 
         # Format response
+        files_with_matches = len(set(m["file"] for m in matches))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_matches = [
+                {
+                    "file": m["file"],
+                    "line_number": m["line_number"],
+                    "line": m["line"],
+                }
+                for m in matches
+            ]
+            result = {
+                "pattern": params.pattern,
+                "files_searched": files_searched or files_with_matches,
+                "total_matches": len(matches),
+                "matches": compact_matches,
+                "truncated": len(matches) >= params.max_results,
+            }
+            return json.dumps(result, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             result = {
                 "pattern": params.pattern,
-                "files_searched": files_searched
-                or len(set(m["file"] for m in matches)),
+                "files_searched": files_searched or files_with_matches,
                 "total_matches": len(matches),
                 "matches": matches,
                 "truncated": len(matches) >= params.max_results,
@@ -420,7 +439,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
         # Markdown format
         markdown = "# Grep Results\n\n"
         markdown += f"**Pattern:** `{params.pattern}`\n"
-        markdown += f"**Files Searched:** {files_searched or len(set(m['file'] for m in matches))}\n"
+        markdown += f"**Files Searched:** {files_searched or files_with_matches}\n"
         markdown += f"**Total Matches:** {len(matches)}\n"
         markdown += f"**Showing:** {len(matches)} matches\n\n"
 
