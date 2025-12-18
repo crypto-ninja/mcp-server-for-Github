@@ -3,60 +3,15 @@
   "name": "io.github.crypto-ninja/github-mcp-server",
   "description": "AI-optimized GitHub MCP server: 112 tools, 98% token reduction, compact responses.",
   "version": "2.5.7",
-  "status": "active",
   "repository": {
     "url": "https://github.com/crypto-ninja/mcp-server-for-Github",
     "source": "github"
   },
   "packages": [
     {
-      "registry_type": "pypi",
-      "registry_base_url": "https://pypi.org",
+      "registryType": "pypi",
       "identifier": "github-mcp-server",
-      "version": "2.5.7",
-      "runtime_hint": "python",
-      "transport": {
-        "type": "stdio"
-      },
-      "runtime_arguments": [
-        {
-          "type": "positional",
-          "value": "-m"
-        },
-        {
-          "type": "positional",
-          "value": "github_mcp"
-        }
-      ],
-      "environment_variables": [
-        {
-          "name": "GITHUB_TOKEN",
-          "description": "GitHub Personal Access Token with repo and workflow scopes",
-          "is_required": true,
-          "is_secret": true
-        },
-        {
-          "name": "MCP_WORKSPACE_ROOT",
-          "description": "Root directory for local file operations (optional)",
-          "is_required": false
-        },
-        {
-          "name": "GITHUB_APP_ID",
-          "description": "GitHub App ID for enhanced rate limits (15k/hour vs 5k/hour)",
-          "is_required": false
-        },
-        {
-          "name": "GITHUB_APP_INSTALLATION_ID",
-          "description": "GitHub App Installation ID",
-          "is_required": false
-        },
-        {
-          "name": "GITHUB_APP_PRIVATE_KEY_PATH",
-          "description": "Path to GitHub App private key PEM file",
-          "is_required": false,
-          "format": "filepath"
-        }
-      ]
+      "version": "2.5.7"
     }
   ]
 }
