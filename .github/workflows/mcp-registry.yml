@@ -9,20 +9,19 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       id-token: write
+      contents: read
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install mcp-publisher
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install MCP Publisher
         run: |
-          VERSION=$(curl -s https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-          echo "Installing mcp-publisher version: $VERSION"
-          curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/${VERSION}/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
-          tar xzf mcp-publisher.tar.gz
-          chmod +x mcp-publisher
-          ./mcp-publisher --version
-          
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.0.0/mcp-publisher_1.0.0_linux_amd64.tar.gz" | tar xz mcp-publisher
+
+      - name: Login to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
       - name: Publish to MCP Registry
-        run: |
-          ./mcp-publisher publish --auth-method github-oidc
+        run: ./mcp-publisher publish
