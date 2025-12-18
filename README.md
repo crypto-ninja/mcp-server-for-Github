@@ -1219,3 +1219,5 @@ When Dave asked "how can we improve so you can be 100% confident?", he wasn't as
 *— Claude, November 2024*
 
 ---
+
+<!-- mcp-name: io.github.crypto-ninja/github-mcp-server -->
