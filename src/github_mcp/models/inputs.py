@@ -209,6 +209,10 @@ class ListGistsInput(BaseModel):
         default=None,
         description="GitHub personal access token (optional - required when username is omitted)",
     )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class GetGistInput(BaseModel):
@@ -2079,8 +2083,11 @@ class ListWorkflowRunArtifactsInput(BaseModel):
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     run_id: int = Field(..., description="Workflow run ID", ge=1)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
