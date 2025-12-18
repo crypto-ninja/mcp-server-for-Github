@@ -196,8 +196,11 @@ class ListGistsInput(BaseModel):
     since: Optional[str] = Field(
         default=None, description="Only gists updated at or after this time (ISO 8601)"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
@@ -205,6 +208,10 @@ class ListGistsInput(BaseModel):
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - required when username is omitted)",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -220,6 +227,10 @@ class GetGistInput(BaseModel):
     )
     token: Optional[str] = Field(
         default=None, description="Optional GitHub token (for private gists)"
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -343,6 +354,10 @@ class GetFileContentInput(BaseModel):
         description="Branch, tag, or commit SHA (defaults to repository's default branch)",
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown', 'json', or 'compact'",
+    )
 
 
 class ListCommitsInput(BaseModel):
@@ -396,8 +411,14 @@ class ListBranchesInput(BaseModel):
     protected: Optional[bool] = Field(
         default=None, description="Filter by protected status"
     )
-    per_page: Optional[int] = Field(
-        default=30, description="Results per page", ge=1, le=100
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        description="Maximum results (1-100)",
+        ge=1,
+        le=100,
+    )
+    page: Optional[int] = Field(
+        default=1, description="Page number for pagination", ge=1
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
@@ -540,6 +561,13 @@ class ListRepoContentsInput(BaseModel):
         default="", description="Directory path (empty for root directory)"
     )
     ref: Optional[str] = Field(default=None, description="Branch, tag, or commit")
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
+    )
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN, description="Output format"
@@ -557,8 +585,11 @@ class ListWorkflowsInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -750,10 +781,15 @@ class ListReleasesInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    per_page: Optional[int] = Field(
-        default=30, description="Results per page (1-100)", ge=1, le=100
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        description="Maximum results (1-100)",
+        ge=1,
+        le=100,
     )
-    page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    page: Optional[int] = Field(
+        default=1, description="Page number for pagination", ge=1
+    )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN, description="Output format"
@@ -771,13 +807,20 @@ class ListLabelsInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class CreateLabelInput(BaseModel):
@@ -838,13 +881,20 @@ class ListStargazersInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class StarRepositoryInput(BaseModel):
@@ -892,6 +942,10 @@ class GetAuthenticatedUserInput(BaseModel):
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
     )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class ListUserReposInput(BaseModel):
@@ -916,8 +970,11 @@ class ListUserReposInput(BaseModel):
     direction: Optional[str] = Field(
         default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
@@ -925,6 +982,10 @@ class ListUserReposInput(BaseModel):
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -947,8 +1008,11 @@ class ListOrgReposInput(BaseModel):
     direction: Optional[str] = Field(
         default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
@@ -956,6 +1020,10 @@ class ListOrgReposInput(BaseModel):
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -978,13 +1046,20 @@ class SearchUsersInput(BaseModel):
     order: Optional[SortOrder] = Field(
         default=SortOrder.DESC, description="Sort order: 'asc' or 'desc'"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class GetReleaseInput(BaseModel):
@@ -1069,7 +1144,9 @@ class UpdateReleaseInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    release_id: Union[int, str] = Field(..., description="Release ID (numeric) or tag name (e.g., 'v1.2.0')")
+    release_id: Union[int, str] = Field(
+        ..., description="Release ID (numeric) or tag name (e.g., 'v1.2.0')"
+    )
     tag_name: Optional[str] = Field(
         default=None, description="New tag name (use carefully!)"
     )
@@ -1188,19 +1265,23 @@ class CreateRepositoryInput(BaseModel):
         default=True, description="Allow rebase merging of pull requests"
     )
     delete_branch_on_merge: Optional[bool] = Field(
-        default=False, description="Automatically delete head branch when pull requests are merged"
+        default=False,
+        description="Automatically delete head branch when pull requests are merged",
     )
     allow_auto_merge: Optional[bool] = Field(
         default=False, description="Allow auto-merge for pull requests"
     )
     allow_update_branch: Optional[bool] = Field(
-        default=False, description="Allow pull request head branch to be updated even if it's behind base branch"
+        default=False,
+        description="Allow pull request head branch to be updated even if it's behind base branch",
     )
     squash_merge_commit_title: Optional[str] = Field(
-        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+        default=None,
+        description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)",
     )
     squash_merge_commit_message: Optional[str] = Field(
-        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+        default=None,
+        description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)",
     )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
@@ -1317,19 +1398,23 @@ class UpdateRepositoryInput(BaseModel):
         default=None, description="Allow rebase merging of pull requests"
     )
     delete_branch_on_merge: Optional[bool] = Field(
-        default=None, description="Automatically delete head branch when pull requests are merged"
+        default=None,
+        description="Automatically delete head branch when pull requests are merged",
     )
     allow_auto_merge: Optional[bool] = Field(
         default=None, description="Allow auto-merge for pull requests"
     )
     allow_update_branch: Optional[bool] = Field(
-        default=None, description="Allow pull request head branch to be updated even if it's behind base branch"
+        default=None,
+        description="Allow pull request head branch to be updated even if it's behind base branch",
     )
     squash_merge_commit_title: Optional[str] = Field(
-        default=None, description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)"
+        default=None,
+        description="Default title for squash merge commits (PR_TITLE, COMMIT_OR_PR_TITLE)",
     )
     squash_merge_commit_message: Optional[str] = Field(
-        default=None, description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)"
+        default=None,
+        description="Default message for squash merge commits (PR_BODY, COMMIT_MESSAGES, BLANK)",
     )
     token: Optional[str] = Field(
         default=None, description="GitHub personal access token"
@@ -1885,8 +1970,11 @@ class ListWorkflowRunJobsInput(BaseModel):
     filter: Optional[str] = Field(
         default=None, description="Filter jobs: 'latest' or 'all'"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -1926,6 +2014,10 @@ class GetJobLogsInput(BaseModel):
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     job_id: int = Field(..., description="Job ID", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown', 'json', or 'compact'",
+    )
 
 
 class RerunWorkflowInput(BaseModel):
@@ -1991,8 +2083,11 @@ class ListWorkflowRunArtifactsInput(BaseModel):
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     run_id: int = Field(..., description="Workflow run ID", ge=1)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2057,8 +2152,11 @@ class ListDependabotAlertsInput(BaseModel):
     ecosystem: Optional[str] = Field(
         default=None, description="Filter by ecosystem (e.g., 'npm', 'pip', 'maven')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2126,8 +2224,11 @@ class ListOrgDependabotAlertsInput(BaseModel):
         description="Filter by severity: 'low', 'medium', 'high', 'critical'",
     )
     ecosystem: Optional[str] = Field(default=None, description="Filter by ecosystem")
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2160,8 +2261,11 @@ class ListCodeScanningAlertsInput(BaseModel):
     tool_name: Optional[str] = Field(
         default=None, description="Filter by tool name (e.g., 'CodeQL', 'ESLint')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2226,8 +2330,11 @@ class ListCodeScanningAnalysesInput(BaseModel):
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     tool_name: Optional[str] = Field(default=None, description="Filter by tool name")
     ref: Optional[str] = Field(default=None, description="Filter by branch/tag/commit")
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2257,8 +2364,11 @@ class ListSecretScanningAlertsInput(BaseModel):
         default=None,
         description="Filter by secret type (e.g., 'github_personal_access_token')",
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2325,8 +2435,11 @@ class ListRepoSecurityAdvisoriesInput(BaseModel):
         default=None,
         description="Filter by state: 'triage', 'draft', 'published', 'closed'",
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2374,8 +2487,11 @@ class ListRepoProjectsInput(BaseModel):
     state: Optional[str] = Field(
         default="open", description="Filter by state: 'open', 'closed', 'all'"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2395,8 +2511,11 @@ class ListOrgProjectsInput(BaseModel):
     state: Optional[str] = Field(
         default="open", description="Filter by state: 'open', 'closed', 'all'"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2493,8 +2612,11 @@ class ListProjectColumnsInput(BaseModel):
     )
 
     project_id: int = Field(..., description="Project ID", ge=1)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2532,8 +2654,11 @@ class ListDiscussionsInput(BaseModel):
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     category: Optional[str] = Field(default=None, description="Filter by category slug")
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2571,6 +2696,13 @@ class ListDiscussionCategoriesInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
+    )
+    page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN, description="Output format"
@@ -2589,8 +2721,11 @@ class ListDiscussionCommentsInput(BaseModel):
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     discussion_number: int = Field(..., description="Discussion number", ge=1)
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
@@ -2606,14 +2741,18 @@ class CreateDiscussionInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     category_id: str = Field(
         ...,
         description="Discussion category node_id (from github_list_discussion_categories)",
         min_length=1,
     )
-    title: str = Field(..., description="Discussion title", min_length=1, max_length=200)
+    title: str = Field(
+        ..., description="Discussion title", min_length=1, max_length=200
+    )
     body: str = Field(..., description="Discussion body (markdown)", min_length=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
 
@@ -2625,10 +2764,14 @@ class UpdateDiscussionInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     discussion_number: int = Field(..., description="Discussion number", ge=1)
-    title: Optional[str] = Field(None, description="New title", min_length=1, max_length=200)
+    title: Optional[str] = Field(
+        None, description="New title", min_length=1, max_length=200
+    )
     body: Optional[str] = Field(None, description="New body (markdown)")
     category_id: Optional[str] = Field(
         None, description="Move to different category (node_id)"
@@ -2643,7 +2786,9 @@ class AddDiscussionCommentInput(BaseModel):
         str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
-    owner: str = Field(..., description="Repository owner", min_length=1, max_length=100)
+    owner: str = Field(
+        ..., description="Repository owner", min_length=1, max_length=100
+    )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
     discussion_number: int = Field(..., description="Discussion number", ge=1)
     body: str = Field(..., description="Comment body (markdown)", min_length=1)
@@ -2677,8 +2822,11 @@ class ListNotificationsInput(BaseModel):
         default=None,
         description="Only show notifications updated before this time (ISO 8601)",
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(default=1, ge=1, description="Page number")
     token: Optional[str] = Field(

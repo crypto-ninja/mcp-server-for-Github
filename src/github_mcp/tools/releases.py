@@ -17,6 +17,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_releases(params: ListReleasesInput) -> str:
@@ -25,7 +26,7 @@ async def github_list_releases(params: ListReleasesInput) -> str:
     """
     try:
         params_dict = {
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
@@ -37,6 +38,13 @@ async def github_list_releases(params: ListReleasesInput) -> str:
         releases_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                releases_list, ResponseFormat.COMPACT.value, "release"
+            )
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result, len(releases_list))
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(releases_list, indent=2)
@@ -77,9 +85,11 @@ async def github_list_releases(params: ListReleasesInput) -> str:
                         body_preview += "..."
                     markdown += f"{body_preview}\n\n"
                 markdown += "---\n\n"
-            if len(releases_list) == params.per_page:
+            if len(releases_list) == (params.limit or 0):
                 current_page = params.page or 1
-                markdown += f"*Showing page {current_page}. Use `page: {current_page + 1}` to see more.*\n"
+                markdown += (
+                    f"*Showing page {current_page}. Use `page: {current_page + 1}` to see more.*\n"
+                )
         return _truncate_response(markdown, len(releases_list))
     except Exception as e:
         return _handle_api_error(e)
@@ -366,9 +376,11 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
     try:
         # Convert release_id to string for processing
         release_id_str = str(params.release_id)
-        
+
         # First, get the release to find its ID if tag name was provided
-        if isinstance(params.release_id, str) and (release_id_str.startswith("v") or "." in release_id_str):
+        if isinstance(params.release_id, str) and (
+            release_id_str.startswith("v") or "." in release_id_str
+        ):
             # Looks like a tag name, need to get release ID
             get_endpoint = (
                 f"repos/{params.owner}/{params.repo}/releases/tags/{release_id_str}"
@@ -379,7 +391,11 @@ async def github_update_release(params: UpdateReleaseInput) -> str:
             release_id = release_data["id"]
         else:
             # It's a numeric ID (int or numeric string)
-            release_id = int(params.release_id) if isinstance(params.release_id, str) else params.release_id
+            release_id = (
+                int(params.release_id)
+                if isinstance(params.release_id, str)
+                else params.release_id
+            )
 
         endpoint = f"repos/{params.owner}/{params.repo}/releases/{release_id}"
 

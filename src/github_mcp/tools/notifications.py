@@ -17,6 +17,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_notifications(params: ListNotificationsInput) -> str:
@@ -56,7 +57,7 @@ async def github_list_notifications(params: ListNotificationsInput) -> str:
         )
 
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.all:
             params_dict["all"] = "true"
         if params.participating:
@@ -78,6 +79,13 @@ async def github_list_notifications(params: ListNotificationsInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(notifications_list, indent=2)
+            return _truncate_response(result, len(notifications_list))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                notifications_list, ResponseFormat.COMPACT.value, "notification"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(notifications_list))
 
         markdown = "# Notifications\n\n"

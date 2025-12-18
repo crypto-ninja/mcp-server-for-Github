@@ -481,7 +481,7 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
 async def workspace_str_replace(params: StrReplaceInput) -> str:
     """
     [LOCAL] Replace an exact string match in a local workspace file.
-    
+
     For editing files on GitHub remote, use github_str_replace instead.
 
     **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable
@@ -581,7 +581,7 @@ async def workspace_str_replace(params: StrReplaceInput) -> str:
 async def workspace_read_file(params: ReadFileChunkInput) -> str:
     """
     [LOCAL] Read a specific range of lines from a local workspace file.
-    
+
     For reading files from GitHub remote, use github_get_file_content instead.
 
     **Workspace Configuration**: Set MCP_WORKSPACE_ROOT environment variable

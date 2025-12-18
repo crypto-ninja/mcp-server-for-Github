@@ -150,7 +150,9 @@ def _slim_user_item(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _slim_search_response(search_result: Dict[str, Any], item_type: str) -> Dict[str, Any]:
+def _slim_search_response(
+    search_result: Dict[str, Any], item_type: str
+) -> Dict[str, Any]:
     """
     Slim a GitHub search API response to reduce size.
 

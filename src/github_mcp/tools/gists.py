@@ -10,8 +10,10 @@ from ..models.inputs import (
     UpdateGistInput,
     DeleteGistInput,
 )
+from ..models.enums import ResponseFormat
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
+from ..utils.compact_format import format_response
 
 
 async def github_list_gists(params: ListGistsInput) -> str:
@@ -43,8 +45,8 @@ async def github_list_gists(params: ListGistsInput) -> str:
         query: Dict[str, Any] = {}
         if params.since:
             query["since"] = params.since
-        if params.per_page:
-            query["per_page"] = params.per_page
+        if params.limit:
+            query["per_page"] = params.limit
         if params.page:
             query["page"] = params.page
 
@@ -60,6 +62,13 @@ async def github_list_gists(params: ListGistsInput) -> str:
         gists_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                gists_list, ResponseFormat.COMPACT.value, "gist"
+            )
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(gists_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)
@@ -73,6 +82,11 @@ async def github_get_gist(params: GetGistInput) -> str:
         data: Dict[str, Any] = await _make_github_request(
             f"gists/{params.gist_id}", token=params.token
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "gist")
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(data, indent=2)
     except Exception as e:
         return _handle_api_error(e)
