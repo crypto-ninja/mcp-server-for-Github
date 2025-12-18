@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "github-mcp-server"
-version = "2.5.6"
+version = "2.5.7"
 description = "The most AI-optimized GitHub MCP server: 112 tools, code-first architecture (98% token reduction), compact responses (80-97% smaller). Built for efficient AI development."
 readme = "README.md"
 requires-python = ">=3.10"

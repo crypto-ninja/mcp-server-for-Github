@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.5.7] - 2025-12-18
+
+### Added
+- **Token Efficiency Guide** (`docs/TOKEN_EFFICIENCY.md`) - Comprehensive guide to achieving 80-97% token savings
+- **Response Formats Reference** (`docs/RESPONSE_FORMATS.md`) - Complete field reference for compact format
+- **AI-Optimized README Section** - New section highlighting token efficiency with real-world savings tables
+- **Cross-references** - All documentation now links to token efficiency guides
+
+### Changed
+- **MCP_GUIDE.md** - Added links to TOKEN_EFFICIENCY.md and RESPONSE_FORMATS.md
+- **QUICKSTART.md** - Added compact format tip in Performance Tips section
+- **FEATURES.md** - Added note about compact format for AI agents with examples
+- **server.json** - Enhanced description for MCP Registry: "The most AI-optimized GitHub MCP server"
+- **pyproject.toml** - Updated package description to highlight AI optimization
+
+### Documentation
+- All examples now recommend `response_format: "compact"` as default
+- Consistent messaging: "98% code-first + 80-97% compact = 18x more efficient"
+- Complete cross-referencing between all documentation files
+
+---
+
 ## [2.5.6] - 2025-12-18
 
 ### Added
