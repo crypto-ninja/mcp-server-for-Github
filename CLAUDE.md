@@ -306,3 +306,62 @@ This means chaining multiple tool calls in a single `execute_code` execution is 
 6. **Multiline code supported** - Write complex workflows with multiple tool calls, conditionals, and loops
 7. **Results contain IDs and URLs** - Useful for chaining (e.g., `issue.number`, `pr.html_url`)
 8. **Human intent drives usage** - What you DO with results depends on what the human asked for
+
+## Optimization Tips
+
+### Always Use Compact Format
+Add `response_format: "compact"` to any tool that supports it. Saves 80-97% tokens.
+
+```typescript
+// ❌ Wasteful - returns 4000+ chars
+const repo = await callMCPTool("github_get_repo_info", { owner: "facebook", repo: "react" });
+
+// ✅ Efficient - returns ~200 chars  
+const repo = await callMCPTool("github_get_repo_info", { 
+  owner: "facebook", repo: "react", response_format: "compact" 
+});
+```
+
+### GraphQL vs REST for Pull Requests
+
+| Need | Use This | Why |
+|------|----------|-----|
+| PR status, stats, overview | `github_get_pr_overview_graphql` | **91% smaller** than REST |
+| Actual code diffs/patches | `github_get_pr_details` | Has `patch` field with real diff |
+
+```typescript
+// For "Is this PR ready?" or "What changed?"
+const overview = await callMCPTool("github_get_pr_overview_graphql", {
+  owner, repo, pull_number, response_format: "compact"
+});
+
+// For "Show me the code changes" or "Review this diff"
+const details = await callMCPTool("github_get_pr_details", {
+  owner, repo, pull_number, include_files: true, response_format: "json"
+});
+```
+
+### Before Bulk Operations
+
+When editing 3+ files, ALWAYS check the most efficient approach first:
+
+```typescript
+const suggestion = await callMCPTool("github_suggest_workflow", {
+  operation: "multiple_file_edits",
+  file_count: 10,
+  num_edits: 25
+});
+// Returns: "LOCAL" with potential savings of 300,000+ tokens!
+```
+
+### Quick Reference
+
+| Operation | Best Practice |
+|-----------|---------------|
+| Get repo info | `response_format: "compact"` |
+| List anything | `response_format: "compact"` + `limit: N` |
+| PR overview | Use GraphQL version |
+| PR code review | Use REST with `include_files: true` |
+| Edit 1-2 files | Use API tools |
+| Edit 3+ files | Check `github_suggest_workflow` first |
+| Search code | `github_grep` (already optimized) |

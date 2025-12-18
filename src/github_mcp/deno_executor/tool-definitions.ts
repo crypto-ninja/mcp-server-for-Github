@@ -509,7 +509,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_pr_details",
     category: "Pull Requests",
-    description: "Get detailed information about a pull request",
+    description: "Get detailed PR information including code diffs. Note: For simple overviews, use github_get_pr_overview_graphql (91% smaller). Use this tool when you need the actual patch/diff content for code review.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -531,7 +531,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_pr_overview_graphql",
     category: "Pull Requests",
-    description: "Get PR overview using efficient GraphQL query (faster than REST)",
+    description: "Get PR overview using GraphQL - 91% more token-efficient than REST. Use this for status checks, merge readiness, and general PR info. Use github_get_pr_details only when you need actual code diff patches.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -2141,7 +2141,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_suggest_workflow",
     category: "Advanced",
-    description: "Recommend whether to use API tools, local git, or a hybrid approach based on operation type, file size, number of edits, and file count",
+    description: "RECOMMENDED: Call this before bulk file operations. Recommends whether to use API tools, local git, or hybrid approach. Can save 300,000+ tokens on multi-file edits.",
     parameters: {
       operation: { type: "string", required: true, description: "Operation type (e.g., 'update_readme', 'create_release', 'multiple_file_edits')" },
       file_size: { type: "number", required: false, description: "Estimated file size in bytes" },
