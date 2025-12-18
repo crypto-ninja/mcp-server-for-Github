@@ -2,7 +2,7 @@
 
 import json
 import httpx
-from typing import Dict, Any
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     ListIssuesInput,
@@ -53,33 +53,47 @@ async def github_list_issues(params: ListIssuesInput) -> str:
             "page": params.page,
         }
 
-        data = await _make_github_request(
+        raw_data: Union[
+            Dict[str, Any], List[Dict[str, Any]]
+        ] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/issues",
             token=params.token,
             params=params_dict,
         )
 
+        # GitHub issues endpoint returns a list; tests may mock dict with "items"
+        if isinstance(raw_data, list):
+            issues: List[Dict[str, Any]] = cast(List[Dict[str, Any]], raw_data)
+        elif isinstance(raw_data, dict):
+            issues = cast(List[Dict[str, Any]], raw_data.get("items", []))
+        else:
+            issues = []
+
+        # For compact/markdown output, skip pull requests that appear in the issues feed
+        issues = [issue for issue in issues if "pull_request" not in issue]
+
         if params.response_format == ResponseFormat.COMPACT:
-            compact_data = format_response(data, ResponseFormat.COMPACT.value, "issue")
+            compact_data = format_response(
+                issues, ResponseFormat.COMPACT.value, "issue"
+            )
             result = json.dumps(compact_data, indent=2)
-            return _truncate_response(result, len(data))
+            return _truncate_response(result, len(issues))
 
         if params.response_format == ResponseFormat.JSON:
-            result = json.dumps(data, indent=2)
-            return _truncate_response(result, len(data))
+            result = json.dumps(issues, indent=2)
+            return _truncate_response(result, len(issues))
 
         # Markdown format
         markdown = f"# Issues for {params.owner}/{params.repo}\n\n"
-        markdown += f"**State:** {params.state.value} | **Page:** {params.page} | **Showing:** {len(data)} issues\n\n"
+        markdown += (
+            f"**State:** {params.state.value} | **Page:** {params.page} | "
+            f"**Showing:** {len(issues)} issues\n\n"
+        )
 
-        if not data:
+        if not issues:
             markdown += f"No {params.state.value} issues found.\n"
         else:
-            for issue in data:
-                # Skip pull requests (they appear in issues endpoint)
-                if "pull_request" in issue:
-                    continue
-
+            for issue in issues:
                 markdown += f"## #{issue['number']}: {issue['title']}\n"
                 markdown += f"- **State:** {issue['state']}\n"
                 markdown += f"- **Author:** @{issue['user']['login']}\n"
@@ -111,7 +125,7 @@ async def github_list_issues(params: ListIssuesInput) -> str:
 
                 markdown += "---\n\n"
 
-        return _truncate_response(markdown, len(data))
+        return _truncate_response(markdown, len(issues))
 
     except Exception as e:
         return _handle_api_error(e)

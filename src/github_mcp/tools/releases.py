@@ -87,9 +87,7 @@ async def github_list_releases(params: ListReleasesInput) -> str:
                 markdown += "---\n\n"
             if len(releases_list) == (params.limit or 0):
                 current_page = params.page or 1
-                markdown += (
-                    f"*Showing page {current_page}. Use `page: {current_page + 1}` to see more.*\n"
-                )
+                markdown += f"*Showing page {current_page}. Use `page: {current_page + 1}` to see more.*\n"
         return _truncate_response(markdown, len(releases_list))
     except Exception as e:
         return _handle_api_error(e)
