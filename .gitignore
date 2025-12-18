@@ -47,11 +47,13 @@ test_pkg/
 # Logs
 *.log
 logs/
+act-build-log.txt
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+test-write-ops-*.txt
 
 # MCP specific
 *.token
