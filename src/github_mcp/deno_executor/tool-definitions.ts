@@ -37,9 +37,14 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
         required: true,
         description: "Repository name",
         example: "react"
+      },
+      response_format: {
+        type: "string",
+        required: false,
+        description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')"
       }
     },
-    returns: "Markdown formatted repository information",
+    returns: "Repository information formatted for the requested response_format",
     example: `const info = await callMCPTool("github_get_repo_info", {
   owner: "facebook",
   repo: "react"
@@ -155,8 +160,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
-      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "List of users who starred the repository, including login and profile URLs",
     example: `const stargazers = await callMCPTool("github_list_stargazers", {
@@ -204,8 +211,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
-      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "List of labels including name, color, and description",
     example: `const labels = await callMCPTool("github_list_labels", {
@@ -261,7 +270,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "'open', 'closed', or 'all'", example: "open" },
-      limit: { type: "number", required: false, description: "Maximum number to return (1-100)", example: "10" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number (default 1)", example: "1" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Formatted list of issues with numbers, titles, states, and URLs",
     example: `const issues = await callMCPTool("github_list_issues", {
@@ -347,8 +358,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       username: { type: "string", required: false, description: "GitHub username (omit for authenticated user)" },
       since: { type: "string", required: false, description: "Only gists updated after this time (ISO 8601)" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
-      page: { type: "number", required: false, description: "Page number for pagination", example: "1" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "GitHub personal access token (required when username is omitted)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "List of gists with id, description, visibility, files, and URLs",
     example: `const gists = await callMCPTool("github_list_gists", {
@@ -362,7 +375,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "Get the full content and metadata for a specific gist",
     parameters: {
       gist_id: { type: "string", required: true, description: "ID of the gist to retrieve" },
-      token: { type: "string", required: false, description: "Optional GitHub token (for private gists)" }
+      token: { type: "string", required: false, description: "Optional GitHub token (for private gists)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "Full gist details including files, owner, history, and URLs",
     example: `const gist = await callMCPTool("github_get_gist", {
@@ -455,7 +469,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "'open', 'closed', or 'all'", example: "open" },
-      limit: { type: "number", required: false, description: "Maximum number to return", example: "10" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of pull requests with numbers, titles, and states",
     example: `const prs = await callMCPTool("github_list_pull_requests", {
@@ -498,7 +515,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       pull_number: { type: "number", required: true, description: "PR number" },
       include_reviews: { type: "boolean", required: false, description: "Include review comments" },
-      include_commits: { type: "boolean", required: false, description: "Include commit history" }
+      include_commits: { type: "boolean", required: false, description: "Include commit history" },
+      include_files: { type: "boolean", required: false, description: "Include changed files" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "Detailed PR information including reviews and commits if requested",
     example: `const details = await callMCPTool("github_get_pr_details", {
@@ -515,7 +535,9 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      pull_number: { type: "number", required: true, description: "PR number" }
+      pull_number: { type: "number", required: true, description: "PR number" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
     },
     returns: "PR overview with metadata",
     example: `const overview = await callMCPTool("github_get_pr_overview_graphql", {
@@ -593,9 +615,12 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      path: { type: "string", required: true, description: "File path", example: "src/index.js" }
+      path: { type: "string", required: true, description: "File path", example: "src/index.js" },
+      ref: { type: "string", required: false, description: "Branch, tag, or commit SHA (defaults to default branch)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'markdown', 'json', or 'compact' (default 'markdown')" }
     },
-    returns: "File content as text",
+    returns: "File content and metadata formatted for the requested response_format",
     example: `const content = await callMCPTool("github_get_file_content", {
   owner: "facebook",
   repo: "react",
@@ -611,8 +636,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       path: { type: "string", required: false, description: "Directory path (empty for root directory)", example: "src" },
       ref: { type: "string", required: false, description: "Branch, tag, or commit" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of files and directories",
     example: `const contents = await callMCPTool("github_list_repo_contents", {
@@ -631,9 +658,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       protected: { type: "boolean", required: false, description: "Filter by protected status" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of branches with names, commit SHAs, protection status, and default branch indicator",
     example: `const branches = await callMCPTool("github_list_branches", {
@@ -916,10 +944,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" },
     },
     returns: "List of releases with tags, dates, and descriptions",
     example: `const releases = await callMCPTool("github_list_releases", {
@@ -1026,10 +1054,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" },
     },
     returns: "List of workflow files with IDs and paths",
     example: `const workflows = await callMCPTool("github_list_workflows", {
@@ -1127,10 +1155,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       run_id: { type: "number", required: true, description: "Workflow run ID" },
       filter: { type: "string", required: false, description: "Filter jobs: 'latest' or 'all'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of jobs with status, conclusion, steps, and timing",
     example: `const jobs = await callMCPTool("github_list_workflow_run_jobs", {
@@ -1166,7 +1194,8 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       job_id: { type: "number", required: true, description: "Job ID" },
-      token: { type: "string", required: false, description: "Optional GitHub token" }
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'markdown' or 'json' (default 'markdown')" }
     },
     returns: "Job logs as plain text (may be truncated if very large)",
     example: `const logs = await callMCPTool("github_get_job_logs", {
@@ -1234,10 +1263,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       run_id: { type: "number", required: true, description: "Workflow run ID" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of artifacts with names, sizes, and download URLs",
     example: `const artifacts = await callMCPTool("github_list_workflow_run_artifacts", {
@@ -1293,10 +1322,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
       severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
       ecosystem: { type: "string", required: false, description: "Filter by ecosystem (e.g., 'npm', 'pip', 'maven')" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of Dependabot alerts with vulnerability details",
     example: `const alerts = await callMCPTool("github_list_dependabot_alerts", {
@@ -1354,10 +1383,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
       severity: { type: "string", required: false, description: "Filter by severity: 'low', 'medium', 'high', 'critical'" },
       ecosystem: { type: "string", required: false, description: "Filter by ecosystem" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of organization-wide Dependabot alerts",
     example: `const alerts = await callMCPTool("github_list_org_dependabot_alerts", {
@@ -1377,10 +1406,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       state: { type: "string", required: false, description: "Filter by state: 'open', 'dismissed', 'fixed'" },
       severity: { type: "string", required: false, description: "Filter by severity: 'critical', 'high', 'medium', 'low', 'warning', 'note'" },
       tool_name: { type: "string", required: false, description: "Filter by tool name (e.g., 'CodeQL', 'ESLint')" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of code scanning alerts with details",
     example: `const alerts = await callMCPTool("github_list_code_scanning_alerts", {
@@ -1438,10 +1467,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       tool_name: { type: "string", required: false, description: "Filter by tool name" },
       ref: { type: "string", required: false, description: "Filter by branch/tag/commit" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of code scanning analyses with status, tool, and commit information",
     example: `const analyses = await callMCPTool("github_list_code_scanning_analyses", {
@@ -1461,10 +1490,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "Filter by state: 'open', 'resolved'" },
       secret_type: { type: "string", required: false, description: "Filter by secret type (e.g., 'github_personal_access_token')" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of secret scanning alerts with details",
     example: `const alerts = await callMCPTool("github_list_secret_scanning_alerts", {
@@ -1522,8 +1551,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "Filter by state: 'triage', 'draft', 'published', 'closed'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
-      page: { type: "number", required: false, description: "Page number" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of security advisories with details",
     example: `const advisories = await callMCPTool("github_list_repo_security_advisories", {
@@ -1560,10 +1591,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of projects with details",
     example: `const projects = await callMCPTool("github_list_repo_projects", {
@@ -1579,10 +1610,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       org: { type: "string", required: true, description: "Organization name" },
       state: { type: "string", required: false, description: "Filter by state: 'open', 'closed', 'all' (default: 'open')" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of organization projects",
     example: `const projects = await callMCPTool("github_list_org_projects", {
@@ -1677,10 +1708,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     description: "List columns in a project",
     parameters: {
       project_id: { type: "number", required: true, description: "Project ID" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of project columns (e.g., 'To Do', 'In Progress', 'Done')",
     example: `const columns = await callMCPTool("github_list_project_columns", {
@@ -1712,10 +1743,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       category: { type: "string", required: false, description: "Filter by category slug" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of discussions with details",
     example: `const discussions = await callMCPTool("github_list_discussions", {
@@ -1749,8 +1780,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of discussion categories (e.g., 'General', 'Q&A', 'Ideas', 'Announcements')",
     example: `const categories = await callMCPTool("github_list_discussion_categories", {
@@ -1766,7 +1799,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
       discussion_number: { type: "number", required: true, description: "Discussion number" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
       response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
@@ -1852,10 +1885,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       participating: { type: "boolean", required: false, description: "Show only notifications where user is participating" },
       since: { type: "string", required: false, description: "Only show notifications updated after this time (ISO 8601)" },
       before: { type: "string", required: false, description: "Only show notifications updated before this time (ISO 8601)" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "GitHub token (required - UAT only)" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of notifications with details",
     example: `const notifications = await callMCPTool("github_list_notifications", {
@@ -1944,10 +1977,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       affiliation: { type: "string", required: false, description: "Filter by affiliation: 'outside', 'direct', 'all' (default: 'all')" },
       permission: { type: "string", required: false, description: "Filter by permission: 'pull', 'push', 'admin'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of collaborators with their permission levels",
     example: `const collaborators = await callMCPTool("github_list_repo_collaborators", {
@@ -1981,10 +2014,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "List of teams with their permission levels",
     example: `const teams = await callMCPTool("github_list_repo_teams", {
@@ -2024,7 +2057,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     name: "github_get_authenticated_user",
     category: "Users",
     description: "Get the authenticated user's profile (the 'me' endpoint)",
-    parameters: {},
+    parameters: {
+      token: { type: "string", required: false, description: "GitHub token (required - UAT or PAT)" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
+    },
     returns: "Authenticated user profile information including login, name, email, bio, and stats",
     example: `const me = await callMCPTool("github_get_authenticated_user", {});`
   },
@@ -2035,7 +2071,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       username: { type: "string", required: true, description: "GitHub username (e.g., 'octocat')" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
-      response_format: { type: "string", required: false, description: "Output format: 'json' or 'markdown' (default 'markdown')" }
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
     },
     returns: "User profile information including name, bio, company, location, public repos count, followers, following, and profile URL",
     example: `const user = await callMCPTool("github_get_user_info", {
@@ -2051,9 +2087,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       type: { type: "string", required: false, description: "Repo type: 'all', 'owner', 'member' (default: 'owner')" },
       sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
       direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
-      page: { type: "number", required: false, description: "Page number for pagination", example: "1" },
-      token: { type: "string", required: false, description: "GitHub personal access token" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "GitHub personal access token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "List of repositories with names, visibility, fork status, language, stars, and URLs",
     example: `const repos = await callMCPTool("github_list_user_repos", {
@@ -2070,9 +2107,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       type: { type: "string", required: false, description: "Repo type: 'all', 'public', 'private', 'forks', 'sources', 'member'" },
       sort: { type: "string", required: false, description: "Sort field: 'created', 'updated', 'pushed', 'full_name'" },
       direction: { type: "string", required: false, description: "Sort direction: 'asc' or 'desc'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
-      page: { type: "number", required: false, description: "Page number for pagination", example: "1" },
-      token: { type: "string", required: false, description: "GitHub personal access token" }
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
+      page: { type: "number", required: false, description: "Page number for pagination (default 1)", example: "1" },
+      token: { type: "string", required: false, description: "GitHub personal access token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "List of organization repositories with names, visibility, fork status, language, stars, and URLs",
     example: `const repos = await callMCPTool("github_list_org_repos", {
@@ -2087,9 +2125,10 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       query: { type: "string", required: true, description: "Search query (supports qualifiers like 'location:', 'language:', 'followers:>100')" },
       sort: { type: "string", required: false, description: "Sort field: 'followers', 'repositories', or 'joined'" },
       order: { type: "string", required: false, description: "Sort order: 'asc' or 'desc'" },
-      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)", example: "30" },
+      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)", example: "10" },
       page: { type: "number", required: false, description: "Page number for pagination", example: "1" },
-      token: { type: "string", required: false, description: "Optional GitHub token" }
+      token: { type: "string", required: false, description: "Optional GitHub token" },
+      response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'json')" }
     },
     returns: "Search results including total count and matching user profiles",
     example: `const users = await callMCPTool("github_search_users", {
