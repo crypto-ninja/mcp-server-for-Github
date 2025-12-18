@@ -1,5 +1,5 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.crypto-ninja/github-mcp-server",
   "description": "AI-optimized GitHub MCP server: 112 tools, 98% token reduction, compact responses.",
   "version": "2.5.7",
@@ -11,7 +11,10 @@
     {
       "registryType": "pypi",
       "identifier": "github-mcp-server",
-      "version": "2.5.7"
+      "version": "2.5.7",
+      "transport": {
+        "type": "stdio"
+      }
     }
   ]
 }
