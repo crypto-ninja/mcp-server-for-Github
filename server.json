@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.crypto-ninja/github-mcp-server",
   "description": "Comprehensive GitHub MCP server with 112 tools - code-first architecture for 98% token reduction",
-  "version": "2.5.5",
+  "version": "2.5.6",
   "status": "active",
   "repository": {
     "url": "https://github.com/crypto-ninja/mcp-server-for-Github",
@@ -13,7 +13,7 @@
       "registry_type": "pypi",
       "registry_base_url": "https://pypi.org",
       "identifier": "github-mcp-server",
-      "version": "2.5.5",
+      "version": "2.5.6",
       "runtime_hint": "python",
       "transport": {
         "type": "stdio"
@@ -60,4 +60,3 @@
     }
   ]
 }
-
