@@ -4,7 +4,6 @@
 
 import asyncio
 import time
-import os
 import sys
 from pathlib import Path
 
