@@ -1,26 +1,42 @@
 # Changelog
 
-## [2.5.6] - 2025-01-XX
+## [2.5.6] - 2025-12-18
+
+### Added
+- **Compact Response Format** - 26 tools now support `response_format: "compact"` for 80-97% token reduction
+  - Repository: get_repo_info, list_branches, get_branch
+  - Issues: list_issues
+  - Pull Requests: list_pull_requests, get_pr_overview_graphql
+  - Commits: list_commits  
+  - Users: get_user_info, get_authenticated_user, search_users
+  - Workflows: get_workflow, get_workflow_runs, get_workflow_run
+  - Search: search_issues, search_repositories, search_code
+  - Labels: list_labels
+  - Collaborators: check_collaborator
+  - Stars: list_stargazers
+  - Gists: list_gists
+  - Releases: list_releases, get_release
+  - Notifications: list_notifications
+- **AI-Agnostic Guide** - `MCP_GUIDE.md` replaces `CLAUDE.md` with instructions for multiple AI assistants
+- **Optimization Tips Section** - Guide now includes best practices for token efficiency
+- **"Your AI Development Partner" Section** - End-user focused documentation showing what you can build
 
 ### Fixed
-- **Compact Tool Discovery**: `listAvailableTools()` now returns compact format (tool names grouped by category) instead of full tool objects, preventing buffer overflow with 112+ tools (#32)
+- **ETag Cache Bug** - Cache was storing ETags but NOT response data; 304 responses now return cached JSON
+- **user_info Compact Format** - `github_get_user_info` was missing compact format handler
+- **Tool Discovery** - `getToolInfo("unknown_tool")` now returns helpful error instead of crashing
+- **searchTools() Relevance** - Results now sorted by relevance score
 
 ### Changed
-- `listAvailableTools()` returns `{ totalTools, categories: [{ name, count, tools: string[] }] }`
-- `searchTools()` returns compact results: `[{ name, category, description }]`
-- `getToolInfo(toolName)` unchanged - still returns full parameter details
+- **Security Tool Descriptions** - Added permission requirements for Dependabot, Code Scanning, and Secret Scanning tools
+- **Tool Discovery Format** - `listAvailableTools()` returns compact format preventing buffer overflow with 112+ tools
 
-### Migration Notes
-If you were accessing full tool objects from `listAvailableTools()`:
-```typescript
-// Before (no longer works)
-const params = tools.toolsByCategory["Issues"][0].parameters;
-
-// After (use getToolInfo for full details)
-const toolName = tools.categories.find(c => c.name === "Issues").tools[0];
-const fullTool = getToolInfo(toolName);
-const params = fullTool.parameters;
-```
+### Documentation
+- Renamed `CLAUDE.md` → `MCP_GUIDE.md` (AI-agnostic)
+- Added rename instructions for Claude, Cursor, Windsurf, GitHub Copilot, Cline
+- Updated all examples to use `response_format: "compact"`
+- Added GraphQL vs REST comparison (91% token savings for PR overview)
+- Added `github_suggest_workflow` guidance for bulk operations
 
 ---
 
