@@ -16,8 +16,14 @@ jobs:
       
       - name: Install mcp-publisher
         run: |
-          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(curl -s https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r .tag_name | tr -d 'v')_linux_amd64.tar.gz" | tar xz
+          # Get latest version tag
+          VERSION=$(curl -s https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r '.tag_name' | tr -d 'v')
+          echo "Installing mcp-publisher version: $VERSION"
+          
+          # Download and extract
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/v${VERSION}/mcp-publisher_${VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x mcp-publisher
+          ./mcp-publisher --version
           
       - name: Login and Publish
         run: |
