@@ -27,6 +27,8 @@ Complete guide to GitHub MCP Server documentation.
 | **Architecture** | System design and implementation | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | **Error Handling** | Error response format and codes | [ERROR_HANDLING.md](ERROR_HANDLING.md) |
 | **Project Summary** | Overview and statistics | [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) |
+| **Token Efficiency** | Comprehensive guide to token savings | [TOKEN_EFFICIENCY.md](TOKEN_EFFICIENCY.md) |
+| **Response Formats** | Format reference for all tools | [RESPONSE_FORMATS.md](RESPONSE_FORMATS.md) |
 
 ---
 

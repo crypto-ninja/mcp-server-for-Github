@@ -12,6 +12,48 @@
 
 👉 New here? See the [Quick Start Guide](docs/QUICKSTART.md)
 
+## 🚀 AI-Optimized for Token Efficiency
+
+This server is designed with AI agents in mind:
+
+### Response Formats
+
+| Format | Use Case | Token Savings |
+|--------|----------|---------------|
+| `compact` | Discovery, lists, status checks | **80-97% smaller** |
+| `json` | Full details when needed | Full response |
+| `markdown` | Human-readable display | Formatted text |
+
+### Real-World Savings
+
+| Resource | Full JSON | Compact | Savings |
+|----------|-----------|---------|---------|
+| Commit | ~3,000 chars | ~100 chars | **97%** |
+| Issue | ~2,500 chars | ~150 chars | **94%** |
+| Repository | ~4,000 chars | ~200 chars | **95%** |
+| PR Overview | ~20,000 chars | ~1,800 chars | **91%** (GraphQL) |
+
+### Smart Usage
+```typescript
+// Default: Use compact for most operations
+const issues = await callMCPTool("github_list_issues", {
+  owner: "user", repo: "repo",
+  limit: 10,
+  response_format: "compact"  // 94% smaller!
+});
+
+// Use json only when you need every field
+const fullIssue = await callMCPTool("github_get_issue", {
+  owner: "user", repo: "repo",
+  issue_number: 42,
+  response_format: "json"
+});
+```
+
+**Combined with our code-first architecture (98% token reduction), you get the most efficient GitHub MCP server available.**
+
+See [Token Efficiency Guide](docs/TOKEN_EFFICIENCY.md) for detailed savings by tool.
+
 ## ✨ What's New
 
 ### 🚀 Latest: v2.5.6 - AI Optimization & Token Efficiency (December 18, 2025)
