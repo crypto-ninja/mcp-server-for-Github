@@ -41,18 +41,8 @@ async def single_execution(
 
 
 async def benchmark_baseline(iterations: int = 5) -> list[float]:
-    """Benchmark without pooling (fresh process each time)."""
-    # Force disable pool
-    os.environ["DENO_POOL_ENABLED"] = "false"
-
-    # Reimport to pick up new env
-    import importlib
-
-    if "src.github_mcp.deno_runtime" in sys.modules:
-        importlib.reload(sys.modules["src.github_mcp.deno_runtime"])
-    if "src.github_mcp.utils.deno_pool" in sys.modules:
-        importlib.reload(sys.modules["src.github_mcp.utils.deno_pool"])
-
+    """Benchmark without pooling (fresh process each time using sync execute_code)."""
+    # Use sync execute_code which uses --single-shot mode (no pooling)
     from src.github_mcp.deno_runtime import DenoRuntime
 
     print(f"\nBaseline (no pool) - {iterations} iterations:")
@@ -74,17 +64,7 @@ async def benchmark_baseline(iterations: int = 5) -> list[float]:
 
 
 async def benchmark_pooled(iterations: int = 5, warmup: int = 2) -> list[float]:
-    """Benchmark with pooling."""
-    # Enable pool
-    os.environ["DENO_POOL_ENABLED"] = "true"
-
-    # Reimport to pick up new env
-    import importlib
-
-    if "src.github_mcp.deno_runtime" in sys.modules:
-        importlib.reload(sys.modules["src.github_mcp.deno_runtime"])
-    if "src.github_mcp.utils.deno_pool" in sys.modules:
-        importlib.reload(sys.modules["src.github_mcp.utils.deno_pool"])
+    """Benchmark with pooling (default behavior)."""
 
     from src.github_mcp.deno_runtime import DenoRuntime
     from src.github_mcp.utils.deno_pool import get_pool

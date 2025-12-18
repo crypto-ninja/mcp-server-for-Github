@@ -13,9 +13,6 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-# Enable connection pooling by default (can be disabled via env var)
-USE_CONNECTION_POOL = os.environ.get("DENO_POOL_ENABLED", "true").lower() == "true"
-
 
 class DenoRuntime:
     """Manages Deno subprocess for executing TypeScript code."""
@@ -29,7 +26,7 @@ class DenoRuntime:
 
     async def execute_code_async(self, code: str) -> Dict[str, Any]:
         """
-        Execute TypeScript code in Deno runtime (async version with pooling support).
+        Execute TypeScript code asynchronously using connection pool.
 
         Args:
             code: TypeScript code to execute
@@ -37,20 +34,8 @@ class DenoRuntime:
         Returns:
             Dict with 'error', 'message'/'data', and optional 'code' keys
         """
-        if USE_CONNECTION_POOL:
-            try:
-                from .utils.deno_pool import execute_with_pool
-
-                return await execute_with_pool(code)
-            except ImportError:
-                # Fallback to non-pooled execution if pool not available
-                pass
-
-        # Fallback to synchronous execution (wrap in async)
-        import asyncio
-
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.execute_code, code)
+        from .utils.deno_pool import execute_with_pool
+        return await execute_with_pool(code)
 
     def execute_code(self, code: str) -> Dict[str, Any]:
         """
@@ -70,11 +55,9 @@ class DenoRuntime:
                 [
                     "deno",
                     "run",
-                    "--allow-read",  # Read MCP server files
-                    "--allow-run",  # Spawn MCP server process
-                    "--allow-env",  # Access environment variables
-                    "--allow-net",  # Network access for GitHub API
+                    "--allow-all",  # All permissions (read, run, env, net)
                     str(self.deno_executor_path),
+                    "--single-shot",  # Use single-shot mode for non-pooled execution
                 ],
                 input=code,  # Pass code via stdin instead of command-line args
                 capture_output=True,
