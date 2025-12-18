@@ -8,8 +8,10 @@ from ..models.inputs import (
     StarRepositoryInput,
     UnstarRepositoryInput,
 )
+from ..models.enums import ResponseFormat
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
+from ..utils.compact_format import format_response
 
 
 async def github_list_stargazers(params: ListStargazersInput) -> str:
@@ -18,8 +20,8 @@ async def github_list_stargazers(params: ListStargazersInput) -> str:
     """
     try:
         query: Dict[str, Any] = {}
-        if params.per_page:
-            query["per_page"] = params.per_page
+        if params.limit:
+            query["per_page"] = params.limit
         if params.page:
             query["page"] = params.page
 
@@ -32,6 +34,13 @@ async def github_list_stargazers(params: ListStargazersInput) -> str:
         stargazers_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                stargazers_list, ResponseFormat.COMPACT.value, "stargazer"
+            )
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(stargazers_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)

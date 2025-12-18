@@ -24,6 +24,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> str:
@@ -53,7 +54,7 @@ async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> st
         - Use when: "List critical security vulnerabilities"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.state:
             params_dict["state"] = params.state
         if params.severity:
@@ -72,6 +73,13 @@ async def github_list_dependabot_alerts(params: ListDependabotAlertsInput) -> st
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                alerts, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(alerts))
 
         markdown = f"# Dependabot Alerts for {params.owner}/{params.repo}\n\n"
@@ -257,7 +265,7 @@ async def github_list_org_dependabot_alerts(
         - Use when: "List all open Dependabot alerts across our repos"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.state:
             params_dict["state"] = params.state
         if params.severity:
@@ -276,6 +284,13 @@ async def github_list_org_dependabot_alerts(
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                alerts, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(alerts))
 
         markdown = f"# Dependabot Alerts for Organization: {params.org}\n\n"
@@ -339,7 +354,7 @@ async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) 
         - Use when: "List critical code scanning issues"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.state:
             params_dict["state"] = params.state
         if params.severity:
@@ -358,6 +373,13 @@ async def github_list_code_scanning_alerts(params: ListCodeScanningAlertsInput) 
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                alerts, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(alerts))
 
         markdown = f"# Code Scanning Alerts for {params.owner}/{params.repo}\n\n"
@@ -532,7 +554,7 @@ async def github_list_code_scanning_analyses(
         - Use when: "List recent code scanning runs"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.tool_name:
             params_dict["tool_name"] = params.tool_name
         if params.ref:
@@ -549,6 +571,13 @@ async def github_list_code_scanning_analyses(
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(analyses, indent=2)
+            return _truncate_response(result, len(analyses))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                analyses, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(analyses))
 
         markdown = f"# Code Scanning Analyses for {params.owner}/{params.repo}\n\n"
@@ -607,7 +636,7 @@ async def github_list_secret_scanning_alerts(
         - Use when: "List exposed API keys"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.state:
             params_dict["state"] = params.state
         if params.secret_type:
@@ -624,6 +653,13 @@ async def github_list_secret_scanning_alerts(
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(alerts, indent=2)
+            return _truncate_response(result, len(alerts))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                alerts, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(alerts))
 
         markdown = f"# Secret Scanning Alerts for {params.owner}/{params.repo}\n\n"
@@ -776,7 +812,7 @@ async def github_list_repo_security_advisories(
         - Use when: "List published GHSA advisories"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.state:
             params_dict["state"] = params.state
 
@@ -791,6 +827,13 @@ async def github_list_repo_security_advisories(
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(advisories, indent=2)
+            return _truncate_response(result, len(advisories))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                advisories, ResponseFormat.COMPACT.value, "alert"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(advisories))
 
         markdown = f"# Security Advisories for {params.owner}/{params.repo}\n\n"

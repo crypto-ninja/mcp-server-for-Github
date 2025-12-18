@@ -27,6 +27,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_get_file_content(params: GetFileContentInput) -> str:
@@ -91,6 +92,16 @@ async def github_get_file_content(params: GetFileContentInput) -> str:
             )
         else:
             content = data.get("content", "")
+
+        if params.response_format == ResponseFormat.JSON:
+            result = json.dumps(data, indent=2)
+            return _truncate_response(result)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "content"
+            )
+            return json.dumps(compact_data, indent=2)
 
         result = f"""# File: {data.get("name", "unknown")}
 
@@ -491,6 +502,13 @@ async def github_list_repo_contents(params: ListRepoContentsInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
+            return _truncate_response(
+                result, len(data) if isinstance(data, list) else 1
+            )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "content")
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(
                 result, len(data) if isinstance(data, list) else 1
             )

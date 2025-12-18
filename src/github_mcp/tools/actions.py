@@ -1,7 +1,7 @@
 """Actions tools for GitHub MCP Server."""
 
 import json
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union, cast
 
 from ..models.inputs import (
     CancelWorkflowRunInput,
@@ -26,6 +26,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_workflows(params: ListWorkflowsInput) -> str:
@@ -57,7 +58,7 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
     """
     try:
         query: Dict[str, Any] = {
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
         data: Dict[str, Any] = await _make_github_request(
@@ -71,6 +72,13 @@ async def github_list_workflows(params: ListWorkflowsInput) -> str:
         workflows: List[Dict[str, Any]] = (
             data.get("workflows", []) if isinstance(data, dict) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                workflows, ResponseFormat.COMPACT.value, "workflow"
+            )
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result, total_count)
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
@@ -425,7 +433,7 @@ async def github_list_workflow_run_jobs(params: ListWorkflowRunJobsInput) -> str
         - Use when: "List the latest jobs for this workflow run"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.filter:
             params_dict["filter"] = params.filter
 
@@ -438,6 +446,19 @@ async def github_list_workflow_run_jobs(params: ListWorkflowRunJobsInput) -> str
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result, data["total_count"])
+
+        if params.response_format == ResponseFormat.COMPACT:
+            jobs_list: List[Dict[str, Any]] = cast(
+                List[Dict[str, Any]], data.get("jobs", [])
+            )
+            compact_data = format_response(
+                jobs_list, ResponseFormat.COMPACT.value, "job"
+            )
+            result = json.dumps(
+                {"total_count": data.get("total_count", len(jobs_list)), "jobs": compact_data},
+                indent=2,
+            )
+            return _truncate_response(result, data.get("total_count", len(jobs_list)))
 
         markdown = f"# Jobs for Workflow Run #{params.run_id}\n\n"
         markdown += f"**Total Jobs:** {data['total_count']}\n"
@@ -603,6 +624,10 @@ async def github_get_job_logs(params: GetJobLogsInput) -> str:
             truncated = logs_text[:max_length]
             return f"# Job Logs (Truncated - showing first {max_length} characters)\n\n```\n{truncated}\n...\n```\n\n*Logs truncated. Full logs available at job URL.*"
 
+        if params.response_format == ResponseFormat.JSON:
+            return json.dumps({"job_id": params.job_id, "logs": logs_text}, indent=2)
+
+        # markdown (default)
         return f"# Job Logs\n\n```\n{logs_text}\n```"
 
     except Exception as e:
@@ -765,7 +790,7 @@ async def github_cancel_workflow_run(params: CancelWorkflowRunInput) -> str:
 
 
 async def github_list_workflow_run_artifacts(
-    params: ListWorkflowRunArtifactsInput,
+        params: ListWorkflowRunArtifactsInput,
 ) -> str:
     """
     List artifacts from a workflow run.
@@ -791,7 +816,7 @@ async def github_list_workflow_run_artifacts(
         - Use when: "List all build artifacts for this workflow"
     """
     try:
-        params_dict = {"per_page": params.per_page, "page": params.page}
+        params_dict = {"per_page": params.limit, "page": params.page}
 
         data = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/actions/runs/{params.run_id}/artifacts",
@@ -802,6 +827,19 @@ async def github_list_workflow_run_artifacts(
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result, data["total_count"])
+
+        if params.response_format == ResponseFormat.COMPACT:
+            artifacts_list: List[Dict[str, Any]] = cast(
+                List[Dict[str, Any]], data.get("artifacts", [])
+            )
+            compact_data = format_response(
+                artifacts_list, ResponseFormat.COMPACT.value, "artifact"
+            )
+            result = json.dumps(
+                {"total_count": data.get("total_count", len(artifacts_list)), "artifacts": compact_data},
+                indent=2,
+            )
+            return _truncate_response(result, data.get("total_count", len(artifacts_list)))
 
         markdown = f"# Artifacts for Workflow Run #{params.run_id}\n\n"
         markdown += f"**Total Artifacts:** {data['total_count']}\n"

@@ -20,6 +20,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_discussions(params: ListDiscussionsInput) -> str:
@@ -47,7 +48,7 @@ async def github_list_discussions(params: ListDiscussionsInput) -> str:
         - Use when: "List discussions in the Q&A category"
     """
     try:
-        params_dict: Dict[str, Any] = {"per_page": params.per_page, "page": params.page}
+        params_dict: Dict[str, Any] = {"per_page": params.limit, "page": params.page}
         if params.category:
             params_dict["category"] = params.category
 
@@ -64,6 +65,13 @@ async def github_list_discussions(params: ListDiscussionsInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(discussions_list, indent=2)
+            return _truncate_response(result, len(discussions_list))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                discussions_list, ResponseFormat.COMPACT.value, "discussion"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(discussions_list))
 
         markdown = f"# Discussions for {params.owner}/{params.repo}\n\n"
@@ -178,6 +186,12 @@ async def github_list_discussion_categories(
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(categories_list, indent=2)
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                categories_list, ResponseFormat.COMPACT.value, "discussion"
+            )
+            return json.dumps(compact_data, indent=2)
+
         markdown = f"# Discussion Categories for {params.owner}/{params.repo}\n\n"
         markdown += f"**Total Categories:** {len(categories_list)}\n\n"
 
@@ -221,7 +235,7 @@ async def github_list_discussion_comments(params: ListDiscussionCommentsInput) -
         - Use when: "List replies to this discussion"
     """
     try:
-        params_dict = {"per_page": params.per_page, "page": params.page}
+        params_dict = {"per_page": params.limit, "page": params.page}
 
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
             f"repos/{params.owner}/{params.repo}/discussions/{params.discussion_number}/comments",

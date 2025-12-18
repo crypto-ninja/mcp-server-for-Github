@@ -19,6 +19,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_repo_projects(params: ListRepoProjectsInput) -> str:
@@ -48,7 +49,7 @@ async def github_list_repo_projects(params: ListRepoProjectsInput) -> str:
     try:
         params_dict = {
             "state": params.state,
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
 
@@ -62,6 +63,13 @@ async def github_list_repo_projects(params: ListRepoProjectsInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "project"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(data))
 
         markdown = f"# Projects for {params.owner}/{params.repo}\n\n"
@@ -116,7 +124,7 @@ async def github_list_org_projects(params: ListOrgProjectsInput) -> str:
     try:
         params_dict = {
             "state": params.state,
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
 
@@ -129,6 +137,13 @@ async def github_list_org_projects(params: ListOrgProjectsInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
+            return _truncate_response(result, len(data))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "project"
+            )
+            result = json.dumps(compact_data, indent=2)
             return _truncate_response(result, len(data))
 
         markdown = f"# Projects for Organization: {params.org}\n\n"
@@ -425,7 +440,7 @@ async def github_list_project_columns(params: ListProjectColumnsInput) -> str:
         - Use when: "List the project board columns"
     """
     try:
-        params_dict = {"per_page": params.per_page, "page": params.page}
+        params_dict = {"per_page": params.limit, "page": params.page}
 
         data = await _make_github_request(
             f"projects/{params.project_id}/columns",
