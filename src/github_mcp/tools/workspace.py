@@ -484,8 +484,8 @@ async def workspace_grep(params: WorkspaceGrepInput) -> str:
 
         markdown += "\n**Summary:**\n"
         if matches:
-            files_with_matches = {match["file"] for match in matches}
-            markdown += f"- {len(files_with_matches)} files with matches\n"
+            files_with_matches_set = {match["file"] for match in matches}
+            markdown += f"- {len(files_with_matches_set)} files with matches\n"
         else:
             markdown += "- 0 files with matches\n"
         markdown += f"- {len(matches)} total occurrences\n"
