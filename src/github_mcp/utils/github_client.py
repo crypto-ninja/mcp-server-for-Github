@@ -45,6 +45,9 @@ class GhClient:
         # (method, path, paramsHash) -> etag / last-modified
         self._etags: Dict[Tuple[str, str, str], str] = {}
         self._last_modified: Dict[Tuple[str, str, str], str] = {}
+        # Cache for parsed JSON responses, used when GitHub returns 304 Not Modified.
+        # Keyed by the same cache key as ETags so we can safely serve cached data.
+        self._response_cache: Dict[Tuple[str, str, str], Any] = {}
         self._lock = asyncio.Lock()
 
     @classmethod
@@ -74,10 +77,13 @@ class GhClient:
 
         key = _cache_key(method, path, params)
 
-        # Add conditional headers if we have an ETag (unless explicitly skipped)
+        # Add conditional headers if we have an ETag and cached data
+        # (unless explicitly skipped). This avoids 304 responses we
+        # can't fulfill from cache.
         if method.upper() == "GET" and not skip_cache_headers:
             etag = self._etags.get(key)
-            if etag:
+            cached = self._response_cache.get(key)
+            if etag and cached is not None:
                 request_headers["If-None-Match"] = etag
             lm = self._last_modified.get(key)
             if lm:
@@ -107,7 +113,7 @@ class GhClient:
                         f"[github-client] {method} {path} -> {resp.status_code} rate={rl}"
                     )
 
-                # Store new ETag on successful responses
+                # Store new ETag and cached JSON on successful responses
                 if resp.status_code == 200 and method.upper() == "GET":
                     etag = resp.headers.get("ETag")
                     last_mod = resp.headers.get("Last-Modified")
@@ -117,9 +123,20 @@ class GhClient:
                                 self._etags[key] = etag
                             if last_mod:
                                 self._last_modified[key] = last_mod
+                            # Cache parsed JSON so callers can use it on 304.
+                            try:
+                                self._response_cache[key] = resp.json()
+                            except Exception:
+                                # If response is not JSON, skip caching body.
+                                pass
 
-                # 304 Not Modified treated as cache hit by caller
+                # 304 Not Modified - try to attach cached JSON for callers
                 if resp.status_code == 304:
+                    async with self._lock:
+                        cached_data = self._response_cache.get(key)
+                    if cached_data is not None:
+                        # Attach cached JSON so higher-level helpers can return it.
+                        setattr(resp, "_cached_json", cached_data)
                     return resp
 
                 # Respect Retry-After for 429 / 403 secondary rate limit

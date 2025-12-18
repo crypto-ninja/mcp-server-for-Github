@@ -52,6 +52,13 @@ async def github_get_user_info(params: GetUserInfoInput) -> str:
             f"users/{params.username}", token=params.token
         )
 
+        # Compact JSON response with only key identity fields
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                data, ResponseFormat.COMPACT.value, "user"
+            )
+            return json.dumps(compact_data, indent=2)
+
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result)

@@ -1315,7 +1315,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_list_dependabot_alerts",
     category: "Security",
-    description: "List Dependabot security alerts for a repository",
+    description: "List Dependabot security alerts for a repository. Requires 'security_events' scope for PAT or 'Dependabot alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1337,7 +1337,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_dependabot_alert",
     category: "Security",
-    description: "Get details about a specific Dependabot alert",
+    description: "Get details about a specific Dependabot alert. Requires 'security_events' scope for PAT or 'Dependabot alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1399,7 +1399,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_list_code_scanning_alerts",
     category: "Security",
-    description: "List code scanning alerts for a repository (CodeQL, ESLint, etc.)",
+    description: "List code scanning alerts for a repository (CodeQL, ESLint, etc.). Requires 'security_events' scope for PAT or 'Code scanning alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1421,7 +1421,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_code_scanning_alert",
     category: "Security",
-    description: "Get details about a specific code scanning alert",
+    description: "Get details about a specific code scanning alert. Requires 'security_events' scope for PAT or 'Code scanning alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1484,7 +1484,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_list_secret_scanning_alerts",
     category: "Security",
-    description: "List secret scanning alerts for a repository (exposed API keys, tokens, etc.)",
+    description: "List secret scanning alerts for a repository (exposed API keys, tokens, etc.). Requires 'security_events' scope for PAT or 'Secret scanning alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1505,7 +1505,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_secret_scanning_alert",
     category: "Security",
-    description: "Get details about a specific secret scanning alert",
+    description: "Get details about a specific secret scanning alert. Requires 'security_events' scope for PAT or 'Secret scanning alerts (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
@@ -1566,7 +1566,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
   {
     name: "github_get_security_advisory",
     category: "Security",
-    description: "Get details about a specific security advisory (GHSA)",
+    description: "Get details about a specific security advisory (GHSA). Requires 'security_events' scope for PAT or 'Security advisories (read)' permission for GitHub App.",
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },

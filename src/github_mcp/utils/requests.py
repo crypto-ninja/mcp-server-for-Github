@@ -35,7 +35,7 @@ async def _make_github_request(
     """
     Reusable function for all GitHub API calls using a shared pooled client.
 
-    Returns parsed JSON. For 304, returns a marker dict {"_from_cache": True}.
+    Returns parsed JSON. For 304, returns cached JSON data when available.
     """
     headers = kwargs.pop("headers", None)
     params = kwargs.pop("params", None)
@@ -57,9 +57,14 @@ async def _make_github_request(
         data=data_body,
         skip_cache_headers=skip_cache_headers,
     )
-    # Raise for non-2xx (except we allow 304 to fall through as cache marker)
+    # Handle 304 Not Modified by returning cached JSON data when present.
     if response.status_code == 304:
-        return {"_from_cache": True}
+        cached_data = getattr(response, "_cached_json", None)
+        if cached_data is not None:
+            return cached_data
+        # Fallback marker if, for some reason, we received a 304
+        # without any cached JSON (should be rare).
+        return {"_from_cache": True, "_no_data": True}
     response.raise_for_status()
     # Some endpoints (DELETE) may return empty body
     if response.content is None or len(response.content) == 0:
