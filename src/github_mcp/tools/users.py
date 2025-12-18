@@ -14,6 +14,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response, _slim_search_response
+from ..utils.compact_format import format_response
 
 
 async def github_get_user_info(params: GetUserInfoInput) -> str:
@@ -110,6 +111,11 @@ async def github_get_authenticated_user(params: GetAuthenticatedUserInput) -> st
 
     try:
         data: Dict[str, Any] = await _make_github_request("user", token=auth_token)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "user")
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(data, indent=2)
     except Exception as e:
         return _handle_api_error(e)
@@ -122,7 +128,7 @@ async def github_search_users(params: SearchUsersInput) -> str:
     try:
         query_params: Dict[str, Any] = {
             "q": params.query,
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
         if params.sort:
@@ -144,6 +150,16 @@ async def github_search_users(params: SearchUsersInput) -> str:
             else {"total_count": 0, "items": []}
         )
         slim_result = _slim_search_response(search_result, "user")
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_items = format_response(
+                slim_result.get("items", []), ResponseFormat.COMPACT.value, "user"
+            )
+            return json.dumps(
+                {"total_count": slim_result.get("total_count", 0), "items": compact_items},
+                indent=2,
+            )
+
         return json.dumps(slim_result, indent=2)
     except Exception as e:
         return _handle_api_error(e)

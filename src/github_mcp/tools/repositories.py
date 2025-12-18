@@ -16,6 +16,7 @@ from ..models.enums import ResponseFormat
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_get_repo_info(params: RepoInfoInput) -> str:
@@ -53,6 +54,10 @@ async def github_get_repo_info(params: RepoInfoInput) -> str:
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(data, indent=2)
             return _truncate_response(result)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "repo")
+            return json.dumps(compact_data, indent=2)
 
         # Markdown format
         markdown = f"""# {data["full_name"]}
@@ -308,8 +313,8 @@ async def github_list_user_repos(params: ListUserReposInput) -> str:
             query["sort"] = params.sort
         if params.direction:
             query["direction"] = params.direction
-        if params.per_page:
-            query["per_page"] = params.per_page
+        if params.limit:
+            query["per_page"] = params.limit
         if params.page:
             query["page"] = params.page
 
@@ -319,6 +324,11 @@ async def github_list_user_repos(params: ListUserReposInput) -> str:
             endpoint = "user/repos"
 
         data = await _make_github_request(endpoint, token=auth_token, params=query)
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(data, ResponseFormat.COMPACT.value, "repo")
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(data, indent=2)
     except Exception as e:
         return _handle_api_error(e)
@@ -336,8 +346,8 @@ async def github_list_org_repos(params: ListOrgReposInput) -> str:
             query["sort"] = params.sort
         if params.direction:
             query["direction"] = params.direction
-        if params.per_page:
-            query["per_page"] = params.per_page
+        if params.limit:
+            query["per_page"] = params.limit
         if params.page:
             query["page"] = params.page
 
@@ -348,6 +358,11 @@ async def github_list_org_repos(params: ListOrgReposInput) -> str:
         repos_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(repos_list, ResponseFormat.COMPACT.value, "repo")
+            return json.dumps(compact_data, indent=2)
+
         return json.dumps(repos_list, indent=2)
     except Exception as e:
         return _handle_api_error(e)

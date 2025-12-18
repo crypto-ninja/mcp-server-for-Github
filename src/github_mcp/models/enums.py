@@ -8,6 +8,7 @@ class ResponseFormat(str, Enum):
 
     MARKDOWN = "markdown"
     JSON = "json"
+    COMPACT = "compact"
 
 
 class IssueState(str, Enum):

@@ -20,6 +20,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
@@ -72,6 +73,11 @@ async def github_list_pull_requests(params: ListPullRequestsInput) -> str:
             prs_list = cast(List[Dict[str, Any]], data.get("items", []))
         else:
             prs_list = []
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(prs_list, ResponseFormat.COMPACT.value, "pr")
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result, len(prs_list))
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(prs_list, indent=2)
@@ -296,6 +302,10 @@ async def github_get_pr_details(params: GetPullRequestDetailsInput) -> str:
 
             return json.dumps(result, indent=2)
 
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_pr = format_response(pr_data, ResponseFormat.COMPACT.value, "pr")
+            return json.dumps({"pr": compact_pr}, indent=2)
+
         # Markdown format
         status_emoji = "🔀" if not pr_data["draft"] else "📝"
         merge_emoji = (
@@ -471,6 +481,10 @@ async def github_get_pr_overview_graphql(params: GraphQLPROverviewInput) -> str:
 
         if params.response_format == ResponseFormat.JSON:
             return _truncate_response(json.dumps(pr, indent=2))
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_pr = format_response(pr, ResponseFormat.COMPACT.value, "pr")
+            return _truncate_response(json.dumps(compact_pr, indent=2))
 
         md = [
             f"# PR #{pr['number']}: {pr['title']}",

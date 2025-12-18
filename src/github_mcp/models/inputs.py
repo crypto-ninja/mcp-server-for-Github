@@ -396,8 +396,14 @@ class ListBranchesInput(BaseModel):
     protected: Optional[bool] = Field(
         default=None, description="Filter by protected status"
     )
-    per_page: Optional[int] = Field(
-        default=30, description="Results per page", ge=1, le=100
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        description="Maximum results (1-100)",
+        ge=1,
+        le=100,
+    )
+    page: Optional[int] = Field(
+        default=1, description="Page number for pagination", ge=1
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
@@ -750,10 +756,13 @@ class ListReleasesInput(BaseModel):
         ..., description="Repository owner", min_length=1, max_length=100
     )
     repo: str = Field(..., description="Repository name", min_length=1, max_length=100)
-    per_page: Optional[int] = Field(
-        default=30, description="Results per page (1-100)", ge=1, le=100
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        description="Maximum results (1-100)",
+        ge=1,
+        le=100,
     )
-    page: Optional[int] = Field(default=1, description="Page number", ge=1)
+    page: Optional[int] = Field(default=1, description="Page number for pagination", ge=1)
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
     response_format: ResponseFormat = Field(
         default=ResponseFormat.MARKDOWN, description="Output format"
@@ -892,6 +901,10 @@ class GetAuthenticatedUserInput(BaseModel):
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
     )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class ListUserReposInput(BaseModel):
@@ -916,8 +929,11 @@ class ListUserReposInput(BaseModel):
     direction: Optional[str] = Field(
         default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
@@ -925,6 +941,10 @@ class ListUserReposInput(BaseModel):
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -947,8 +967,11 @@ class ListOrgReposInput(BaseModel):
     direction: Optional[str] = Field(
         default="asc", description="Sort direction: 'asc' or 'desc' (default: 'asc')"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
@@ -956,6 +979,10 @@ class ListOrgReposInput(BaseModel):
     token: Optional[str] = Field(
         default=None,
         description="GitHub personal access token (optional - uses GITHUB_TOKEN env var if not provided)",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
     )
 
 
@@ -978,13 +1005,20 @@ class SearchUsersInput(BaseModel):
     order: Optional[SortOrder] = Field(
         default=SortOrder.DESC, description="Sort order: 'asc' or 'desc'"
     )
-    per_page: Optional[int] = Field(
-        default=30, ge=1, le=100, description="Results per page (1-100, default 30)"
+    limit: Optional[int] = Field(
+        default=DEFAULT_LIMIT,
+        ge=1,
+        le=100,
+        description="Maximum results (1-100)",
     )
     page: Optional[int] = Field(
         default=1, ge=1, description="Page number for pagination"
     )
     token: Optional[str] = Field(default=None, description="Optional GitHub token")
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.JSON,
+        description="Output format: 'json', 'markdown', or 'compact'",
+    )
 
 
 class GetReleaseInput(BaseModel):

@@ -17,6 +17,7 @@ from ..models.enums import (
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp, _truncate_response
+from ..utils.compact_format import format_response
 
 
 async def github_list_releases(params: ListReleasesInput) -> str:
@@ -25,7 +26,7 @@ async def github_list_releases(params: ListReleasesInput) -> str:
     """
     try:
         params_dict = {
-            "per_page": params.per_page,
+            "per_page": params.limit,
             "page": params.page,
         }
         data: Union[Dict[str, Any], List[Dict[str, Any]]] = await _make_github_request(
@@ -37,6 +38,13 @@ async def github_list_releases(params: ListReleasesInput) -> str:
         releases_list: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(
+                releases_list, ResponseFormat.COMPACT.value, "release"
+            )
+            result = json.dumps(compact_data, indent=2)
+            return _truncate_response(result, len(releases_list))
 
         if params.response_format == ResponseFormat.JSON:
             result = json.dumps(releases_list, indent=2)

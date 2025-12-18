@@ -14,6 +14,7 @@ from ..models.enums import ResponseFormat
 from ..utils.requests import _make_github_request, _get_auth_token_fallback
 from ..utils.errors import _handle_api_error
 from ..utils.formatting import _format_timestamp
+from ..utils.compact_format import format_response
 
 
 async def github_list_branches(params: ListBranchesInput) -> str:
@@ -28,7 +29,7 @@ async def github_list_branches(params: ListBranchesInput) -> str:
             - owner (str): Repository owner
             - repo (str): Repository name
             - protected (Optional[bool]): Filter by protected status
-            - per_page (Optional[int]): Results per page (1-100, default 30)
+            - limit (Optional[int]): Maximum results (1-100, default 10)
             - token (Optional[str]): GitHub token
             - response_format (ResponseFormat): Output format
 
@@ -48,7 +49,10 @@ async def github_list_branches(params: ListBranchesInput) -> str:
         auth_token = await _get_auth_token_fallback(params.token)
 
         endpoint = f"repos/{params.owner}/{params.repo}/branches"
-        query_params: Dict[str, Any] = {"per_page": params.per_page}
+        query_params: Dict[str, Any] = {
+            "per_page": params.limit,
+            "page": params.page,
+        }
 
         if params.protected is not None:
             query_params["protected"] = "true" if params.protected else "false"
@@ -66,6 +70,10 @@ async def github_list_branches(params: ListBranchesInput) -> str:
         branches: List[Dict[str, Any]] = (
             cast(List[Dict[str, Any]], data) if isinstance(data, list) else []
         )
+
+        if params.response_format == ResponseFormat.COMPACT:
+            compact_data = format_response(branches, ResponseFormat.COMPACT.value, "branch")
+            return json.dumps(compact_data, indent=2)
 
         if params.response_format == ResponseFormat.JSON:
             return json.dumps(
