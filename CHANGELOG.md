@@ -37,6 +37,10 @@
 - Updated all examples to use `response_format: "compact"`
 - Added GraphQL vs REST comparison (91% token savings for PR overview)
 - Added `github_suggest_workflow` guidance for bulk operations
+- Created `docs/TOKEN_EFFICIENCY.md` - Comprehensive guide to token savings (18x more efficient)
+- Created `docs/RESPONSE_FORMATS.md` - Complete reference for compact field listings
+- Added "AI-Optimized" section to README with savings tables
+- Updated `server.json` and `pyproject.toml` descriptions for MCP Registry
 
 ---
 

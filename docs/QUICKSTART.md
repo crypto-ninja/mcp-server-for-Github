@@ -305,6 +305,15 @@ If you encounter issues:
 2. **Use filters**: Apply state, label, and date filters when listing issues/PRs
 3. **Paginate wisely**: Don't request huge result sets at once
 4. **Check token**: Using a token dramatically improves rate limits
+5. **Use compact format**: Add `response_format: "compact"` to save 80-97% tokens on responses
+   ```typescript
+   // Recommended: Use compact for lists and status checks
+   const issues = await callMCPTool("github_list_issues", {
+     owner: "user", repo: "repo",
+     response_format: "compact"  // 94% smaller!
+   });
+   ```
+   📖 **See [Token Efficiency Guide](TOKEN_EFFICIENCY.md) for complete savings guide.**
 
 ## 🎊 You're Ready!
 

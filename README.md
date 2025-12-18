@@ -52,7 +52,9 @@ const fullIssue = await callMCPTool("github_get_issue", {
 
 **Combined with our code-first architecture (98% token reduction), you get the most efficient GitHub MCP server available.**
 
-See [Token Efficiency Guide](docs/TOKEN_EFFICIENCY.md) for detailed savings by tool.
+📖 **Documentation:**
+- [Token Efficiency Guide](docs/TOKEN_EFFICIENCY.md) - Detailed savings by tool (18x more efficient)
+- [Response Formats Reference](docs/RESPONSE_FORMATS.md) - Complete compact field listings
 
 ## ✨ What's New
 

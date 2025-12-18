@@ -130,6 +130,8 @@ Many tools support a `response_format` parameter:
 - `"json"` - Full structured data when you need all fields
 - `"markdown"` - Formatted text for human readability
 
+📖 **See [Response Formats Reference](docs/RESPONSE_FORMATS.md) for complete field listings and [Token Efficiency Guide](docs/TOKEN_EFFICIENCY.md) for detailed savings.**
+
 ```typescript
 // Get compact data (recommended - saves 80-97% tokens)
 const data = await callMCPTool("github_list_branches", {

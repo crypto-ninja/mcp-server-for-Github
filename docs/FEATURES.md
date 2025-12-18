@@ -1,17 +1,28 @@
 # 🌟 GitHub MCP Server - Feature Showcase
 
+> **💡 AI Optimization Tip**: For AI agents, use `response_format: "compact"` to save 80-97% tokens. Examples below show `markdown` for human readability, but `compact` is recommended for programmatic use. See [Token Efficiency Guide](TOKEN_EFFICIENCY.md) for details.
+
 ## Visual Tour of Capabilities
 
 ### 🔍 Tool #1: Repository Information
 
 **What it does**: Fetches comprehensive metadata about any GitHub repository
 
-**Input:**
+**Input (for human display):**
 ```json
 {
   "owner": "facebook",
   "repo": "react",
   "response_format": "markdown"
+}
+```
+
+**Input (for AI agents - recommended):**
+```json
+{
+  "owner": "facebook",
+  "repo": "react",
+  "response_format": "compact"
 }
 ```
 
