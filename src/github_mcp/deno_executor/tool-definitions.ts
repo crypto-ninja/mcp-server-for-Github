@@ -169,7 +169,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     example: `const stargazers = await callMCPTool("github_list_stargazers", {
   owner: "facebook",
   repo: "react",
-  per_page: 10
+  limit: 10
 });`
   },
   {
@@ -366,7 +366,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     returns: "List of gists with id, description, visibility, files, and URLs",
     example: `const gists = await callMCPTool("github_list_gists", {
   username: "octocat",
-  per_page: 10
+  limit: 10
 });`
   },
   {
@@ -1977,7 +1977,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
       repo: { type: "string", required: true, description: "Repository name" },
       affiliation: { type: "string", required: false, description: "Filter by affiliation: 'outside', 'direct', 'all' (default: 'all')" },
       permission: { type: "string", required: false, description: "Filter by permission: 'pull', 'push', 'admin'" },
-      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
       response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
@@ -2014,7 +2014,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     parameters: {
       owner: { type: "string", required: true, description: "Repository owner" },
       repo: { type: "string", required: true, description: "Repository name" },
-      limit: { type: "number", required: false, description: "Maximum results (1-100, default 10)" },
+      per_page: { type: "number", required: false, description: "Results per page (1-100, default 30)" },
       page: { type: "number", required: false, description: "Page number (default 1)" },
       token: { type: "string", required: false, description: "Optional GitHub token" },
       response_format: { type: "string", required: false, description: "Output format: 'json', 'markdown', or 'compact' (default 'markdown')" }
@@ -2095,7 +2095,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     returns: "List of repositories with names, visibility, fork status, language, stars, and URLs",
     example: `const repos = await callMCPTool("github_list_user_repos", {
   username: "octocat",
-  per_page: 20
+  limit: 20
 });`
   },
   {
@@ -2133,7 +2133,7 @@ export const GITHUB_TOOLS: ToolDefinition[] = [
     returns: "Search results including total count and matching user profiles",
     example: `const users = await callMCPTool("github_search_users", {
   query: "location:London followers:>100",
-  per_page: 10
+  limit: 10
 });`
   },
 
