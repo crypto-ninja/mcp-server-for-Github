@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional, Tuple
 import httpx
 import os
 
+from .ssl_context import get_ssl_context
+
 
 def _cache_key(
     method: str, url_path: str, params: Optional[Dict[str, Any]]
@@ -36,6 +38,7 @@ class GhClient:
         self._client = httpx.AsyncClient(
             base_url=base_url,
             timeout=timeout,
+            verify=get_ssl_context(),
             follow_redirects=True,  # Required for job logs API (302 redirect to blob storage)
             headers={
                 "Accept": "application/vnd.github+json",

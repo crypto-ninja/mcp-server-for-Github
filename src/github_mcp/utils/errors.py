@@ -3,6 +3,13 @@
 import httpx
 
 
+def _is_tls_verification_error(e: httpx.ConnectError) -> bool:
+    message = str(e).lower()
+    return "certificate verify failed" in message or "certIFICATE_VERIFY_FAILED" in str(
+        e
+    )
+
+
 def _handle_api_error(e: Exception) -> str:
     """
     Consistent error formatting across all tools.
@@ -57,6 +64,14 @@ def _handle_api_error(e: Exception) -> str:
         return f"Error: GitHub API request failed with status {status_code}. {safe_excerpt}"
     elif isinstance(e, httpx.TimeoutException):
         return "Error: Request timed out. Please try again."
+    elif isinstance(e, httpx.ConnectError) and _is_tls_verification_error(e):
+        return (
+            "Error: TLS certificate verification failed.\n"
+            "Hint: Antivirus HTTPS scanning (e.g. Norton) or a corporate proxy may "
+            "re-sign traffic with a root CA that certifi does not trust. This server "
+            "uses your OS trust store; if errors persist, set GITHUB_MCP_SSL_CA_FILE "
+            "to your organization's CA bundle path."
+        )
     elif isinstance(e, httpx.NetworkError):
         return "Error: Network error occurred. Please check your connection."
     return f"Error: Unexpected error occurred: {str(e)}"

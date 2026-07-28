@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from pathlib import Path
 
+from .ssl_context import get_ssl_context
+
 # Configuration
 LICENSE_API_URL = "https://lwbqfgdwmavycgmntevn.supabase.co/functions/v1/verify-license"
 LICENSE_CHECK_INTERVAL = 86400  # 24 hours in seconds
@@ -128,7 +130,7 @@ class LicenseManager:
 
     async def _verify_online(self) -> Dict[str, Any]:
         """Verify license with online API."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=get_ssl_context()) as client:
             try:
                 response = await client.post(
                     self.api_url,

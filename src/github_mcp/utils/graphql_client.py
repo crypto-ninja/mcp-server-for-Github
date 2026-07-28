@@ -1,5 +1,8 @@
 from typing import Any, Dict, Optional
+
 import httpx
+
+from .ssl_context import get_ssl_context
 
 
 class GraphQLClient:
@@ -11,6 +14,7 @@ class GraphQLClient:
     ) -> Dict[str, Any]:
         async with httpx.AsyncClient(
             timeout=30.0,
+            verify=get_ssl_context(),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/vnd.github+json",

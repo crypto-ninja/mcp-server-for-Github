@@ -15,6 +15,8 @@ from typing import Optional
 import httpx
 import jwt  # PyJWT
 
+from ..utils.ssl_context import get_ssl_context
+
 
 class GitHubAppAuth:
     """GitHub App authentication handler with token caching."""
@@ -68,7 +70,9 @@ class GitHubAppAuth:
             jwt_token = self._generate_jwt(app_id, private_key_pem)
 
             async with httpx.AsyncClient(
-                timeout=30.0, headers={"Accept": "application/vnd.github+json"}
+                timeout=30.0,
+                verify=get_ssl_context(),
+                headers={"Accept": "application/vnd.github+json"},
             ) as client:
                 response = await client.post(
                     f"https://api.github.com/app/installations/{installation_id}/access_tokens",
@@ -254,6 +258,7 @@ async def verify_installation_access(token: str, owner: str, repo: str) -> tuple
     try:
         async with httpx.AsyncClient(
             timeout=30.0,
+            verify=get_ssl_context(),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/vnd.github+json",
